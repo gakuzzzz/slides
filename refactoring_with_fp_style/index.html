@@ -1,0 +1,810 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <title>Refactoring with Functional Programming Style</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-code, .remark-inline-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Refactoring with Functional Programming Style
+
+Scala関西Summit 2015/08/01
+
+---
+class: middle
+
+## 自己紹介
+
+* 中村 学(Nakamura Manabu)
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* 株式会社 Tech to Value
+* [Scala Matsuri 2016](http://scalamatsuri.org/) よろしくおねがいします！
+
+---
+class: middle
+
+## 今日は宣伝に来ました
+
+![t2v](http://www.t2v.jp/images/logo.png)
+
+---
+class: middle
+
+
+## Scalaコードレビュー サービス
+
+* GitHub(or類似サービス)上でのOnlineコードレビュー
+* Slack等チャットツールによるQ&A
+* 月数回程度のOfflineミーティングを相談に応じて
+
+---
+class: middle
+
+## 今日の内容
+
+* 過去の事例から共通する典型的なパターンを紹介
+* 実際のコードに FP Style をどう適用するのか示しつつ<br>どんな感じのレビューなのか雰囲気を感じて貰えれば
+
+
+---
+class: middle
+
+## 典型例 その１
+
+## 巨大なListのループ
+
+---
+class: middle
+
+最初のコード
+
+```scala
+case class Product(id: ProductId, name: Name)
+
+def createItem(product: Product): Item = ???
+def createCodes(name: Name, item: Item): List[Code] = ???
+```
+
+```scala
+val products: List[Product] = ??? // サイズが大きいことが想定される
+
+val allItemsBuf: mutable.ListBuffer[Item] = mutable.ListBuffer()
+val allCodesBuf: mutable.ListBuffer[Code] = mutable.ListBuffer()
+
+for (product <- products) {
+  val item = createItem(product)
+  allItemsBuf += item
+  allCodesBuf ++= createCodes(product.name, item)
+}
+
+val allItems = allItemsBuf.toList
+val allCodes = allCodesBuf.toList
+```
+
+
+
+---
+class: middle
+
+これ ~~進研○ミ~~ でやったところだ！ 高階関数使うんだ！
+
+```scala
+def createItem(product: Product): Item = ???
+def createCodes(name: Name, item: Item): List[Code] = ???
+```
+
+```scala
+val products: List[Product] = ??? // サイズが大きいことが想定される
+
+val allItems = products.map(createItem)
+val allCodes = products.flatMap { p => 
+  createCodes(p.name, createItem(p))
+}
+```
+
+## やった！ mutable が無くなった！<br>　
+
+---
+class: middle
+
+シンプルにはなった。けれど……
+
+```scala
+def createItem(product: Product): Item = ???
+def createCodes(name: Name, item: Item): List[Code] = ???
+```
+
+```scala
+val products: List[Product] = ??? // サイズが大きいことが想定される
+
+val allItems = products.map(createItem)
+val allCodes = products.flatMap { p => 
+  createCodes(p.name, createItem(p))
+}
+```
+
+## **２回**全件ループしてしまっている<br>createItem も２重に実行している
+
+---
+class: center, middle
+
+「やっぱり効率考えると普通のループの方が……」
+
+
+「FP Style って実用には向かないんじゃ……」
+
+---
+class: center, middle
+
+## ちょっと待って！！
+
+
+---
+class: center, middle
+
+## そこで <strong style="color: blue;">Monoid</strong> ですよ
+
+---
+class: middle
+
+## Monoid とは
+
+以下の性質を満たす集合と2項演算の組み合わせ
+
+* 演算が集合に対し閉じている
+    * 基本的に集合は型で表す
+    * つまり引数の型と戻り値の型が同じという事
+* 演算が結合法則を満たす
+    * `a`, `b`, `c` を集合の要素として、演算を `|+|` とした時<br>`(a |+| b) |+| c == a |+| (b |+| c)` が成り立つという事
+    * 交換法則(可換則) ではない事に注意
+* 単位元が存在する
+    * `e |+| a == a`
+    * `a == a |+| e`
+    * 全ての要素に対して上記が成り立つ e が存在するという事
+
+---
+class: middle
+
+## 例えば
+
+* 整数と足し算
+    * 整数 + 整数 = 整数 (演算が集合に対し閉じている)
+    * `(1 + 2) + 3 == 1 + (2 + 3)` (結合法則を満たす)
+    * `0 + a == a` かつ `a + 0 == a` (単位元 0 が存在する)
+* Listと連結
+    * `List[Int] ++ List[Int]` の結果は `List[Int]`
+    * `(List(1) ++ List(2)) ++ List(3) == `<br>　　　　　`List(1) ++ (List(2) ++ List(3))`
+    * `Nil ++ List(1) == List(1)` かつ `List(2) ++ Nil == List(2)`
+
+---
+class: middle
+
+## Monoidではない例
+
+* 整数と割り算
+    * 整数÷整数の結果は整数とは限らない(演算が閉じていない)
+* 整数と引き算
+    * `(1 - 2) - 3 != 1 - (2 - 3)`(結合法則を満たさない)
+
+---
+class: middle
+
+## そして Foldable
+
+---
+class: center, middle
+
+## Foldable とは
+
+畳み込みができる型クラス
+
+<section>
+※型クラスとは、<br>クラス定義時とは別に後から実装を提供できるinterfaceのようなもの
+</section>
+
+---
+class: middle
+
+## みんな大好き foldLeft
+
+```scala
+scala> List(1, 2, 3).foldLeft(0)(_ + _)
+res0: Int = 6 // 0 + 1 + 2 + 3
+```
+
+---
+class: middle
+
+## もし List の要素が Monoid だったら
+
+```scala
+List(...).foldLeft(単位元)(2項演算)
+```
+
+畳み込みが可能！！
+
+---
+class: middle
+
+## でも常に要素が Monoid とは限らない
+
+---
+class: middle
+
+## そこで foldMap
+
+```scala
+def foldMap[B: Monoid](f: A => B): B
+```
+
+「要素の型を任意のMonoidへ変換する関数」<br>を受け取り畳み込みを行う
+
+
+<section>
+flatMap が map して flatten するイメージなら<br>
+foldMap は map して fold するイメージ
+</section>
+
+---
+class: middle
+
+これを使うと最初の例(再掲)も
+
+```scala
+def createItem(product: Product): Item = ???
+def createCodes(name: Name, item: Item): List[Code] = ???
+```
+
+```scala
+val products: List[Product] = ??? // サイズが大きいことが想定される
+
+val allItems = products.map(createItem)
+val allCodes = products.flatMap { p => 
+  createCodes(p.name, createItem(p))
+}
+```
+
+---
+class: middle
+
+foldMap で書き直せる
+
+```scala
+def createItem(product: Product): Item = ???
+def createCodes(name: Name, item: Item): List[Code] = ???
+```
+
+```scala
+import scalaz.std.list._
+//import scalaz.std.tuple._
+import scalaz.syntax.foldable._
+
+val products: List[Product] = ??? // サイズが大きいことが想定される
+
+val allItems = products.foldMap { p => List(createItem(p)) }
+val allCodes = products.foldMap { p =>
+  createCodes(p.name, createItem(p))
+}
+```
+
+でもこれでは 2回ループしてるのは変わらない
+
+---
+class: middle
+
+## Monoid は<strong style="color: blue">合成</strong>できる
+
+---
+class: middle
+
+2つの Monoid[A] と Monoid[B] を元に
+
+タプルのモノイド、Monoid[(A, B)] を定義することが可能
+
+```scala
+def tuple2[A, B](ma: Monoid[A], mb: Monoid[B]): Monoid[(A, B)] = {
+  new Monoid[(A, B)] {
+    def zero: (A, B) = (ma.zero, mb.zero)
+    def append(x: (A, B), y: (A, B)): (A, B) = {
+      (ma.append(x._1, y._1), mb.append(x._2, y._2))
+    }
+  }
+}
+```
+
+---
+class: middle
+
+つまり、以下(再掲)を
+
+```scala
+def createItem(product: Product): Item = ???
+def createCodes(name: Name, item: Item): List[Code] = ???
+```
+
+```scala
+import scalaz.std.list._
+//import scalaz.std.tuple._
+import scalaz.syntax.foldable._
+
+val products: List[Product] = ??? // サイズが大きいことが想定される
+
+val allItems = products.foldMap { p => List(createItem(p)) }
+val allCodes = products.foldMap { p =>
+  createCodes(p.name, createItem(p))
+}
+```
+
+## 　
+
+---
+class: middle
+
+次のように書き換える事ができる
+
+```scala
+def createItem(product: Product): Item = ???
+def createCodes(name: Name, item: Item): List[Code] = ???
+```
+
+```scala
+import scalaz.std.list._
+import scalaz.std.tuple._
+import scalaz.syntax.foldable._
+
+val products: List[Product] = ??? // サイズが大きいことが想定される
+
+val (allItems, allCodes) = products.foldMap { p => 
+  val item = createItem(p)
+  (List(item), createCodes(p.name, item))
+}
+```
+
+## めでたくループが**１回**に！
+
+---
+class: middle
+
+## Monoid と Foldable の<br><strong style="color: blue">本当の力</strong>をお見せしますよ
+
+---
+class: middle
+
+## Monoidの2項演算は**結合則**を満たす
+
+---
+class: middle
+
+## 従って、要素の順序さえ同じであれば、どこから結合しても問題ない
+
+---
+class: middle
+
+## つまり、平衡畳み込みが可能
+
+---
+class: middle
+
+## foldLeft での畳み込み
+
+```scala
+List(a,b,c,d).fold // append(append(append(a, b), c), d)
+```
+
+## 平衡畳み込み
+
+```scala
+List(a,b,c,d).fold // append(append(a, b), append(c, d))
+```
+
+---
+class: center, middle
+
+appendの計算量によっては<br>全体の計算量を大きく減らすことができる
+
+また、スレッドを使った並列計算も可能になる
+
+---
+class: middle
+
+## ここまでのまとめ
+
+* 巨大な集合に対する状態を持った複雑なループも<br>Monoid と Foldable を使うことで<br>簡潔に記述できる場合がある
+* Monoid や Foldable の実装を工夫することで、<br>パフォーマンスを改善できる場合がある
+
+---
+class: middle
+
+## 典型例 その２
+
+## Validationと更新
+
+
+---
+class: middle
+
+## 要件
+
+* CSVのファイルを読み込む
+* 全ての行をvalidateし、<br>エラーが1件でもあれば全てのエラーを出力して終了
+* エラーが全行で無ければ各行をEntityに変換し、<br>後続処理をする
+
+---
+class: middle
+
+## 最初のコード main
+
+```scala
+val records: List[String] = loadCsv()
+val errors: List[String] = validate(records)
+if (errors.isEmpty) {
+  updateRecords(records)
+} else {
+  outputErrors(errors)
+}
+```
+
+```scala
+def validate(records: List[String]): List[String] = {
+  // 後述
+}
+```
+
+```scala
+def updateRecords(records: List[String]): Unit = {
+  // 後述
+}
+```
+
+
+---
+class: middle
+
+## 最初のコード validate
+
+```scala
+def validate(records: List[String]): List[String] = {
+  val errors: mutable.ListBuffer[String] = mutable.ListBuffer()
+  for (record <- records) {
+    val columns = record.split(",")
+    if (columns.size != 4) errors += "less columns"
+    else {
+      if (Try(columns(0).toLong).isFailure) errors += "invalid id"
+      if (columns(1).size > 10) errors += "name too long"
+      val min = Try(columns(3).toInt)
+      val max = Try(columns(4).toInt)
+      if (min.isFailure) errors += "invalid min"
+      if (max.isFailure) errors += "invalid max"
+      if (min.isSuccess && max.isSuccess) {
+        if (min.get > max.get) {
+          errors += "min is grater than max"
+        }
+      }
+    }
+  }
+  errors.toList
+}
+```
+
+---
+class: middle
+
+## 最初のコード updateRecords
+
+```scala
+case class ScoreRange(min: Int, max: Int)
+case class Entity(id: Long, name: String, scoreRange: ScoreRange)
+```
+
+```scala
+def updateRecords(records: List[String]): Unit = {
+  val entities: mutable.ListBuffer[Entity] = mutable.ListBuffer()
+  for (record <- records) {
+    val columns = record.split(",")
+    val id = columns(0).toLong
+    val name = columns(1)
+    val scoreRange = ScoreRange(columns(3).toInt, columns(4).toInt)
+    entities += Entity(id, name, scoreRange)
+  }
+  batchUpdate(entities.toList)
+}
+```
+
+---
+class: middle
+
+## 何が悪いのか
+
+* validateが入り組みすぎており単体テストができない
+* validate と updateRecords で同じ変換処理を行っている
+* updateRecords が validate を通ったという暗黙の前提に依存しきっている
+* 2重でrecordsループを回している
+
+---
+class: middle
+
+## そこで <strong style="color: blue;">Validation</strong> ですよ
+
+
+---
+class: middle
+
+## Validation[+E, +A] とは
+
+Scala 標準の Either もしくは Try のように、
+
+* 成功を表す Success[Nothing, A] 
+* 失敗を表す Failure[E, Nothing]
+
+でできており、
+
+* **エラーを蓄積する合成が可能**になっている
+* また成功時の値をそのまま保持する事ができる
+
+---
+class: middle
+
+したがって、Validation を使うことで
+
+* 最小のvalidationロジックを組み立てる事で全体のvalidationロジックを記述する事が可能になり、Testabilityがあがる
+* validation成功時の値を持つことで、後続処理で２重に変換ロジックを行う必要が無くなる
+
+という事が実現できる
+
+---
+class: middle
+
+## ValidationNel
+
+エラーを蓄積する際に、NonEmptyList をよく使うので
+
+```scala
+type ValidationNel[E, A] = Validation[NonEmptyList[E], A]
+```
+
+というエイリアスが切られている
+
+---
+class: middle
+
+この ValidationNel で以下(再掲)の main を書き直すと
+
+```scala
+case class ScoreRange(min: Int, max: Int)
+case class Entity(id: Long, name: String, scoreRange: ScoreRange)
+```
+
+```scala
+val records: List[String] = loadCsv()
+val errors: List[String] = validate(records)
+if (errors.isEmpty) {
+  updateRecords(records)
+} else {
+  outputErrors(errors)
+}
+```
+
+```scala
+def validate(records: List[String]): List[String] = {
+  // 後述
+}
+```
+
+```scala
+def updateRecords(records: List[String]): Unit = {
+  // 後述
+}
+```
+
+---
+class: middle
+
+次のようになる
+
+```scala
+case class ScoreRange(min: Int, max: Int)
+case class Entity(id: Long, name: String, scoreRange: ScoreRange)
+```
+
+```scala
+val records: List[String] = loadCsv()
+val validated: ValidationNel[String, List[Entity]] = validate(records)
+validated match {
+  case Success(entities) => batchUpdate(entities)
+  case Failure(errors)   => outputErrors(errors.list)
+}
+```
+
+```scala
+def validate(records: List[String]): ValidationNel[String, List[Entity]] = {
+ // 後述
+}
+```
+
+```scala
+// 直接 List[Entity] 扱えるので updateRecords は必要なくなる
+```
+
+---
+class: middle
+
+validation は以下の様に(長いので分割)
+
+```scala
+def validate(records: List[String]): ValidationNel[String, List[Entity]] = {
+  import scalaz.Validation.FlatMap._
+  records.foldMap { record =>
+    for {
+      columns <- validateColumn(record)
+      entity  <- validateEntity(columns)
+    } yield List(entity)
+  }
+}
+
+def validateColumn(record: String): ValidationNel[String, Array[String]] = {
+  val columns = record.split(",")
+  if (columns.size == 4) columns.successNel
+  else "less columns".failureNel
+}
+
+def validateEntity(col: Array[String]): ValidationNel[String, Entity] = {
+  import scalaz.syntax.applicative._
+  (validateId(col(0))   |@| 
+   validateName(col(1)) |@| 
+   validateScoreRange(col(2), col(3)))(Entity)
+}
+```
+
+---
+class: middle
+
+```scala
+def validateId(id: String): ValidationNel[String, Long] = {
+  Validation.fromTryCatchNonFatal(id.toLong).leftMap(_ => NonEmptyList("invalid id"))
+}
+
+def validateName(name: String): ValidationNel[String, String] = {
+  if (name.size <= 10) name.successNel
+  else "name too long".failureNel
+}
+
+def validateScoreNum(num: String, column: String): ValidationNel[String, Int] = {
+  Validation.fromTryCatchNonFatal(num.toInt).leftMap(_ => NonEmptyList(s"invalid $column"))
+}
+
+def validateMinMax(min: String, max: String): ValidationNel[String, (Int, Int)] = {
+  import scalaz.syntax.applicative._
+  (validateScoreNum(min, "min") |@| validateScoreNum(max, "max"))((n, x) => (n, x))
+}
+
+def validateScoreRangeConstraint(min: Int, max: Int): ValidationNel[String, ScoreRange] = {
+  if (min <= max) ScoreRange(min, max).successNel
+  else "min is grater than max".failureNel
+}
+
+def validateScoreRange(min: String, max: String): ValidationNel[String, ScoreRange] = {
+  import scalaz.Validation.FlatMap._
+  validateMinMax(min, max).flatMap { case (n, x) => validateScoreRangeConstraint(n, x) }
+}
+
+```
+
+---
+class: middle
+
+## ここまでのまとめ
+
+* 入り組んだvalidationや変換ロジックはValidationを使うことで小さいロジックから合成できるようになり、Testabilityを上げる事ができる
+* Monoid も Validation も**Composability**(合成可能性)が肝になっている
+
+
+---
+class: middle
+
+## 総括
+
+こんな感じで、Functional Programming Style を生かした Scala のコーディングについてレビューしたりチャットで質問に回答したりしています。
+
+---
+class: middle
+
+* チームメンバーにScalaのスペシャリストが居ない
+* もっと業務コードに密接に絡んだ質問がしたい
+
+などなどありましたら是非Scalaコードレビューサービスの利用をご検討ください。
+
+---
+class: middle
+
+## お申し込み
+
+* Twitter [@gakuzzzz](https://twitter.com/gakuzzzz/) にメンション or DM
+* [弊社Webサイト](http://www.t2v.jp/)の申し込みフォーム
+
+
+---
+class: middle
+
+## 質問とか
+
+
+    </textarea>
+    <script src="https://gnab.github.io/remark/downloads/remark-0.11.0.min.js" type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+      slideshow.on('beforeShowSlide', function (slide) {
+        $("a[href^='http://']").attr("target", "_blank");
+        $("a[href^='https://']").attr("target", "_blank");
+      });
+    </script>
+  </body>
+</html>
