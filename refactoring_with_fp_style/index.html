@@ -537,8 +537,8 @@ def validate(records: List[String]): List[String] = {
     else {
       if (Try(columns(0).toLong).isFailure) errors += "invalid id"
       if (columns(1).size > 10) errors += "name too long"
-      val min = Try(columns(3).toInt)
-      val max = Try(columns(4).toInt)
+      val min = Try(columns(2).toInt)
+      val max = Try(columns(3).toInt)
       if (min.isFailure) errors += "invalid min"
       if (max.isFailure) errors += "invalid max"
       if (min.isSuccess && max.isSuccess) {
@@ -569,7 +569,7 @@ def updateRecords(records: List[String]): Unit = {
     val columns = record.split(",")
     val id = columns(0).toLong
     val name = columns(1)
-    val scoreRange = ScoreRange(columns(3).toInt, columns(4).toInt)
+    val scoreRange = ScoreRange(columns(2).toInt, columns(3).toInt)
     entities += Entity(id, name, scoreRange)
   }
   batchUpdate(entities.toList)
@@ -784,8 +784,8 @@ class: middle
 
 ## お申し込み
 
-* Twitter [@gakuzzzz](https://twitter.com/gakuzzzz/) にメンション or DM
 * [弊社Webサイト](http://www.t2v.jp/)の申し込みフォーム
+* Twitter [@gakuzzzz](https://twitter.com/gakuzzzz/) にメンション or DM
 
 
 ---
