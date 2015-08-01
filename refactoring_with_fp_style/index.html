@@ -713,7 +713,7 @@ def validateColumn(record: String): ValidationNel[String, Array[String]] = {
 }
 
 def validateEntity(col: Array[String]): ValidationNel[String, Entity] = {
-  import scalaz.syntax.applicative._
+  import scalaz.syntax.apply._
   (validateId(col(0))   |@| 
    validateName(col(1)) |@| 
    validateScoreRange(col(2), col(3)))(Entity)
@@ -738,7 +738,7 @@ def validateScoreNum(num: String, column: String): ValidationNel[String, Int] = 
 }
 
 def validateMinMax(min: String, max: String): ValidationNel[String, (Int, Int)] = {
-  import scalaz.syntax.applicative._
+  import scalaz.syntax.apply._
   (validateScoreNum(min, "min") |@| validateScoreNum(max, "max"))((n, x) => (n, x))
 }
 
