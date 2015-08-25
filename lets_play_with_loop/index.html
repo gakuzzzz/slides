@@ -429,8 +429,8 @@ implicit def tuple2[A, B](
     implicit ma: Monoid[A], mb: Monoid[B]): Monoid[(A, B)] = {
   new Monoid[(A, B)] {
     def zero: (A, B) = (ma.zero, mb.zero)
-    def append(x: (A, B), y: (A, B)): (A, B) = {
-      (ma.append(x._1, y._1), mb.append(x._2, y._2))
+    def op(x: (A, B), y: (A, B)): (A, B) = {
+      (ma.op(x._1, y._1), mb.op(x._2, y._2))
     }
   }
 }
