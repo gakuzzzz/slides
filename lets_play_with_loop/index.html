@@ -279,7 +279,7 @@ res0: Int = 6 // 0 + 1 + 2 + 3
 ```scala
 val c = concat[Int] // 画面幅の都合で代入
 List(List(1, 2), List(3)).foldLeft(c.zero)(c.op)
-res1: Int = List(1, 2, 3) // List() ++ List(1, 2) ++ List(3)
+res1: List[Int] = List(1, 2, 3) // List() ++ List(1, 2) ++ List(3)
 ```
 
 
@@ -313,14 +313,14 @@ class: middle
 val list1 = List("abc", "d", "ef")
 
 foldMap(list1, sum)(_.size)
-res0: 6 // 0 + 3 + 1 + 2
+res0: Int = 6 // 0 + 3 + 1 + 2
 ```
 
 ```scala
 val list2 = List(List("ab", "c"), List("def"))
 
 foldMap(list2, concat[Int])(_.map(_.size))
-res1: List(2, 1, 3) // List() ++ List(2, 1) ++ List(3)
+res1: List[Int] = List(2, 1, 3) // List() ++ List(2, 1) ++ List(3)
 ```
 
 ある型のMonoidインスタンスと、その型への変換処理を渡すだけで簡単に畳み込みができる
