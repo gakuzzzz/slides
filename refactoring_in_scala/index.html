@@ -1,0 +1,1026 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <title>Refactoring in Scala</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(http://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-code, .remark-inline-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+      .translation {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background-color: #eeeeee;
+        padding: 0.5em 1em;
+        width: 100%;
+        line-height: 110%;
+      }
+      code {
+        font-size: 100%;
+        background-color: #eeeeff;
+        padding: 3px;
+      }
+      .translation code {
+        padding: 0px;
+        background-color: #cccccc;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td, th {
+        border: 1px solid #333333;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Refactoring in Scala
+
+Scala Matsuri 2016  1/30
+
+
+---
+class: middle
+
+## Who am I
+
+* Manabu Nakamura
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd. 
+
+![t2v](http://www.t2v.jp/images/logo.png)
+
+<div class="translation">
+自己紹介: 中村 学 (株)Tech to Value
+</div>
+---
+class: middle
+
+## Who am I
+
+I'm a "Professional Null Cleaner"
+
+![https://twitter.com/seratch_ja/status/676431073824247809](./images/pnc.png)
+
+Lately my work has been removing null from Java projects ;p
+
+<div class="translation">
+最近はJavaのプロジェクトからnullを取り除く仕事してます ;p 
+</div>
+---
+class: middle
+
+## Abstract
+
+## How to define Value Types
+
+'Value Types' means primitive data types such as what are called 'Value Object' in Domain Driven Design.
+
+Through the Value Types definition, I'd like to introduce the flexibility and expressivity of Scala. 
+
+<div class="translation">
+	今日の内容は、値の型についての話です。<br/>
+	DDDの文脈ではValue Objectと呼ばれるような値について、<br/>
+	どのように表現するか、どのように扱えばいいのかを通して、<br/>
+	Scalaの表現力や言語機構の柔軟さを紹介したいと思います。
+</div>
+---
+class: middle
+
+Start code
+
+```scala
+case class Board(id: Long, name: String, ownerId: Long)
+case class User(id: Long, name: String, groupId: Long)
+
+trait UserRepository {
+  def findByGroupIds(groupIds: Traversable[Long]): Seq[User]
+}
+trait BoardRepository {
+  def findByOwnerIds(ownerIds: Traversable[Long]): Seq[Board]
+}
+```
+
+```scala
+def findBoardWithOwner(groupId: Long): Seq[(Board, User)] = {
+  val users = userRepository.findByGroupIds(Set(groupId))
+  val userMap: Map[Long, User] = users.map(u => u.id -> u).toMap
+  val boards = boardRepository.findByOwnerIds(userMap.keys)
+  boards.map { board =>
+    board -> userMap(board.ownerId)
+  }
+}
+```
+
+<div class="translation">
+最初のコード
+</div>
+---
+class: middle
+
+# What's wrong?
+
+<div class="translation">
+何が問題でしょうか？
+</div>
+---
+class: middle
+
+# What's wrong?
+
+* `Map[Long, User]` type says nothing
+* If we write `userMap(board.id)`, the compiler does not tell it.<br>(and a `NoSuchElementException` will be thrown!)
+
+<div class="translation">
+	・<code>Map[Long, User]</code> は意味が不明確です。<br/>
+	・もし<code>userMap(board.id)</code>と間違えても、コンパイルエラーになりません。<br/>
+	&nbsp;(しかも実行時例外を投げる可能性が大です)
+</div>
+
+---
+class: middle
+
+# First Approach
+
+## Intoroduce Type Alias
+
+<div class="translation">
+最初の改善案: Type Alias の導入
+</div>
+---
+class: middle
+
+### Intoroduce Type Alias
+
+```scala
+package object models {
+  type UserId  = Long
+  type GroupId = Long
+  type BoardId = Long
+
+  type UserName  = String
+  type BoardName = String
+}
+```
+
+```scala
+case class Board(id: BoardId, name: BoardName, ownerId: UserId)
+case class User(id: UserId, name: UserName, groupId: GroupId)
+```
+
+```scala
+def findBoardWithOwner(groupId: GroupId): Seq[(Board, User)] = {
+  val users = userRepository.findByGroupIds(Set(groupId))
+  val userMap: Map[UserId, User] = users.map(u => u.id -> u).toMap
+  val boards = boardRepository.findByOwnerIds(userMap.keys)
+  boards.map { board =>
+    board -> userMap(board.ownerId)
+  }
+}
+```
+
+<div class="translation">
+Type Alias の導入
+</div>
+---
+class: middle
+
+### Intoroduce Type Alias
+
+* `Map[UserId, User]` Clearer semantics!
+* Easy to change physical data type.
+    ```scala
+    //type UserId = Long 
+    type UserId = String
+    ```
+    There is no need to change other logic anything.
+
+<div class="translation">
+	・コードから意味が明確に！<br/>
+	・物理表現の変更が容易<br/>
+	&nbsp;仮に実データの表現に変更があっても、他のロジックには一切変更が要りません。
+</div>
+---
+class: middle
+
+### Intoroduce Type Alias
+
+The compiler still can not found mistakes.
+
+```scala
+// userMap(board.ownerId)
+userMap(board.id)
+```
+
+<div class="translation">
+	依然として間違いをコンパイルエラーでは検出できません。
+</div>
+---
+class: middle
+
+# Second Approach(1)
+
+## Intoroduce Tagged Type
+
+<div class="translation">
+次の改善案(1): Tagged Type の導入
+</div>
+---
+class: middle
+
+### Intoroduce Tagged Type
+
+Tagged Type is a mechanism to add a label to types and is provided by [Scalaz](https://github.com/scalaz/scalaz), [shapless](https://github.com/milessabin/shapeless)(`Newtype`), etc.
+
+```scala
+type Tagged[A, T] = {type Tag = T; type Self = A}
+type @@[T, Tag] = Tagged[T, Tag]
+```
+
+Scala has infix type notation.
+
+```scala
+// all same type
+val a: Tagged[String, Int] = ...
+val b: @@[String, Int]     = a
+val c: String Tagged Int   = b
+val d: String @@ Int       = c
+```
+
+<div class="translation">
+	TaggedType は型にラベルをつける仕組みで、Scalaz や shapless などで提供されています。<br/>
+	Scala では型引数を二つ取る型は中置記法で書くことができます。<br/>
+	中置記法で読みやすくするために<code>@@</code>という別名が定義されています。
+</div>
+---
+class: middle
+
+### Intoroduce Tagged Type
+
+Using Tagged Type, we can write as following
+
+```scala
+package object models {
+  type Id   = Long
+  type Name = String
+}
+```
+
+```scala
+case class Board(id: Id @@ Board, name: Name @@ Board, ownerId: Id @@ User)
+case class User(id: Id @@ User, name: Name @@ User, groupId: Id @@ Group)
+```
+
+```scala
+def findBoardWithOwner(groupId: Id @@ Group): Seq[(Board, User)] = {
+  val users = userRepository.findByGroupIds(Set(groupId))
+  val userMap: Map[Id @@ User, User] = users.map(u => u.id -> u).toMap
+  val boards = boardRepository.findByOwnerIds(userMap.keys)
+  boards.map { board =>
+    board -> userMap(board.ownerId)
+  }
+}
+```
+<div class="translation">
+	Tagged Type を使うと上記のように書けます。
+</div>
+---
+class: middle
+
+### Intoroduce Tagged Type
+
+* `Map[Id @@ User, User]` Clearer semantics
+* More safety!
+    ```scala
+      val userMap: Map[Id @@ User, User] = ...
+      ...
+      boards.map { board =>
+        board -> userMap(board.id) // compile error!
+      }
+    ```
+* There is no cost of wrap/unwrap because the implementation is only simple cast.
+
+<div class="translation">
+	・コードの意味は明白になります。<br>
+	・ミスをしてもコンパイラが型違反を検出してくれます。<br>
+	・内部ではただのcastになるのでwrap/unwrapのコストがかかりません
+</div>
+---
+class: middle
+
+### Intoroduce Tagged Type
+
+However, when it is used in combination with `AnyVal` subtypes, there is boxing/unboxing cost.
+
+```scala
+val userId: Long @@ User = ...     // needs boxing/unboxing
+val userName: String @@ User = ... // no cost
+```
+
+<div class="translation">
+	しかし `AnyVal` のサブクラスと共に使用する場合、boxing/unboxing が発生します。
+</div>
+---
+class: middle
+
+# Second Approach(2)
+
+## Intoroduce Value Classes
+
+<div class="translation">
+次の改善案(2): Value Classes の導入
+</div>
+---
+class: middle
+
+### Intoroduce Value Classes
+
+[Value Classes](http://docs.scala-lang.org/overviews/core/value-classes.html) is a standard function in Scala to avoid allocating runtime objects.
+
+```scala
+class UserId(val value: Long) extends AnyVal
+case class BoardId(value: Long) extends AnyVal
+```
+
+It has a few limitations, but is ideal for wrapper classes like as Value Types.
+
+
+<div class="translation">
+	<a href="http://docs.scala-lang.org/ja/overviews/core/value-classes.html">Value Class</a>は実行時のオブジェクト割り当てを回避する標準機能です。<br/>
+	いくつか制約はありますが、値型を表現するのに適しています。
+</div>
+---
+class: middle
+
+### Intoroduce Value Classes
+
+```scala
+case class UserId(value: Long) extends AnyVal
+case class BoardId(value: Long) extends AnyVal
+case class GroupId(value: Long) extends AnyVal
+case class UserName(value: String) extends AnyVal
+case class BoardName(value: String) extends AnyVal
+```
+
+```scala
+case class Board(id: BoardId, name: BoardName, ownerId: UserId)
+case class User(id: UserId, name: UserName, groupId: GroupId)
+```
+
+```scala
+def findBoardWithOwner(groupId: GroupId): Seq[(Board, User)] = {
+  val users = userRepository.findByGroupIds(Set(groupId))
+  val userMap: Map[UserId, User] = users.map(u => u.id -> u).toMap
+  val boards = boardRepository.findByOwnerIds(userMap.keys)
+  boards.map { board =>
+    board -> userMap(board.ownerId)
+  }
+}
+```
+
+<div class="translation">
+	&nbsp;
+</div>
+---
+class: middle
+### Intoroduce Value Classes
+
+* `Map[UserId, User]` Clearer semantics
+* More safety!
+    ```scala
+      val userMap: Map[UserId, User] = ...
+      ...
+      boards.map { board =>
+        board -> userMap(board.id) // compile error!
+      }
+    ```
+* There is no cost of wrap/unwrap because it is inlined at compile time.
+
+<div class="translation">
+	・コードの意味は明白になります。<br>
+	・ミスをしてもコンパイラが型違反を検出してくれます。<br>
+	・コンパイル時にinline化されるのでwrap/unwrapのコストもかかりません。
+</div>
+---
+class: middle
+### Intoroduce Value Classes
+
+However, there are memory allocations in some cases.
+
+> 1. a value class is treated as another type.
+> 1. a value class is assigned to an array.
+> 1. doing runtime type tests, such as pattern matching.
+
+quote from: http://docs.scala-lang.org/overviews/core/value-classes.html
+
+<div class="translation">
+	以下の場合にはメモリ割り当てが行われます。<br>
+&nbsp;&nbsp;1.値クラスが別の型として扱われるとき。<br>
+&nbsp;&nbsp;2.値クラスが配列に代入されるとき。<br>
+&nbsp;&nbsp;3.パターンマッチングなどにおいて、実行時の型検査を行うとき。<br>
+</div>
+---
+class: middle
+
+# Tagged Type or Value Classes?
+
+<div class="translation">
+	Tagged Type と Value Classes のどちらを使うべきでしょうか？
+</div>
+---
+class: middle
+
+### Tagged Type or Value Classes?
+
+Choose by pros/cons in your project.
+
+#### Tagged Type Pros
+
+* Support of Container type cast.
+    ```scala
+    val strings: Seq[String] = List("Alice", "Bob")
+    val userNames: Seq[Name @@ User] = 
+      Tag.of[User].subst(strings) // no iteration
+    ```
+
+#### Value Classes Pros
+
+* Easy to define additional methods
+    ```scala
+    case class Isbn(value) extends AnyVal {
+       def verifyCheckDigit: Boolean = ...
+    }
+    ```
+
+<div class="translation">
+	メリット・デメリットを比較して、選択できるようにしましょう。
+</div>
+---
+class: middle
+
+# BTW
+
+<div class="translation">
+	ところで
+</div>
+---
+class: middle
+
+This is a boilerplate. Don't you think it's tedious to define this?
+
+```scala
+case class UserId(value: Long) extends AnyVal
+case class BoardId(value: Long) extends AnyVal
+case class GroupId(value: Long) extends AnyVal
+case class UserName(value: String) extends AnyVal
+case class BoardName(value: String) extends AnyVal
+```
+
+<div class="translation">
+	似たような Value Class を一つ一つ定義するのは面倒だと思いませんか？
+</div>
+---
+class: middle
+
+# Next Approach
+
+## Intoroduce Phantom Types
+
+<div class="translation">
+次の改善案: Phantom Types の導入
+</div>
+---
+class: middle
+
+### Intoroduce Phantom Types
+
+"Phantom Types" is type parameters what are never used.
+
+```scala
+case class Id[A](value: Long) extends AnyVal
+case class Name[A](value: String) extends AnyVal
+```
+
+```scala
+case class Board(id: Id[Board], name: Name[Board], ownerId: Id[User])
+case class User(id: Id[User], name: Name[User], groupId: Id[Group])
+```
+
+```scala
+def findBoardWithOwner(groupId: Id[Group]): Seq[(Board, User)] = {
+  val users = userRepository.findByGroupIds(Set(groupId))
+  val userMap: Map[Id[User], User] = users.map(u => u.id -> u).toMap
+  val boards = boardRepository.findByOwnerIds(userMap.keys)
+  boards.map { board =>
+    board -> userMap(board.ownerId)
+  }
+}
+```
+
+<div class="translation">
+	Phantom Types とは値に使用されない型引数を使って制約を表現する手法です。
+</div>
+---
+class: middle
+
+# Summary so far
+
+1. Separate semantics representation from physical data type(Intoroduce Type Alias)
+1. Use power of static type checking(Tagged Type or Value Classes)
+1. Reduce boiloreplates by generic programming(Phantom Types)
+
+<div class="translation">
+ここまで、値型を定義する方法についてご紹介してきました。<br/>
+
+1.まず実際の物理表現と意味表現を分離し(Type Alias)、<br/>
+2.静的型検査の力を活用して間違いを検出しやすくしました(Tagged Type or Value Classes)。<br/>
+3.またジェネリクスによってボイラープレートを減らしました(Phantom Types)。
+</div>
+---
+class: middle
+
+# New Problem
+
+## Layer boundaries
+
+<div class="translation">
+	新たな問題: レイヤー境界
+</div>
+---
+class: middle
+
+We got safe Value Types. However, at the same time, we got a new problem.
+
+Our using web framework and RDB library and other libraries do not know the our defining Value Types.
+
+Type conversion is now necessary at the layer boundaries.
+
+It is too hard to write this conversion at all hand every time.
+
+<div class="translation">
+	私達は安全な値型を手に入れることができました。が、同時に新しい問題も生まれました。<br/>
+	WebフレームワークやRDB操作ライブラリなど外部のライブラリは、<br>私達が独自に定義した型など知りようがありません。</br>
+	
+	そのためレイヤー境界で型の変換をする必要が出てきてしまいました。<br/>
+	この変換を毎回すべて手で書いていたらとてもとても大変です。
+</div>
+---
+class: middle
+
+Fortunately, well-known libraries mostly have type conversion mechanisms.
+
+<dl>
+	<dt><a href="https://www.playframework.com/">Play Framework</a> 2.x</dt>
+	<dd>PathBindable / QueryStringBindable</dd>
+	<dd>Formatter</dd>
+
+	<dt><a href="http://skinny-framework.org/">Skinny Framework</a> 2.x</dt>
+	<dd>ParamValueTypeConverter</dd>
+
+	<dt><a href="http://slick.typesafe.com/">Slick3</a></dt>
+	<dd>ColumnType</dd>
+
+	<dt><a href="http://scalikejdbc.org/">ScalikeJDBC</a> 2.3.x</dt>
+	<dd>TypeBinder</dd>
+</dl>
+
+If a library which you use does not have the mechanism, you should switch the library or send a Pull Request (or escape form the project :p )
+
+<div class="translation">
+	主要なライブラリは殆ど型変換の仕組みを提供してくれています。<br/>
+	もし今使っているライブラリに存在しない場合は、<br />
+	ライブラリを変えるか、Pull Request するかしましょう
+</div>
+---
+class: middle
+
+Play2 Formatter and Slick3 ColumnType example
+
+```scala
+case class Id[A](value: Long) extends AnyVal
+object Id {
+
+  implicit def formatter[A](
+      implicit base: Formatter[Long]): Formatter[Id[A]] = {
+    new Formatter[Id[T]] {
+      override val format = base.format
+      override def bind(key: String, data: Map[String, String]) =
+        base.bind(key, data).right.map(Id.apply)
+      override def unbind(key: String, value: Id[A]) = 
+        base.unbind(key, value.value)
+    }
+  }
+
+  implicit def columnType[A]: ColumnType[Id[A]] = {
+    MappedColumnType.base[Id[A], Long](_.value, Id.apply)
+  }
+
+}
+```
+
+<div class="translation">
+	Play2 Formatter と Slick3 ColumnType の例
+</div>
+---
+class: middle
+
+## It is tooo heavy to define every type.
+
+<div class="translation">
+	これを全ての値型で定義するととても大変です。
+</div>
+---
+class: middle
+
+## And, It breaks layer responsibility.
+
+Value Types belong to the Domain Layer.
+
+However, It depends on Presentation Layer(Play2) and Infrastructure Layer(Slick)
+
+<div class="translation">
+	またこれは層の責務も破っています。<br/>
+	値型はドメイン層に属しますが、他の層のライブラリに依存してしまっています。
+</div>
+---
+class: middle
+
+# Next Approach
+
+## Intoroduce Iso and Prism
+
+<div class="translation">
+次の改善案: Iso および Prism の導入
+</div>
+---
+class: middle
+
+### Intoroduce Iso and Prism
+
+Iso means "Isomorphism". It represents that two types can be completely interconversion.
+
+```scala
+trait Iso[A, B] {
+  def to(a: A): B
+  def from(b: B): A
+}
+```
+
+It must have the following conditions are satisfied.
+
+```scala
+Forall a: A, from(to(a)) == a
+Forall b: A, to(from(b)) == b
+```
+
+<div class="translation">
+	Iso は Isomorphism の略で、二つの型が完全に相互変換可能なことを表します。<br/>
+	また次の式が必ず成り立つ必要があります。<br/>
+	全てのA型の値aにおいて、<code>from(to(a)) == a</code><br/>
+	全てのB型の値bにおいて、<code>to(from(b)) == b</code>
+</div>
+---
+class: middle
+
+### Intoroduce Iso and Prism. 
+
+Prism is similar to Iso. The deferrence is that one side conversion is not always successful.
+
+```scala
+trait Prism[A, B] {
+  def toOpt(a: A): Option[B]
+  def from(b: B): A
+}
+```
+
+```scala
+Forall a: A, toOpt(a).forall(b => from(b) == a)
+Forall b: A, to(from(b)) == b
+```
+
+<div class="translation">
+	Prism は Iso に似ています。違いは片方の変換が必ず成功するとは限らないところです。<br/>
+	同様に以下の式が成り立つ必要があります。<br/>
+	全てのA型の値aにおいて、<code>toOpt(a).forall(b => from(b) == a)</code><br/>
+	全てのB型の値bにおいて、<code>to(from(b)) == b</code>
+</div>
+---
+class: middle
+
+### Intoroduce Iso and Prism. 
+
+When does it use Prism? 
+
+Prism represents the following Value Types what have restrictions.
+
+```scala
+class Name[A] private (val value: String) extends AnyVal
+object Name {
+  def of[A](value: String): Option[Name[A]] = {
+    if (value.trim.isEmpty) None else Some(new Name(value))
+  }
+}
+```
+
+```scala
+sealed abstract class Color(val rgb: Int)
+object Suite {
+  case object Red  extends Suite(0xff0000)
+  case object Blue extends Color(0x0000ff)
+  val values = Seq(Red, Blue)
+  def valueOf(rgb: Int): Color = values.find(_.rgb == rgb)
+}
+```
+
+<div class="translation">
+	Prismは生成に制約があるような値型で利用します。
+</div>
+---
+class: middle
+
+### Intoroduce Iso and Prism. 
+
+Iso can be a subtype of Prism
+
+```scala
+trait Prism[A, B] {
+  def toOpt(a: A): Option[B]
+  def from(b: B): A
+}
+```
+
+```scala
+trait Iso[A, B] extends Prism[A, B] {
+  def to(a: A): B
+
+  override def toOpt(a: A): Option[B] = Some(to(a))
+}
+```
+
+<div class="translation">
+	IsoはPrismのサブ型になることができます。
+</div>
+---
+class: middle
+
+### Intoroduce Iso and Prism. 
+
+Iso and Prism are provided by [Monocle](https://github.com/julien-truffaut/Monocle) and [shapless](https://github.com/milessabin/shapeless) and etc.
+
+And Iso is provided by [Scalaz](https://github.com/scalaz/scalaz)
+
+If your project alredy depends on these library, you can use it and more usuful functions.
+
+<div class="translation">
+	Iso や Prism は Monocle や shapless などのライブラリでも提供されています。<br/>
+	それらのライブラリを利用しているのであれば、独自で定義する必要はないでしょう。<br/>
+</div>
+---
+class: middle
+
+### Intoroduce Iso and Prism. 
+
+What is important is that Iso and Prism is not dependent on any architecture.
+
+```scala
+case class Id[A](value: Long) extends AnyVal
+object Id {
+  implicit def idIso[A]: Iso[Long, Id[A]] = new Iso[Long, Id[A]] {
+    def to(a: Long): Id[A] = Id(a)
+    def from(b: Id[A]): Long = b.value
+  }
+}
+```
+
+So, when a value type provides Iso or Prism, it does not depends on any architecture.
+
+<div class="translation">
+	重要なのは、Iso や Prism が何かしらのアーキテクチャに依存していない事です。<br/>
+	従って値型が Iso や Prism を提供してもドメイン層の責務を破る心配はありません。
+</div>
+---
+class: middle
+
+With Prism, all you have to do is to define the type conversions of each library only once.
+
+```scala
+implicit def prismFormatter[A, B](
+    implicit base: Formatter[A], prism: Prism[A, B]): Formatter[B] = 
+  new Formatter[B] {
+    override val format = base.format
+    override def bind(key: String, data: Map[String, String]) =
+      base.bind(key, data).right.flatMap { v =>
+        prism.toOpt(v).toRight(Seq(FormError(key, "invalid.data")))
+      }
+    override def unbind(key: String, value: B) = 
+      base.unbind(key, prism.from(value))
+  }
+```
+
+```scala
+implicit def prismColumnType[A, B](
+    implicit base: BaseColumnType[A], prism: Prism[A, B]): ColumnType[B] = 
+  MappedColumnType.base[B, A](prism.from, a => prism.toOpt(a).getOrElse {
+    throw new UnknownDataError(s"Invalid data is stored. $a")
+  })
+```
+
+<div class="translation">
+	また、各ライブラリの型変換処理は Prism を使用するもの一つ定義するだけでよくなります。<br/>
+	各値型は Iso もしくは Prism だけを提供すれば全てのライブラリに対応できる事になります。
+</div>
+---
+class: middle
+
+Although that it is not necessary to define each library, the definitions of Iso instance are almost the same code.
+
+
+```scala
+trait Iso[A, B] extends Prism[A, B] { ... snip }
+object Iso {
+  def apply[A, B](f: A => B, g: B => A): Iso[A, B] = new Iso[A, B] {
+    def to(a: A): B = f(a)
+    def from(b: B): A = g(b)
+  }
+}
+```
+
+```scala
+case class Id[A](value: Long) extends AnyVal
+object Id {
+  implicit def iso[A]: Iso[Long, Id[A]] = Iso(Id.apply, _.value)
+}
+case class Name[A](value: String) extends AnyVal
+object Name {
+  implicit def iso[A]: Iso[String, Name[A]] = Iso(Name.apply, _.value)
+}
+```
+
+
+<div class="translation">
+	各ライブラリ毎に変換処理を定義する必要がなくなったとはいえ、<br/>値型のIsoの定義はほぼ同一です。
+</div>
+---
+class: middle
+
+
+There is a way that it reduces Iso instance difinitions using 'implicit macro'.
+
+[The problem statement](http://docs.scala-lang.org/overviews/macros/implicits.html) of the formal implicit macro document is precisely Iso.
+
+(Attention) the macro is experimental in Scala2.11 and Scala2.12.
+
+You should consider to use it at your project.
+
+<div class="translation">
+	そこで implicit macro を使用することで、 Iso の定義を簡略化する方法もあります。<br/>
+	実を言うと公式の implicit macro のドキュメントの<a href="http://docs.scala-lang.org/ja/overviews/macros/implicits.html#section-3">具体例</a>がまさしくIsoそのものだったりします :)<br/>
+	<br/>
+	(注意) ただし Scala2.11 および Scala2.12 でも macro は experimental な機能です。<br/>
+	プロジェクト毎に利用するべきかどうかきちんと判断する必要があります。
+</div>
+---
+class: middle
+
+## Summary so far
+
+It intoroduced the way of type conversion at layer boundary.
+
+1. At layer boundary, It needs type conversion logic each library.
+1. Using Iso or Prism, it reduces dependencies.
+1. Using implicit macro, it reduces Iso instance difinitions(Experimental).
+
+<div class="translation">
+	レイヤー境界で必要になる値型の変換方法について紹介しました。<br>
+	<br/>
+	1.レイヤー境界ではフレームワーク、ライブラリに応じた変換処理が必要になります。<br/>
+	2.Iso や Prism を使うことでコードの依存性を下げDRYにできます。<br/>
+	3.マクロを使って、Iso の定義のボイラープレートを無くす事ができます。(Experimental)
+</div>
+---
+class: middle
+
+# advertising
+
+<div class="translation">
+	宣伝
+</div>
+---
+class: middle
+
+## Scala online code review service(in Japanese...)
+
+Would you consider this service if your projects have the following problem?
+
+* An experts of Scala is not in your team.
+* There are closely entwined questions to the business code
+
+<div class="translation">
+	弊社Scalaのコードレビューをサービスとして行っています。<br/>
+	&nbsp;&nbsp;・GitHub(or類似サービス)上でのOnlineコードレビュー<br/>
+	&nbsp;&nbsp;・Slack等チャットツールによるQ&A<br/>
+	<br/>
+	もし下記の様な状況などありましたら是非ご検討ください。<br/>
+	&nbsp;&nbsp;・導入したいけどチームにスペシャリストが居ない<br/>
+	&nbsp;&nbsp;・業務コードに密接に絡んだ質問がしたい<br/>
+</div>
+---
+class: middle
+
+# applications and inquiries
+
+* [WebSite](http://www.t2v.jp/#contact-section) contact form
+* [@gakuzzzz](https://twitter.com/gakuzzzz) mention or DM
+
+<div class="translation">
+	お申し込み<br/>
+	<a href="http://www.t2v.jp/#contact-section">弊社Webサイト</a>の申し込みフォーム<br>
+	Twitter <a href="https://twitter.com/gakuzzzz">@gakuzzzz</a> にメンション or DM</div>
+</div>
+---
+class: middle
+
+# Any questions?
+
+<div class="translation">
+	質問とか
+</div>
+---
+
+    </textarea>
+    <script src="http://gnab.github.io/remark/downloads/remark-0.12.min.js" type="text/javascript"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+      slideshow.on('beforeShowSlide', function (slide) {
+        $("a[href^='http://']").attr("target", "_blank");
+        $("a[href^='https://']").attr("target", "_blank");
+      });
+    </script>
+  </body>
+</html>
