@@ -205,7 +205,7 @@ class: middle
 
 # First Approach
 
-## Intoroduce Type Alias
+## Introduce  Type Alias
 
 <div class="translation">
 最初の改善案: Type Alias の導入
@@ -213,7 +213,7 @@ class: middle
 ---
 class: middle
 
-### Intoroduce Type Alias
+### Introduce Type Alias
 
 ```scala
 package object models {
@@ -248,7 +248,7 @@ Type Alias の導入
 ---
 class: middle
 
-### Intoroduce Type Alias
+### Introduce Type Alias
 
 * `Map[UserId, User]` Clearer semantics!
 * Easy to change physical data type.
@@ -266,7 +266,7 @@ class: middle
 ---
 class: middle
 
-### Intoroduce Type Alias
+### Introduce Type Alias
 
 The compiler still can not found mistakes.
 
@@ -283,7 +283,7 @@ class: middle
 
 # Second Approach(1)
 
-## Intoroduce Tagged Type
+## Introduce Tagged Type
 
 <div class="translation">
 次の改善案(1): Tagged Type の導入
@@ -291,7 +291,7 @@ class: middle
 ---
 class: middle
 
-### Intoroduce Tagged Type
+### Introduce Tagged Type
 
 Tagged Type is a mechanism to add a label to types and is provided by [Scalaz](https://github.com/scalaz/scalaz), [shapless](https://github.com/milessabin/shapeless)(`Newtype`), etc.
 
@@ -318,7 +318,7 @@ val d: String @@ Int       = c
 ---
 class: middle
 
-### Intoroduce Tagged Type
+### Introduce Tagged Type
 
 Using Tagged Type, we can write as following
 
@@ -350,7 +350,7 @@ def findBoardWithOwner(groupId: Id @@ Group): Seq[(Board, User)] = {
 ---
 class: middle
 
-### Intoroduce Tagged Type
+### Introduce Tagged Type
 
 * `Map[Id @@ User, User]` Clearer semantics
 * More safety!
@@ -371,7 +371,7 @@ class: middle
 ---
 class: middle
 
-### Intoroduce Tagged Type
+### Introduce Tagged Type
 
 However, when it is used in combination with `AnyVal` subtypes, there is boxing/unboxing cost.
 
@@ -388,7 +388,7 @@ class: middle
 
 # Second Approach(2)
 
-## Intoroduce Value Classes
+## Introduce Value Classes
 
 <div class="translation">
 次の改善案(2): Value Classes の導入
@@ -396,7 +396,7 @@ class: middle
 ---
 class: middle
 
-### Intoroduce Value Classes
+### Introduce Value Classes
 
 [Value Classes](http://docs.scala-lang.org/overviews/core/value-classes.html) is a standard function in Scala to avoid allocating runtime objects.
 
@@ -415,7 +415,7 @@ It has a few limitations, but is ideal for wrapper classes like as Value Types.
 ---
 class: middle
 
-### Intoroduce Value Classes
+### Introduce Value Classes
 
 ```scala
 case class UserId(value: Long) extends AnyVal
@@ -446,7 +446,7 @@ def findBoardWithOwner(groupId: GroupId): Seq[(Board, User)] = {
 </div>
 ---
 class: middle
-### Intoroduce Value Classes
+### Introduce Value Classes
 
 * `Map[UserId, User]` Clearer semantics
 * More safety!
@@ -466,7 +466,7 @@ class: middle
 </div>
 ---
 class: middle
-### Intoroduce Value Classes
+### Introduce Value Classes
 
 However, there are memory allocations in some cases.
 
@@ -547,7 +547,7 @@ class: middle
 
 # Next Approach
 
-## Intoroduce Phantom Types
+## Introduce Phantom Types
 
 <div class="translation">
 次の改善案: Phantom Types の導入
@@ -555,7 +555,7 @@ class: middle
 ---
 class: middle
 
-### Intoroduce Phantom Types
+### Introduce Phantom Types
 
 "Phantom Types" is type parameters what are never used.
 
@@ -588,7 +588,7 @@ class: middle
 
 # Summary so far
 
-1. Separate semantics representation from physical data type(Intoroduce Type Alias)
+1. Separate semantics representation from physical data type(Introduce Type Alias)
 1. Use power of static type checking(Tagged Type or Value Classes)
 1. Reduce boiloreplates by generic programming(Phantom Types)
 
@@ -665,7 +665,7 @@ object Id {
 
   implicit def formatter[A](
       implicit base: Formatter[Long]): Formatter[Id[A]] = {
-    new Formatter[Id[T]] {
+    new Formatter[Id[A]] {
       override val format = base.format
       override def bind(key: String, data: Map[String, String]) =
         base.bind(key, data).right.map(Id.apply)
@@ -710,7 +710,7 @@ class: middle
 
 # Next Approach
 
-## Intoroduce Iso and Prism
+## Introduce Iso and Prism
 
 <div class="translation">
 次の改善案: Iso および Prism の導入
@@ -718,7 +718,7 @@ class: middle
 ---
 class: middle
 
-### Intoroduce Iso and Prism
+### Introduce Iso and Prism
 
 Iso means "Isomorphism". It represents that two types can be completely interconversion.
 
@@ -745,7 +745,7 @@ Forall b: A, to(from(b)) == b
 ---
 class: middle
 
-### Intoroduce Iso and Prism. 
+### Introduce Iso and Prism. 
 
 Prism is similar to Iso. The deferrence is that one side conversion is not always successful.
 
@@ -770,7 +770,7 @@ Forall b: A, to(from(b)) == b
 ---
 class: middle
 
-### Intoroduce Iso and Prism. 
+### Introduce Iso and Prism. 
 
 When does it use Prism? 
 
@@ -801,7 +801,7 @@ object Suite {
 ---
 class: middle
 
-### Intoroduce Iso and Prism. 
+### Introduce Iso and Prism. 
 
 Iso can be a subtype of Prism
 
@@ -826,7 +826,7 @@ trait Iso[A, B] extends Prism[A, B] {
 ---
 class: middle
 
-### Intoroduce Iso and Prism. 
+### Introduce Iso and Prism. 
 
 Iso and Prism are provided by [Monocle](https://github.com/julien-truffaut/Monocle) and [shapless](https://github.com/milessabin/shapeless) and etc.
 
@@ -841,7 +841,7 @@ If your project alredy depends on these library, you can use it and more usuful 
 ---
 class: middle
 
-### Intoroduce Iso and Prism. 
+### Introduce Iso and Prism. 
 
 What is important is that Iso and Prism is not dependent on any architecture.
 
@@ -947,7 +947,7 @@ class: middle
 
 ## Summary so far
 
-It intoroduced the way of type conversion at layer boundary.
+It Introduced the way of type conversion at layer boundary.
 
 1. At layer boundary, It needs type conversion logic each library.
 1. Using Iso or Prism, it reduces dependencies.
