@@ -788,7 +788,7 @@ object Name {
 ```scala
 sealed abstract class Color(val rgb: Int)
 object Suite {
-  case object Red  extends Suite(0xff0000)
+  case object Red  extends Color(0xff0000)
   case object Blue extends Color(0x0000ff)
   val values = Seq(Red, Blue)
   def valueOf(rgb: Int): Color = values.find(_.rgb == rgb)
