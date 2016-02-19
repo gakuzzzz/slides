@@ -293,7 +293,7 @@ class: middle
 
 ### Introduce Tagged Type
 
-Tagged Type is a mechanism to add a label to types and is provided by [Scalaz](https://github.com/scalaz/scalaz), [shapless](https://github.com/milessabin/shapeless)(`Newtype`), etc.
+Tagged Type is a mechanism to add a label to types and is provided by [Scalaz](https://github.com/scalaz/scalaz), [shapeless](https://github.com/milessabin/shapeless)(`Newtype`), etc.
 
 ```scala
 type Tagged[A, T] = {type Tag = T; type Self = A}
@@ -311,7 +311,7 @@ val d: String @@ Int       = c
 ```
 
 <div class="translation">
-	TaggedType は型にラベルをつける仕組みで、Scalaz や shapless などで提供されています。<br/>
+	TaggedType は型にラベルをつける仕組みで、Scalaz や shapeless などで提供されています。<br/>
 	Scala では型引数を二つ取る型は中置記法で書くことができます。<br/>
 	中置記法で読みやすくするために<code>@@</code>という別名が定義されています。
 </div>
@@ -828,14 +828,14 @@ class: middle
 
 ### Introduce Iso and Prism. 
 
-Iso and Prism are provided by [Monocle](https://github.com/julien-truffaut/Monocle) and [shapless](https://github.com/milessabin/shapeless) and etc.
+Iso and Prism are provided by [Monocle](https://github.com/julien-truffaut/Monocle) and [shapeless](https://github.com/milessabin/shapeless) and etc.
 
 And Iso is provided by [Scalaz](https://github.com/scalaz/scalaz)
 
 If your project alredy depends on these library, you can use it and more usuful functions.
 
 <div class="translation">
-	Iso や Prism は Monocle や shapless などのライブラリでも提供されています。<br/>
+	Iso や Prism は Monocle や shapeless などのライブラリでも提供されています。<br/>
 	それらのライブラリを利用しているのであれば、独自で定義する必要はないでしょう。<br/>
 </div>
 ---
