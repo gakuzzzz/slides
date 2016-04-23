@@ -385,7 +385,7 @@ def questionGen(`type`: QuestionType) = for {
 } yeild new Question(`type`, subject, body)
 
 val aQuestionGen = questionGen(A)
-val otherQuestionGen = Gen.oneOf(B, C, D, E).map(questionGen)
+val otherQuestionGen = Gen.oneOf(B, C, D, E).flatMap(questionGen)
 
 val aEnqueteGen = for {
   name    <- Gen.alphaNumStr
