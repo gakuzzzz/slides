@@ -252,7 +252,7 @@ class: middle
 
 ```scala
 例)
-property("Listのrevserを2回行うと元のListに一致する") {
+property("Listのreverseを2回行うと元のListに一致する") {
   forAll { (list: List[String]) =>
     assert(list.reverse.reverse === list)
   }
