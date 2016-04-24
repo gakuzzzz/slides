@@ -382,7 +382,7 @@ class: middle
 def questionGen(qType: QType): Gen[Question] = for {
   subject <- Gen.alphaNumStr
   body    <- Gen.alphaNumStr
-} yeild new Question(qType, subject, body)
+} yeild Question(qType, subject, body)
 
 val notAQuestionGen: Gen[Question] = 
   Gen.oneOf(B, C, D, E).flatMap(questionGen)
