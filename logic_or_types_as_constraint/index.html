@@ -384,7 +384,8 @@ def questionGen(qType: QType): Gen[Question] = for {
   body    <- Gen.alphaNumStr
 } yeild new Question(qType, subject, body)
 
-val notAQuestionGen: Gen[Question] = Gen.oneOf(B, C, D, E).flatMap(questionGen)
+val notAQuestionGen: Gen[Question] = 
+  Gen.oneOf(B, C, D, E).flatMap(questionGen)
 
 val aEnqueteGen: Gen[AEnquete] = for {
   name    <- Gen.alphaNumStr
@@ -392,7 +393,7 @@ val aEnqueteGen: Gen[AEnquete] = for {
   otherQs <- Gen.list(notAQuestionGen, 2)
 } yield AEnquete(name, aQ, otherQs)
 
-val notAEnqueteGen: Gen[NoAEnquete] = for {
+val notAEnqueteGen: Gen[NotAEnquete] = for {
   name    <- Gen.alphaNumStr
   otherQs <- Gen.list(notAQuestionGen, 3)
 } yield NotAEnquete(name, otherQs)
