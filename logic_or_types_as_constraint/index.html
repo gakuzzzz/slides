@@ -332,13 +332,13 @@ class: middle
 これの Generator を作ろうと思うと大変難しい。
 
 ```scala
-val questionGen = for {
+val questionGen: Gen[Question] = for {
   qType   <- Gen.oneOf(A, B, C, D, E)
   subject <- Gen.alphaNumStr
   body    <- Gen.alphaNumStr
 } yeild Question(qType, subject, body)
 
-val enqueteGen = for {
+val enqueteGen: Gen[Enquete] = for {
   name      <- Gen.alphaNumStr
   questions <- Gen.list(questionGen, 3) 
                // A が最大1つまでという条件が書きづらい
@@ -379,25 +379,25 @@ class: middle
 こうすることでGenerator/Arbitraryが定義しやすくなる
 
 ```scala
-def questionGen(qType: QType) = for {
+def questionGen(qType: QType): Gen[Question] = for {
   subject <- Gen.alphaNumStr
   body    <- Gen.alphaNumStr
 } yeild new Question(qType, subject, body)
 
-val notAQuestionGen = Gen.oneOf(B, C, D, E).flatMap(questionGen)
+val notAQuestionGen: Gen[Question] = Gen.oneOf(B, C, D, E).flatMap(questionGen)
 
-val aEnqueteGen = for {
+val aEnqueteGen: Gen[AEnquete] = for {
   name    <- Gen.alphaNumStr
   aQ      <- questionGen(A)
   otherQs <- Gen.list(notAQuestionGen, 2)
 } yield AEnquete(name, aQ, otherQs)
 
-val notAEnqueteGen = for {
+val notAEnqueteGen: Gen[NoAEnquete] = for {
   name    <- Gen.alphaNumStr
   otherQs <- Gen.list(notAQuestionGen, 3)
 } yield NotAEnquete(name, otherQs)
 
-val enqueteGen = Gen.frequency(
+val enqueteGen: Gen[Enquete] = Gen.frequency(
   1 -> aEnqueteGen, 
   2 -> notAEnqueteGen
 )
