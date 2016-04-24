@@ -379,23 +379,22 @@ class: middle
 こうすることでGenerator/Arbitraryが定義しやすくなる
 
 ```scala
-def questionGen(`type`: QuestionType) = for {
+def questionGen(qType: QType) = for {
   subject <- Gen.alphaNumStr
   body    <- Gen.alphaNumStr
-} yeild new Question(`type`, subject, body)
+} yeild new Question(qType, subject, body)
 
-val aQuestionGen = questionGen(A)
-val otherQuestionGen = Gen.oneOf(B, C, D, E).flatMap(questionGen)
+val notAQuestionGen = Gen.oneOf(B, C, D, E).flatMap(questionGen)
 
 val aEnqueteGen = for {
   name    <- Gen.alphaNumStr
-  aQ      <- aQuestionGen
-  otherQs <- Gen.list(otherQuestionGen, 2)
+  aQ      <- questionGen(A)
+  otherQs <- Gen.list(notAQuestionGen, 2)
 } yield AEnquete(name, aQ, otherQs)
 
 val notAEnqueteGen = for {
   name    <- Gen.alphaNumStr
-  otherQs <- Gen.list(otherQuestionGen, 3)
+  otherQs <- Gen.list(notAQuestionGen, 3)
 } yield NotAEnquete(name, otherQs)
 
 val enqueteGen = Gen.frequency(
