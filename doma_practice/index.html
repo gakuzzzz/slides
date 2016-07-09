@@ -190,7 +190,7 @@ notAssigned() は notAssigned() 自身とも equals が成り立たないよう�
 
 ```java
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == NOT_ASSIGNED) return false;
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -501,8 +501,8 @@ class: middle
 ```java
 import java.util.List;
 import java.util.Optional;
-
 import static java.util.Collections.unmodifiableList;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 
 public class GuildView {
@@ -516,7 +516,7 @@ public class GuildView {
       final Optional<? extends GuildHouse> house) {
     this.meta = meta;
     this.members = unmodifiableList(members.stream().collect(toList()));
-    this.house = house.map(h -> h); // Function.identity は使えない :(
+    this.house = house.map(identity());
   }
 
   // getterその他省略
