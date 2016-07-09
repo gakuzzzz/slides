@@ -1,0 +1,719 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <title>とあるDoma2の使い方</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-code, .remark-inline-code {
+        font-size: 90%;
+        color: #660000;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# とあるDoma2の使い方
+
+Doma勉強会 in 東京 2016/07/09
+
+---
+class: left, middle
+
+## 自己紹介
+
+* 中村 学(Nakamura Manabu)
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* 株式会社 Tech to Value
+* Japan Scala Association
+
+---
+class: left, middle
+
+## 今日の内容
+
+うらがみさんの[Doma実践](http://backpaper0.github.io/ghosts/doma-practice.html#1)が面白かったので、<br/>
+僕も普段こんな感じでDomaを使ってるよ、<br/>というのを紹介しようと思います。
+
+---
+class: center, middle
+
+# Immutable Entity
+
+---
+class: middle
+
+## Entity は必ず Immutable に
+
+不変クラスの便利さについては今日は省略。
+
+実はこれだけで語ると40分終わってしまうので ;)
+
+Effective Java にも書かれてるので気になる人は読みましょう。
+
+ともあれ、Entityに限らず、まずクラスは不変で定義して、<br/>理由がある時だけ可変にする、というのを基本にしてます。
+
+---
+class: middle
+
+## Immutable Entity で困るとき
+
+Immutable Entity で困るのは、<br/>IDをDBの自動生成を利用している時
+
+---
+class: middle
+
+## Immutable Entity で困るとき
+
+1. insertはEntityインスタンスを渡す必要がある
+1. 従ってinsert前にEntityをnewする必要がある
+1. でもIDの値はinsertするまで決定しない
+
+* 不完全な状態でEntityを作る必要がある
+
+---
+class: middle
+
+## IDクラス
+
+この問題を回避しつつ、型の恩恵を受けるために ID というドメインクラスを定義します。
+
+```java
+import org.seasar.doma.Domain;
+
+@Domain(valueType = long.class, factoryMethod = "of")
+public final class ID<T> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+    private final long value;
+
+    private ID(final long value) {
+        this.value = value;
+    }
+
+    public long getValue() {
+        return value;
+    }
+```
+
+コンストラクタはprivateに
+
+---
+class: middle
+
+## IDクラス
+
+そして static factory メソッドと 未割り当てを表す notAssigned() を定義します。
+
+```java
+    public static <R> ID<R> of(final long value) {
+        if (value < 0) throw new IllegalArgumentException(
+             "value should be positive. " + value
+        );
+        return new ID<>(value);
+    }
+
+    private static final ID<Object> NOT_ASSIGNED = new ID<>(-1);
+
+    @SuppressWarnings("unchecked")
+    public static <R> ID<R> notAssigned() {
+        return (ID<R>) NOT_ASSIGNED;
+    }
+```
+
+---
+class: middle
+
+## IDクラス
+
+notAssigned() は notAssigned() 自身とも equals が成り立たないようにする事で、未割り当てのままEntityを活用できないようにします。
+
+```java
+    @Override
+    public boolean equals(Object o) {
+        if (this == NOT_ASSIGNED) return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ID<?> id = (ID<?>) o;
+        return value == id.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (value ^ (value >>> 32));
+    }
+}
+```
+
+---
+class: middle
+
+## IDクラス
+
+この IDドメインクラスを使う事で、insert前のID未決定時のEntityインスタンスを作成できるようになります。
+
+```java
+final Foo newFoo = new Foo(
+    ID.notAssigned(), 
+    Name.of("hoge"), 
+    DateTime.now()
+);
+final Result<Foo> created = FooDao.insert(newFoo);
+```
+
+---
+class: middle, center
+
+# Collect検索
+
+---
+class: middle
+
+## Collect検索
+
+existを使った存在チェックやcountするような特定のSQLを除いて、
+Entityを返す**検索メソッドは全て** [Collect検索](http://doma.readthedocs.io/ja/stable/query/select/#id10)にしています。
+
+
+---
+class: middle
+
+## Collect検索とは
+
+[Stream検索](http://doma.readthedocs.io/ja/stable/query/select/#id8) のショートカット。
+
+Stream検索は検索結果を一度に全て`java.util.List`にして受け取るのではなく、`java.util.stream.Stream`で扱うための検索です。
+
+リソースのクローズがあるので、メソッド引数に `Function<Stream<ENTITY>, RESULT>` を渡すのが基本になります。
+
+
+---
+class: middle
+
+## Stream検索の例
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.SelectType;
+
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+@Dao(config = AppConfig.class)
+public interface FooDao {
+
+    @Select(strategy = SelectType.STREAM)
+    <R> R findAll(final Function<Stream<Foo>, R> func);
+}
+```
+
+```java
+import static java.util.stream.Collectors.toList;
+
+final List<Foo> foos = fooDao.findAll(s -> s.collect(toList()));
+```
+
+---
+## Collect検索
+
+Stream検索は、基本的に大量のレコードを扱うときに便利な検索ですが、collectメソッドを使って値を生成することで、任意の結果を返すことが可能になります。
+
+```java
+import static java.util.stream.Collectors.toList;
+
+final List<Foo> foos = fooDao.findAll(s -> s.collect(toList()));
+```
+
+そのため、これをショートカットして、Daoのメソッド引数に直接 `java.util.stream.Collector` を渡せるようにしたものがCollect検索になります。
+
+---
+class: middle
+
+## Collect検索
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.SelectType;
+
+import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.stream.Collector;
+
+@Dao(config = AppConfig.class)
+public interface FooDao {
+
+    @Select(strategy = SelectType.STREAM)
+    <R> R findAllStream(final Function<Stream<Foo>, R> func);
+
+    @Select(strategy = SelectType.COLLECT)
+    <R> R findAllCollect(final Collector<Foo, ?, R> collector);
+}
+```
+
+```java
+import static java.util.stream.Collectors.toList;
+
+final List<Foo> foos1 = fooDao.findAllStream(s -> s.collect(toList()));
+final List<Foo> foos2 = fooDao.findAllCollect(toList()); // 同じ意味
+```
+
+---
+class: middle
+
+## Collect検索
+
+ちょっとしたショートカットと言えばそれまでですが、<br/>
+Stream検索でラムダ構文を使うより型推論がしやすくなるケースが多い印象です。
+
+---
+class: middle
+
+## Collect検索
+
+で、(Entityを返す)全ての検索をCollect検索にしています
+
+---
+class: middle
+
+## 1件検索
+
+例えば、よくある主キーで１件検索する `findById` みたいなメソッド。あれもCollect検索を使います。
+
+```java
+import java.util.Optional;
+import java.util.stream.Collector;
+
+import static java.util.Collections.singleton;
+import static jp.t2v.lab.domasample.Collectors2.toOptional;
+
+@Dao(config = AppConfig.class)
+public interface FooDao {
+
+    @Select(strategy = SelectType.COLLECT)
+    <R> R findByIds(final Iterable<ID<Foo>> ids, 
+        final Collector<Foo, ?, R> collector);
+
+    default Optional<Foo> findById(ID<Foo> id) {
+        return findByIds(singleton(id), toOptional());
+    }
+
+}
+```
+
+---
+class: middle
+
+## 1件検索
+
+`Stream#findAny` に相当するような Collector が標準で存在していれば良かったのですが、存在しないので Optional を返す Collector、`toOptional` を定義します。
+
+```java
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collector;
+
+public class Collectors2 {
+    private Collectors2() {}
+    public static <T> Collector<T, ?, Optional<T>> toOptional() {
+        return Collector.<T, AtomicReference<T>, Optional<T>>of(
+            AtomicReference::new,
+            (acc, t) -> acc.compareAndSet(null, t),
+            (a, b)   -> {a.compareAndSet(null, b.get()); return a;},
+            acc      -> Optional.ofNullable(acc.get()),
+            Collector.Characteristics.CONCURRENT
+        );
+    }
+}
+```
+
+---
+class: middle
+
+## 1件検索
+
+なぜわざわざそんな事をしているかと言うと、以下の理由があります。
+
+* one-to-manyなどの構造を表現する際にCollect検索を多用する(後述)
+* 1件検索と複数件検索で同じSQLファイルを使用したい
+
+
+---
+class: middle
+
+## 同じSQLファイルを使用したい
+
+![https://twitter.com/nakamura_to/status/548833863363883010](./images/fragment_sql.png)
+
+えらい人は言いました。「再利用性よりもSQLの完全性」と。
+
+---
+class: middle
+
+## 同じSQLファイルを使用したい
+
+where句なんかは洩れがあると大変なので、なるべく共通化したいです。(複数検索ではちゃんと削除フラグを条件で見てたのに１件検索では忘れてたとか目も当てられない)
+
+けれども外だしSQLファイルではSQLの完全性が大事。where句のincludesとかしだすとすぐにSQLがメンテできなくなっていきます。
+
+であれば完全なSQLファイルをそのまま再利用すればいい！
+
+---
+class: middle
+
+## 同じSQLファイルを使用したい
+
+という訳で、1件検索にもCollect検索を利用することで、SQLファイルを再利用する事ができるようになります。
+
+---
+class: middle
+
+## デメリット
+
+検索結果保証機能や2件以上存在したときのNonUniqueResultExceptionなどの機能が使えなくなります。
+
+ただこれも、Collectorの実装を工夫すれば対応可能です。
+
+---
+class: middle
+
+# もう一つの理由
+
+---
+class: middle
+
+## もう一つの理由
+
+1件検索でもCollect検索を使う理由を二つ挙げていました。(再掲)
+
+* one-to-manyなどの構造を表現する際にCollect検索を多用する
+* 1件検索と複数件検索で同じSQLファイルを使用したい
+
+
+構造を表現する際にCollect検索があるととても楽ができます。
+
+---
+class: middle
+
+## Domaの検索
+
+Domaの検索は、基本的にResultSetの1行を、一つのEntityクラスにマッピングします。
+
+従って、n:m の関係だったり 1:0-1 の関係だったりといった複雑なオブジェクト構造を直接マッピングする事ができません。
+
+そこで、Domaでそういった複雑なオブジェクト構造を作る場合には、Entity毎に検索を行い検索結果を手で組み立てます。
+
+---
+class: middle
+
+## Domaの検索
+
+Entity毎に検索を行えば n:m の関係を下手に join で扱って limmit/offset する時に困るというのもなくなります。
+
+ただ、単純にrootのEntityを取得し、その一つずつ関連するEntityの検索を行ってしまうと簡単にN+1問題 が発生します。
+
+その時にCollect検索の出番です。
+
+
+---
+class: middle
+
+## オブジェクト構造の例
+
+例えば以下の様なゲームのEntityの関係を考えます。
+
+```java
+   Guild : 1 ------ N   : Character
+   Guild : 1 ------ 0-1 : GuildHouse
+```
+
+`Guild`と`Character`と`GuildHouse`がそれぞれEntityです。
+
+
+---
+class: middle
+
+## オブジェクト構造の例
+
+これを以下のようなクラスにマッピングします。
+
+```java
+import java.util.List;
+import java.util.Optional;
+
+import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.toList;
+
+public class GuildView {
+
+  private final Guild meta;
+  private final List<Character> members;
+  private final Optional<GuildHouse> house;
+
+  public GuildView(final Guild meta, 
+      final List<? extends Character> members, 
+      final Optional<? extends GuildHouse> house) {
+    this.meta = meta;
+    this.members = unmodifiableList(members.stream().collect(toList()));
+    this.house = house.map(h -> h); // Function.identity は使えない :(
+  }
+
+  // getterその他省略
+```
+
+---
+class: middle
+
+## オブジェクト構造の例
+
+GuildDao
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.SelectType;
+import org.seasar.doma.jdbc.SelectOptions;
+
+import java.util.stream.Collector;
+
+@Dao(config = AppConfig.class)
+public interface GuildDao {
+
+  @Select(strategy = SelectType.COLLECT)
+  <R> R findAll(final SelectOptions opt, 
+    final Collector<Guild, ?, R> collector);
+
+```
+
+---
+class: middle
+
+## オブジェクト構造の例
+
+CharacterDao
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.SelectType;
+
+import java.util.stream.Collector;
+
+@Dao(config = AppConfig.class)
+public interface CharacterDao {
+
+  @Select(strategy = SelectType.COLLECT)
+  <R> R findByGuildIds(final Iterable<ID<Guild>> guildIds, 
+    final Collector<Character, ?, R> collector);
+```
+---
+class: middle
+
+## オブジェクト構造の例
+
+CharacterDao/findByGuildIds.sql
+
+```sql
+SELECT
+  *
+FROM
+  `character`
+WHERE
+  guild_id IN /*guildIds*/(1, 2)
+  AND deleted_time IS NULL
+```
+
+---
+class: middle
+
+## オブジェクト構造の例
+
+GuildHouseDao
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.SelectType;
+
+import java.util.stream.Collector;
+
+@Dao(config = AppConfig.class)
+public interface GuildHouseDao {
+
+  @Select(strategy = SelectType.COLLECT)
+  <R> R findByGuildIds(final Iterable<ID<Guild>> guildIds, 
+    final Collector<GuildHouse, ?, R> collector);
+```
+
+---
+class: middle
+
+```java
+import j.u.{List, Map, Optional};
+import static j.u.Collections.emptyList;
+import static j.u.function.Function.identity;
+import static j.u.stream.Collectors.{toList, toMap, toSet, groupingBy};
+
+final SelectOptions opt = SelectOptions.get().limit(100).offset(0);
+final List<Guild> guilds = guildDao.findAll(opt, toList());
+final Set<ID<Guild>> ids = 
+  guilds.stream().map(Guild::getId).collect(toSet());
+
+final Map<ID<Guild>, List<Character>> chars = // 1:N は Map<ID, List> で
+  characterDao.findByGuildIds(ids, groupingBy(Character::getGuildId));
+
+final Map<ID<Guild>, GuildHouse> houses =  // 1:0-1 は Map<ID, Entity> で
+  guildHouseDao.findByGuildIds(ids, 
+    toMap(GuildHouse::getGuildId, identity()));
+
+final List<GuildView> views = 
+  guilds.stream().map(buildGuild(chars, houses)).collect(toList());
+```
+
+```java
+private Function<Guild, GuildView> buildGuild(
+    final Map<ID<Guild>, List<Character>> characters, 
+    final Map<ID<Guild>, GuildHouse> houses) {
+  return guild -> new GuildView(
+    guild,
+    characters.getOrDefault(guild.getId(), emptyList()),
+    Optional.ofNullable(houses.get(guild.getId())) // getOpt()って書きたい
+  );
+}
+
+```
+
+---
+class: middle
+
+## Doma2 の嬉しい点
+
+```java
+final Set<ID<Guild>> ids = 
+  guilds.stream().map(Guild::getId).collect(toSet());
+
+final Map<ID<Guild>, List<Character>> chars =
+  characterDao.findByGuildIds(ids, groupingBy(Character::getGuildId));
+```
+
+`ids`が空だった時、Doma1だと`characterDao.findByGuildIds` で IN句が空になりSQL構文エラー！
+
+Doma2では、空集合が渡されると `IN(null)` に変換されるため安全に！
+
+---
+class: middle
+
+## その他の便利な変換の例
+
+指定したIDのキャラクターの所属ギルドのID一覧を取得
+
+```java
+import static j.u.stream.Collectors.{mapping, toSet};
+
+final Set<ID<Guild>> ids = 
+  characterDao.findByIds(asList(ID.of(1), ID.of(2)), 
+    mapping(Character::getGuildId, toSet()));
+```
+
+`Collectors.mapping` を使えば、
+`.stream().map(foo).collect(bar)` を `.stream().collect(mapping(foo, bar))` に書き換えられる。
+
+
+
+---
+class: middle
+
+## Collect検索まとめ
+
+* Collect検索使うと、Listで取りたい時でも、Optionalで取りたい時でも、Mapで取りたい時でも他の操作をしたいときでも自由自在で便利！
+
+---
+class: middle
+
+## 全体まとめ
+
+* DomaはImmutableなEntityサポートしてて便利です
+* Domain Class は色々工夫できます
+* (Entityを受け取る)検索は全部Collect検索にしましょう
+
+---
+class: middle
+
+## 質問とか
+
+
+    </textarea>
+    <script src="http://gnab.github.io/remark/downloads/remark-0.12.min.js" type="text/javascript"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+      slideshow.on('beforeShowSlide', function (slide) {
+        $("a[href^='http://']").attr("target", "_blank");
+        $("a[href^='https://']").attr("target", "_blank");
+      });
+    </script>
+  </body>
+</html>
