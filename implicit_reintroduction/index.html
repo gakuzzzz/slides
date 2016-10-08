@@ -595,7 +595,7 @@ Implicit Conversion の主要な動機は、<br/>
 というものです
 
 <section>
-Kotlinの拡張メソッドみたいなものですね
+C#やKotlinの拡張メソッドと同じモチベーションですね
 </section>
 
 ---
@@ -659,7 +659,7 @@ class: left, middle
 また メソッドを提供するだけで型としては意味を持たないクラスのインスタンスを生成するのも無駄なので、implicit class は value class と合わせて使われる事が多いです
 
 ```scala
-implicit class FooOps(var foo: Foo) extends AnyVal {
+implicit class FooOps(val foo: Foo) extends AnyVal {
   def bar: String = ...
   def baz: Int = ...
 }
