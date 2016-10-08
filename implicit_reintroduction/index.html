@@ -447,8 +447,8 @@ val values: Seq[(String, Option[Int])]
 
 val sorted = sort(values)(
   tuple2Comparator(
-    stringComparatpr, 
-    optionComparatpr(intComparator)
+    stringComparator, 
+    optionComparator(intComparator)
   )
 )
 ```
@@ -477,8 +477,8 @@ class: left, middle
 ```scala
 val sorted = sort(values)(
   tuple2Comparator(
-    stringComparatpr, 
-    optionComparatpr(intComparator)
+    stringComparator, 
+    optionComparator(intComparator)
   )
 )
 ```
@@ -499,8 +499,8 @@ class: left, middle
 ```scala
 val sorted = sort(values)(
   tuple2Comparator(
-    stringComparatpr, 
-    optionComparatpr(intComparator)
+    stringComparator, 
+    optionComparator(intComparator)
   )
 )
 ```
@@ -540,7 +540,7 @@ class: left, middle
 
 もちろん implicit parameter でこれを実現するためには、implicit な値が**直観的**あるいは**自明**な定義になっている事が必要です。
 
-例えば `Comparatpr[(A, B)]` が、<br/>「`A` で比較した結果が小さい時だけ `B` の逆順で比較する」<br/>みたいな直観と反する定義をされていた場合、コードは途端に読みづらくなります。
+例えば `Comparator[(A, B)]` が、<br/>「`A` で比較した結果が小さい時だけ `B` の逆順で比較する」<br/>みたいな直観と反する定義をされていた場合、コードは途端に読みづらくなります。
 
 implicit な値を定義する際はこの点に気を付けましょう
 
