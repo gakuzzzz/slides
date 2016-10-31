@@ -559,12 +559,12 @@ class: left, middle
 `A => B` という型の implicit な値が存在する時、コンパイラが `A` 型の値を `B` 型としても扱えるようにする、としてるだけに過ぎません
 
 ```scala
-case class Foo {
+case class Foo() {
   def bar: String = ...
 }
 case class Baz(foo: Foo)
 
-implicit val bazToFoo: Baz => Foo = _.bar
+implicit val bazToFoo: Baz => Foo = _.foo
 
 val baz: Baz = ...
 baz.bar // Foo のメソッドが呼べる
@@ -577,11 +577,11 @@ class: left, middle
 `A => B` 型の implicit な値を定義する際はメソッドでも構いません。
 
 ```scala
-implicit val bazToFoo: Baz => Foo = _.bar
+implicit val bazToFoo: Baz => Foo = _.foo
 
 // ↑↓どちらでもよい
 
-implicit def bazToFoo(baz: Baz): Foo = baz.bar
+implicit def bazToFoo(baz: Baz): Foo = baz.foo
 ```
 
 
