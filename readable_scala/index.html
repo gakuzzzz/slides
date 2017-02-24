@@ -1,0 +1,1367 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Readable Scala</title>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-code, .remark-inline-code {
+        font-size: 90%;
+        color: #660000;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+      .translation {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background-color: #eeeeee;
+        padding: 0.5em 1em;
+        width: 100%;
+        line-height: 110%;
+      }
+      code {
+        font-size: 100%;
+        background-color: #eeeeff;
+        padding: 3px;
+      }
+      .translation code {
+        padding: 0px;
+        background-color: #cccccc;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td, th {
+        border: 1px solid #333333;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Readable Scala
+
+Scala Matsuri 2017/02/25
+
+
+---
+class: left, middle
+
+## Who am I
+
+* Manabu Nakamura
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd. 
+* Japan Scala Association
+
+![t2v](http://www.t2v.jp/images/logo.png)
+
+<div class="translation">
+自己紹介: 中村 学 (株)Tech to Value
+</div>
+
+---
+class: left, middle
+
+## Is Scala "Unreadable"?
+
+It often sees the claim that scala codes are unreadable.
+
+Because there are Implicit, there are many symbols, so various reasons are mentioned.
+
+<div class="translation">
+Scalaはコードが読みづらいという主張をしばしば目にします。<br/>
+Implicitがあるから、記号が多いから、様々な理由が挙げられています。
+</div>
+
+---
+class: left, middle
+
+## Is Scala "Unreadable"?
+
+However, the each feature of Scala was not introduced for the purpose of making it unreadable.
+
+<div class="translation">
+しかし、Scalaの各機能はコードを読みづらくする目的で導入された訳ではありません。
+</div>
+
+---
+class: left, middle
+
+## Is Scala "Unreadable"?
+
+To put it more, Scala's many features are designed to make code readable.
+
+<div class="translation">
+もっと言えば、Scalaの多くの機能は、コードを読みやすくするために設計されています。
+</div>
+
+---
+class: left, middle
+
+## The theme of this session
+
+In this session, it shows that the features of Scala is to make the code Readable.
+
+<div class="translation">
+このセッションではScalaの機能が<br/>コードをいかにReadableにするかを示したいと思います。
+</div>
+
+---
+class: left, middle
+
+## What does "Readable" mean?
+
+
+<div class="translation">
+「読みやすい」とはどういう事でしょうか？
+</div>
+
+---
+class: left, middle
+
+## What does "Readable" mean?
+
+In this session, I use the following definition from <br/>"The Art of Readable Code" 
+
+<section style="font-size: 200%; width: 90%; margin: auto auto;">
+Other people can understand in the shortest time.
+</section>
+
+<div class="translation">
+ここでは書籍「リーダブルコード」から引用して以下の定義を使いたいと思います。<br>
+> 「他の人が最短時間で理解できる事」
+</div>
+
+---
+class: left, middle
+
+## What does "Readable" mean?
+
+<section>
+Other people can understand in the shortest time.
+</section>
+
+When comparing codes, the readers need be able to understand the contents of both.
+
+And the time that must be comparable.
+
+<div class="translation">
+コードを比較する場合には、読み手はどちらも内容を理解でき、<br/>その時間を比較できる事が前提となります。
+</div>
+---
+class: left, middle
+
+## What does "Readable" mean?
+
+Therefore, The following assertion is nonsense. 
+
+ "Because the paradigm or idiom that the readers do not know is used, this code is unredable"
+
+<div class="translation">
+従って「読み手が知らないパラダイムやイディオムが使われているから可読性が低い」<br>という主張は意味をなしません。
+</div>
+
+---
+class: left, middle
+
+## What does "Readable" mean?
+
+Of course, it is also important to paradigms and idioms according to the team's literacy and learning level, or to urge teams to learn.
+
+I will not discuss it in this session as that topic will be about the team building.
+
+<div class="translation">
+もちろん、チームのリテラシや学習レベルに合わせて<br/>使用するパラダイムやイディオムを選択したり、チームで学習したり、<br/>という事も大事なことです。
+<br/><br/>
+それに関してはチームビルディングの領域になるため、今日の内容には含めません。
+</div>
+
+
+---
+class: left, middle
+
+## Does Scala has many symbols?
+
+<div class="translation">
+Scalaは記号が多い？
+</div>
+
+---
+class: left, middle
+
+## Does Scala has many symbols?
+
+It seems the claim that "Scala codes include many symbols and are unredable since these symbols can not be googled."
+
+Is it really so?
+
+<div class="translation">
+「Scala のコードは記号が多く、ググれないので読みづらい」という主張を目にします。
+<br>
+はたして本当にそうでしょうか？
+</div>
+
+---
+class: left, middle
+
+This is the all symbols that have special meaning in the Scala syntax. ([refs](http://docs.scala-lang.org/tutorials/FAQ/finding-symbols.html))
+
+```scala
+( )        // Delimit expressions and parameters
+[ ]        // Delimit type parameters
+{ }        // Delimit blocks
+.          // Method call and path separator
+// /* */   // Comments
+#          // Used in type notations
+:          // Type ascription or context bounds
+<: >:      // Upper and lower bounds
+" """      // Strings
+'          // Indicate symbols and characters
+@          // Annotations and variable binding on pattern matching
+`          // Denote constant or enable arbitrary identifiers
+,          // Parameter separator
+;          // Statement separator
+[Type]*    // Repeated parameter
+_*         // vararg expansion
+_          // Many different meanings
+=          // Assignment operator
+|   // Used on pattern matching, to combine patterns
+<-  // Used on for-comprehensions, to separate pattern from generator
+=>  // Used for function types, function literals and import renaming
+```
+
+<div class="translation">
+構文上、特殊な意味を持つ記号は上記だけです。(<a href="http://docs.scala-lang.org/tutorials/FAQ/finding-symbols.html">参考</a>)
+</div>
+
+---
+class: left, middle
+
+## Does Scala has many symbols?
+
+Compared with Java that define separately arithmetic operators, conditional operators and so on, it is overwhelmingly few.
+
+<div class="translation">
+論理演算子や算術演算子なども全て個別に定義されているJava等<br/>と比較すると、圧倒的に少ないです。
+</div>
+
+---
+class: left, middle
+
+## Does Scala has many symbols?
+
+In other words, all but the preceding ones are identifiers, just methods, objects or type names.
+
+Let's read the API document rather than google search.
+
+Or using [Scaps](http://scala-search.org/) is good.
+
+<div class="translation">
+言ってしまえば、先にあげたもの以外は全て識別子であり、<br/>単なるメソッドかオブジェクトか型名です。
+<br>
+ググるよりも API Document を読みましょう。
+<br>
+もしくは <a href="http://scala-search.org/">Scaps</a> などを使うとよいと思います。
+</div>
+
+---
+class: left, middle
+
+## How to use Symbolic identifiers
+
+<div class="translation">
+記号識別子の使い方
+</div>
+
+---
+class: left, middle
+
+## How to use Symbolic identifiers
+
+Which is Readable?
+
+```scala
+def amount(unitPrice: BigDecimal, num: BigDecimal, tax: BigDecimal) = {
+  unitPrice.multiply(num).multiply(tax)
+}
+```
+
+```scala
+def amount(unitPrice: BigDecimal, num: BigDecimal, tax: BigDecimal) = {
+  unitPrice multiply num multiply tax
+}
+```
+
+```scala
+def amount(unitPrice: BigDecimal, num: BigDecimal, tax: BigDecimal) = {
+  unitPrice * num * tax
+}
+```
+
+<div class="translation">
+どのコードが最短時間で理解できるでしょうか？
+</div>
+
+---
+class: left, middle
+
+## How to use Symbolic identifiers
+
+Which is Readable?
+
+```scala
+def battle(player: Character, enemy: Character): Result = {
+  player.attack(enemy)
+}
+```
+
+```scala
+def battle(player: Character, enemy: Character): Result = {
+  player ==!!!**>>> enemy
+}
+```
+
+<div class="translation">
+どのコードが最短時間で理解できるでしょうか？
+</div>
+
+---
+class: left, middle
+
+## How to use Symbolic identifiers
+
+```scala
+  unitPrice.multiply(num).multiply(tax)
+```
+```scala
+  unitPrice * num * tax
+```
+
+Symbol methods are generally used as infix operators.
+
+Human eyes move the viewpoint based on blank characters when reading.
+
+<div class="translation">
+記号メソッドは一般的に中置演算子として利用されます。<br>
+人間の目は英文を読む際、空白文字を基準に視点を動かします。<br/>
+</div>
+---
+class: left, middle
+
+## How to use Symbolic identifiers
+
+```scala
+  unitPrice.multiply(num).multiply(tax)
+```
+```scala
+  unitPrice * num * tax
+```
+
+By using infix operators, expressions are very strongly separated by symbols and blank characters, and other identifiers become very prominent.
+
+<div class="translation">
+中置演算子にすることで、記号と空白文字で非常に強く式が区切られ、<br/>他の識別子が非常に目立つようになります。
+</div>
+
+
+---
+class: left, middle
+
+## How to use Symbolic identifiers
+
+```scala
+  unitPrice.multiply(num).multiply(tax)
+```
+```scala
+  unitPrice * num * tax
+```
+
+If the readers are fully aware of the meaning of the symbol, the symbolic method shortens the time spent understanding the expression.
+
+<div class="translation">
+記号の意味を読み手が十分に認知している場合、<br/>記号メソッドは内容の理解に費やす時間を短くします。
+</div>
+
+---
+class: left, middle
+
+## How to use Symbolic identifiers
+
+```scala
+  player.attack(enemy)
+```
+
+```scala
+  player ==!!!**>>> enemy
+```
+
+However, if the readers do not perceive the meaning of the symbol at all,
+They need to refer to other documents and definitions,
+It will take a very long time to understand the expression.
+
+<div class="translation">
+しかし、記号の意味を読み手が全く認知していない場合、<br/>
+他のドキュメントや定義を参照する必要が発生し、<br/>
+内容の理解に非常に長い時間を必要とするでしょう。
+</div>
+
+---
+class: left, middle
+
+## How to use Symbolic identifiers
+
+After all it is dependent on the knowledge of the readers that the symbol identifier is proper.
+
+If all readers are experts in a particular domain,
+It can also make codes Readable by using commonly used notation as DSL.
+
+But if there is no such premise,
+You should refrain from using unique symbolic identifiers.
+
+　.
+
+　.
+
+<div class="translation">
+結局のところ記号の是非というのは読み手の知識に依存してしまいます。<br>
+<br>
+読み手が何らかのエキスパートであれば、<br/>
+そこで一般的に使われる記法をDSLとして使う事でReadableにすることもできます。<br>
+<br>
+しかしそういった前提がないのであれば、<br>
+独特な記号識別子の利用は控えた方が良いでしょう。
+</div>
+
+
+---
+class: left, middle
+
+## Summary
+
+* There are few symbols with special meanings in the grammar of Scala.
+* Symbol identifiers separate expressions and highlight other identifiers.
+* It is better to refrain from a unique symbol identifier whose reader does not seem to understand
+
+<div class="translation">
+Scalaの文法上、特別な意味を持つ記号は少ない。<br/>
+記号識別子は式を区切り他の識別子を目立たせることができる。<br/>
+読み手が意味をつかめない独特な記号識別子は控えた方が無難。<br/>
+</div>
+
+---
+class: left, middle
+
+## About Implicit
+
+<div class="translation">
+Implicit について
+</div>
+
+---
+class: left, middle
+
+## About Implicit
+
+In my opinion, "Implicit" thinks it is the most misunderstood feature.
+
+<div class="translation">
+Implicit は最も誤解を受けている機能のように思います。
+</div>
+
+---
+class: left, middle
+
+## What is Implicit? 
+
+<div class="translation">
+そもそもScalaのImplicitというのはどのような機能なのでしょうか
+</div>
+---
+class: left, middle
+
+## What is Implicit? 
+
+First, please forget Implicit "Conversion".
+
+<div class="translation">
+まず Implicit Conversion は忘れてください。
+</div>
+---
+class: left, middle
+
+## What is Implicit? 
+
+Implicit "Parameter" is the foundation of this feature.
+
+<div class="translation">
+Scala における Implicit の基本は Implicit Parameter にあります。
+</div>
+---
+class: left, middle
+
+## What is Implicit Parameter
+
+* Add `implicit` modifier to method parameter group
+
+```scala
+def foo(bar: Bar)(implicit baz: Baz)
+```
+
+* In method calls, Scalac complements implicit values which the type match in scope.
+
+```scala
+foo(new Bar)  // complements parameter baz
+```
+
+* If there are no value which the type match in scope or there are more than one values, the compilation is failed.
+
+　.
+
+<div class="translation">
+メソッドの引数グループに `implicit` 修飾子をつける。<br/>
+メソッド呼び出しで、スコープ中に型が一致するimplicitな値をコンパイラが補う。<br/>
+スコープ中に型が一致する値が存在しない、<br/>もしくは複数存在しているとコンパイルエラーになる<br>
+</div>
+
+---
+class: left, middle
+
+## What is Implicit Parameter
+
+An "implicit value" is a value that is annotated by `implicit` modifier. 
+
+```scala
+implicit val foo: Foo = ...
+
+implicit object Bar extends BarLike {
+  ...
+}
+```
+
+<div class="translation">
+Implicit な値とは、定義時に implicit 修飾子がついた値です。
+</div>
+
+---
+class: left, middle
+
+## The Motivation of Implicit Parameter
+
+The motivation of Implicit Parameter is to provide extensible interface.
+
+<div class="translation">
+Implicit Parameter の動機は拡張性のあるインターフェイスの提供です。
+</div>
+
+---
+class: left, middle
+
+## the plain traits problem
+
+```scala
+trait Comparable[A] {
+  def compare(other: A): Int
+}
+def sort[A <: Comparable[A]](in: Traversable[A]): Seq[A] = ...
+```
+
+A plain trait is mixed-in at class definition.
+
+```scala
+class Foo(i: Int) extends Comparable[Foo] {
+  ...
+  def compare(other: A): Int = {
+    this.i - other.i
+  }
+}
+```
+
+<div class="translation">
+普通の trait は、mixin をクラスの定義と同時に行います。
+</div>
+
+---
+class: left, middle
+
+## the plain traits problem
+
+In fact, It can not mix-in your own traits to a class whose definition can not be changed.
+
+<div class="translation">
+つまり、定義を変更できないクラスには<br/>自作の trait を mixin させることができません。
+</div>
+
+---
+class: left, middle
+
+## The Motivation of Implicit Parameter
+
+So, it separates the implementation of the method from the definition of the class.
+
+```scala
+trait Comparator[A] {
+  def compare(o1: A, o2: A): Int
+}
+def sort[A](in: Traversable[A])(implicit c: Comparator[A]): Seq[A] = ...
+```
+
+```scala
+class Foo(i: Int) {
+  ...
+}
+implicit val fooComparator: Comparator[Foo] = new Comparator[Foo] {
+  def compare(o1: Foo, o2: Foo): Int = o1.i - o2.i
+}
+```
+
+<div class="translation">
+そこで、メソッドの実装をクラスの定義と分離できるようにします
+</div>
+
+---
+class: left, middle
+
+## Compareing mix-in
+
+```scala
+trait Comparable[A] {
+  def compare(other: A): Int
+}
+class Foo(i: Int) extends Comparable[Foo] {
+  ...
+  def compare(other: A): Int = {
+    this.i - other.i
+  }
+}
+```
+
+```scala
+trait Comparator[A] {
+  def compare(o1: A, o2: A): Int
+}
+class Foo(i: Int) {
+  ...
+}
+implicit val fooComparator: Comparator[Foo] = new Comparator[Foo] {
+  def compare(o1: Foo, o2: Foo): Int = o1.i - o2.i
+}
+```
+
+<div class="translation">
+mixin と比較してみるとこうなります
+</div>
+
+---
+class: left, middle
+
+## The Motivation of Implicit Parameter
+
+Since it is only necessary to define the value,
+It is possible to add freely to existing classes later.
+
+<div class="translation">
+値を定義すればいいだけなので、<br/>
+既存クラスに対しても後から自由に追加することが可能です。
+</div>
+
+---
+class: left, middle
+
+## Use side
+
+It can use it like mixin.
+
+```scala
+// Plain trait
+def sort[A <: Comparable[A]](in: Traversable[A]): Seq[A] = ...
+
+val foos: Seq[Foo] = ...
+val sorted = sort(foos)
+```
+
+```scala
+// implicit parameter
+def sort[A](in: Traversable[A])(implicit c: Comparator[A]): Seq[A] = ...
+
+val foos: Seq[Foo] = ...
+val sorted = sort(foos) // scalac complements Comparator[Foo]
+```
+
+<div class="translation">
+利用側でも mixin と変わらない使い勝手で使えます
+</div>
+
+---
+class: left, middle
+
+## Why it needs to complement implicitly rather than explicitly?
+
+<div class="translation">
+わざわざ暗黙に渡さなくても<br>明示的に渡せばよいのではないでしょうか？
+</div>
+
+---
+class: left, middle
+
+## The power of implicit
+
+Implicit parameter makes it possible to separate "How" and "What".
+
+<div class="translation">
+How と What を分離し Whatの記述に集中できる
+</div>
+
+---
+class: left, middle
+
+## Separate How and What
+
+For example, Tuple2 Comparator
+
+```scala
+implicit def tuple2Comparator[A, B](
+  implicit a: Comparator[A], b: Comparator[B]
+): Comparator[(A, B)] = new Comparator[(A, B)] {
+  def compare(o1: (A, B), o2: (A, B)): Int = {
+    val aOrd = a.compare(o1._1, o2._1)
+    if (aOrd == 0) b.compare(o1._2, o2._2) else aOrd
+  }
+}
+```
+
+First of all, compare with A and compare with B if it is the same.
+
+<div class="translation">
+例えばタプルのComparatorを考えてみましょう。<br/>
+まず `A` で比較して同じであれば `B` でも比較する定義です。
+</div>
+
+---
+class: left, middle
+
+## Separate How and What
+
+Well, if the `Comparater` is not implicit, what about the code to sort `Seq [(String, Option [Int])`?
+
+```scala
+val values: Seq[(String, Option[Int])]
+
+val sorted = sort(values)(
+  tuple2Comparator(
+    stringComparator, 
+    optionComparator(intComparator)
+  )
+)
+```
+
+What I want to do is just sorting values, but the code that compose Comparator gets enormous and the original intention of the code is buried.
+
+　.
+
+　.
+
+　.
+
+<div class="translation">
+もし Comparator がimplicit parameterではなかった場合、<br>
+Seq[(String, Option[Int])] をソートするコードはどうなるでしょうか？<br>
+<br>
+やりたい事は values のソートというだけなのに<br/> Comparator の合成部分が巨大になりコードの本来の意図が埋もれてしまっています
+</div>
+
+---
+class: left, middle
+
+## Separate How and What
+
+However, in fact it can be written as follows
+
+```scala
+val values: Seq[(String, Option[Int])]
+
+val sorted = sort(values)
+```
+
+The readers can understand what it want to do in the shortest time.
+
+<div class="translation">
+これが実際には上記のように書けるのです。<br>
+<br>
+やりたいこと最短時間で把握することができます。
+</div>
+
+---
+class: left, middle
+
+## Separate How and What
+
+```scala
+val sorted = sort(values)(
+  tuple2Comparator(
+    stringComparator, 
+    optionComparator(intComparator)
+  )
+)
+```
+
+```scala
+val sorted = sort(values)
+```
+
+Some may say that the former is easy to understand because it clearly shows how they are comparing.
+
+This is because "How"(how it works) appears on the code.
+
+　.
+
+<div class="translation">
+中には前者の方が「どのように比較しているか明示しているのでわかりやすい」<br>という人も居るかもしれません。<br>
+<br>
+これは How(どのようにして動くのか) がコード上に現れているからですね。<br>
+</div>
+
+---
+class: left, middle
+
+## Separate How and What
+
+The history of the evolution of the programming language is also the history of how to hide "How" to make it possible to express "What" is briefly.
+
+```scala
+val numbers: Seq[Int] = ...
+
+// How
+var evens: Seq[Int] = Vector()
+for (e <- numbers) {
+  if (e % 2 == 0) evens = evens :+ e
+}
+
+// What
+val evens = numbers.filter(_ % 2 == 0)
+```
+
+The latter can express the purpose directly.
+
+　.
+
+<div class="translation">
+プログラミング言語の進化の歴史は、<br>いかに How を隠ぺいして What を端的に表現できるようにするか、<br>の歴史でもあります。
+</div>
+
+---
+class: left, middle
+
+## Separate How and What
+
+By separating How and What, it is possible to briefly show the purpose as an expression on the code so that it is possible to read the intention of the code in the shortest time.
+
+<div class="translation">
+このように How と What を分離することで、<br>
+コード上の表現として目的を端的に示すことができるので、<br>
+コードの意図を読み取ることが最短時間でできるようになります。
+</div>
+
+---
+class: left, middle
+
+## Separate How and What
+
+Also, "How" is an important concern in troubleshooting and performance tuning.
+
+By separating "How" and "What", it becomes possible to perform performance tuning without affecting business logic.
+
+<div class="translation">
+また、不具合調査やパフォーマンスチューニングでは How が重要な関心事になります。<br>
+<br>
+How と What が分離している事で、<br>ビジネスロジックに影響を与えずに最適化を行う事が可能になります。
+</div>
+
+---
+class: left, middle
+
+## Separate How and What
+
+In order to separate How and What with implicit parameter and focus on What, How(an implicit value) must be intuitive or trivial definitions.
+
+For example, if `Comparator [(A, B)]` had been non-trivial defined like as reverse order of `B` only when the result compared in` A` is small, the readers will easily misread code.
+
+　.
+
+<div class="translation">
+実際に implicit parameter で How と What を分離して What に集中するためには、<br>
+How つまり implicit な値が、直観的あるいは自明な定義になっている事が必要です。<br>
+<br>
+例えば `Comparator[(A, B)]` が、<br/>「`A` で比較した結果が小さい時だけ `B` の逆順で比較する」<br>
+という直観と反する定義をされていた場合、<br>
+読み手は簡単に意図を読み間違えるでしょう。
+</div>
+
+---
+class: left, middle
+
+## Trivial definition
+
+However, it is not easy to write a trivial definition.
+
+<div class="translation">
+とは言うものの、自明な定義というのは簡単には書けません。
+</div>
+
+---
+class: left, middle
+
+## Trivial definition
+
+Abstraction can sometimes lead to obvious definitions.
+
+<div class="translation">
+抽象化を行うことで自明な定義を導出できることがあります。
+</div>
+
+---
+class: left, middle
+
+## The power of abstraction
+
+Consider, for example, the implementation of the method below.
+
+```scala
+def foo(a: String, b: Int): (Int, String)
+```
+
+
+<div class="translation">
+例えば上記のメソッドの実装を考えてみましょう。
+</div>
+
+---
+class: left, middle
+
+## The power of abstraction
+
+```scala
+def foo(a: String, b: Int): (Int, String)
+```
+
+Even if it is a premise that has no side effects, we can write many many implementations.
+
+```scala
+def foo(a: String, b: Int): (Int, String) = {
+  (b * 10, a)
+}
+
+def foo(a: String, b: Int): (Int, String) = {
+  (a.size, a * b)
+}
+
+def foo(a: String, b: Int): (Int, String) = {
+  (a.size * b, "")
+}
+```
+
+<div class="translation">
+副作用を持たない前提だとしても、いくらでも実装を書くことができます。
+</div>
+
+---
+class: left, middle
+
+## The power of abstraction
+
+```scala
+def foo(a: String, b: Int): (Int, String)
+```
+
+How about trying to abstract this as follows?
+
+```scala
+def foo[A, B](a: A, b: B): (B, A)
+```
+
+<div class="translation">
+これを次のように抽象化してみるとどうでしょうか？
+</div>
+
+---
+class: left, middle
+
+## The power of abstraction
+
+There is no implementation method other than the below.
+
+```scala
+def foo[A, B](a: A, b: B): (B, A) = {
+  (b, a)
+}
+```
+
+In other words, the abstraction makes the definition obvious from the type signature.
+
+<div class="translation">
+上記以外の実装の方法がありませんね。<br>
+<br>
+つまり、抽象化を行うことで型から定義が自明になりました。
+</div>
+
+
+---
+class: left, middle
+
+## The power of abstraction
+
+Abstraction is often focused on reusability, but it has strong power in addition to that.
+
+<div class="translation">
+抽象化というと再利用性に注目しがちですが、<br>それ以外にも強い力がありますよ、という話でした。
+</div>
+
+---
+class: left, middle
+
+## Summary
+
+* By using implicit parameter, we can separate How and What.
+* It is important that "How" is trivial definition.
+* By using abstraction we can increase trivial definitions.
+
+
+<div class="translation">
+implicit parameter を使うことで How と What を分離できる。<br>
+How は自明な定義になっている事が重要。<br>
+抽象化を使うことで自明な定義を増やすことができる。<br>
+</div>
+
+---
+class: left, middle
+
+## Implicit conversion
+
+<div class="translation">
+Implicit conversion
+</div>
+
+---
+class: left, middle
+
+## Implicit Conversion
+
+Actually Implicit Conversion is a special form of Implicit Parameter.
+
+It just says that when an implicit value of type <br>`A => B` exists, the compiler can handle the value of `A` type even as `B` type.
+
+```scala
+case class Foo() {
+  def bar: String = ...
+}
+case class Baz(foo: Foo)
+
+implicit val bazToFoo: Baz => Foo = _.foo
+
+val baz: Baz = ...
+baz.bar // it can call Foo's method
+```
+
+　.
+
+　.
+
+<div class="translation">
+実は Implicit Conversion は Implicit Parameter の特殊形です。<br>
+<br>
+A => B という型の implicit な値が存在する時、<br>
+コンパイラが A 型の値を B 型としても扱えるようにする、としてるだけです。
+</div>
+
+---
+class: left, middle
+
+## Implicit Conversion
+
+It can use a method to define an implicit value of `A => B` type.
+
+```scala
+implicit val bazToFoo: Baz => Foo = _.foo
+
+// ↑↓ same mean
+
+implicit def bazToFoo(baz: Baz): Foo = baz.foo
+```
+
+<div class="translation">
+A => B 型の implicit な値を定義する際はメソッドでも構いません。
+</div>
+
+---
+class: left, middle
+
+## The motivation of Implicit Conversion
+
+The main motivation of Implicit Conversion,
+We'd like to add a member to a class whose definition can not be modified.
+
+<section>
+like as the Extension Methods of C# and Kotlin.
+</section>
+
+<div class="translation">
+Implicit Conversion の主要な動機は、<br/>
+「定義を変更できないクラスにメンバを追加したい」というものです
+</div>
+
+---
+class: left, middle
+
+## Implicit Conversion
+
+Implicit Conversion has tended to be overused and has created pitfalls.
+
+For that reason, now, it is common to avoid Implicit Conversion excluding the Enrich my library pattern.
+
+* Scalac will warn we unless we use `-language:implicitConversions` scalac option or import `scala.language.implicitConversions`
+* `JavaConversions` is deprecated and using `JavaConverters` is recommended instead of it.
+
+<div class="translation">
+Implicit Conversion は過剰に使われがちで落とし穴を生み出してきました。<br>
+そのため、現在では後述する Enrich my library パターン以外の<br>
+Implicit Conversion の積極的な利用は避けるべきというのが一般的です。
+</div>
+
+---
+class: left, middle
+
+## Enrich my library pattern
+
+It defines a class that holds the member you want to add and does not use that class as a type.
+
+```scala
+class FooOps(foo: Foo) {
+  def bar: String = ...
+  def baz: Int = ...
+}
+implicit def FooOps(foo: Foo): FooOps = new FooOps(foo)
+
+val f: Foo = ...
+f.bar
+f.baz
+// FooOps does not appear as a type
+```
+
+<div class="translation">
+追加したいメンバを保持したクラスを定義し、<br>型としてはそのクラスを使わない手法です
+</div>
+
+---
+class: left, middle
+
+## Enrich my library pattern
+
+There is an syntax sugar called implicit class because this format is frequent.
+
+```scala
+class FooOps(foo: Foo) {
+  def bar: String = ...
+  def baz: Int = ...
+}
+implicit def FooOps(foo: Foo): FooOps = new FooOps(foo)
+```
+```scala
+implicit class FooOps(foo: Foo) {
+  def bar: String = ...
+  def baz: Int = ...
+}
+```
+
+<div class="translation">
+この書き方が頻出するため、implicit class という省略記法が存在します。
+</div>
+
+---
+class: left, middle
+
+## Readability of Enrich my library pattern 
+
+For languages that do not have extended methods like Java, It needs to define a Singleton Utility when you want to extend an existing class.
+
+```scala
+val first: Optional[A] = ...
+val second: Optional[A] = ...
+val third: Optional[A] = ...
+```
+
+```scala
+// Util
+val result = OptionalUtil.or(OptionalUtil.or(first, second), third)
+val result = or(or(first, second), third)
+```
+
+```scala
+// Enrich my library
+val result = first or second or third
+```
+
+<div class="translation">
+Javaの様に拡張メソッドを持たない言語の場合、<br>既存のクラスを拡張したい時にSingletonなUtilityを作ることになります。
+</div>
+
+---
+class: left, middle
+
+## Readability of Enrich my library pattern 
+
+```scala
+// Util
+val result = or(or(first, second), third)
+```
+
+```scala
+// Enrich my library
+val result = first or second or third
+```
+
+Using Extension methods, it becomes visually easy for first, second, and third to be handled at the same level.
+
+<div class="translation">
+拡張メソッドにすることで、<br>
+first と second と third が同レベルの扱いであることが<br>
+視覚的にわかりやすくなります。
+</div>
+
+---
+class: left, middle
+
+# Summary
+
+
+* Readable code is a code that others can understand the contents in the shortest time.
+* Each feature of Scala is prepared so as to demonstrate the intention of the code briefly.
+* Let's use Scala's language features to write readable code.
+
+<div class="translation">
+Readableコードとは、他人が最短時間で内容を理解できるコードのことです。<br>
+Scalaの各機能はコードの意図を端的に示せるように用意されています。<br>
+Readable なコードを書くために Scalaの言語機構を活用しましょう。
+</div>
+
+---
+class: middle
+
+# advertising
+
+<div class="translation">
+	宣伝
+</div>
+---
+class: middle
+
+## Scala online code review service(in Japanese...)
+
+Would you consider this service if your projects have the following problem?
+
+* An experts of Scala is not in your team.
+* There are closely entwined questions to the business code
+
+<div class="translation">
+	弊社Scalaのコードレビューをサービスとして行っています。<br/>
+	&nbsp;&nbsp;・GitHub(or類似サービス)上でのOnlineコードレビュー<br/>
+	&nbsp;&nbsp;・Slack等チャットツールによるQ&A<br/>
+	<br/>
+	もし下記の様な状況などありましたら是非ご検討ください。<br/>
+	&nbsp;&nbsp;・導入したいけどチームにスペシャリストが居ない<br/>
+	&nbsp;&nbsp;・業務コードに密接に絡んだ質問がしたい<br/>
+</div>
+---
+class: middle
+
+# applications and inquiries
+
+* [WebSite](http://www.t2v.jp/#contact-section) contact form
+* [@gakuzzzz](https://twitter.com/gakuzzzz) mention or DM
+
+<div class="translation">
+	お申し込み<br/>
+	<a href="http://www.t2v.jp/#contact-section">弊社Webサイト</a>の申し込みフォーム<br>
+	Twitter <a href="https://twitter.com/gakuzzzz">@gakuzzzz</a> にメンション or DM</div>
+</div>
+---
+class: middle
+
+# Any questions?
+
+<div class="translation">
+	質問とか
+</div>
+
+    </textarea>
+    <script src="http://gnab.github.io/remark/downloads/remark-0.12.min.js" type="text/javascript"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+      slideshow.on('beforeShowSlide', function (slide) {
+        $("a[href^='http://']").attr("target", "_blank");
+        $("a[href^='https://']").attr("target", "_blank");
+      });
+    </script>
+  </body>
+</html>
