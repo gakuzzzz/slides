@@ -264,7 +264,7 @@ Is it really so?
 ---
 class: left, middle
 
-This is the all symbols that have special meaning in the Scala syntax. ([refs](http://docs.scala-lang.org/tutorials/FAQ/finding-symbols.html))
+This is the all reserved symbols and keywords.
 
 ```scala
 ( )        // Delimit expressions and parameters
@@ -281,17 +281,22 @@ This is the all symbols that have special meaning in the Scala syntax. ([refs](h
 `          // Denote constant or enable arbitrary identifiers
 ,          // Parameter separator
 ;          // Statement separator
-[Type]*    // Repeated parameter
 _*         // vararg expansion
 _          // Many different meanings
 =          // Assignment operator
+```
+
+```scala
+*   // Used on parameter type suffix, to declare repeated parameter type
+$   // Used on String interpolation
++ - // Used on type parameter, to declare variance
 |   // Used on pattern matching, to combine patterns
 <-  // Used on for-comprehensions, to separate pattern from generator
 =>  // Used for function types, function literals and import renaming
 ```
 
 <div class="translation">
-構文上、特殊な意味を持つ記号は上記だけです。(<a href="http://docs.scala-lang.org/tutorials/FAQ/finding-symbols.html">参考</a>)
+予約語およびkeywordの一覧です。(<a href="http://docs.scala-lang.org/tutorials/FAQ/finding-symbols.html">参考</a>)
 </div>
 
 ---
