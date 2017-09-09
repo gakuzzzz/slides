@@ -1,0 +1,686 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <title>Property Based Testing でドメインロジックをテストする</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-code, .remark-inline-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Property Based Testing で<br />ドメインロジックを<br />テストする
+
+Scala関西Summit 2017/09/09
+
+---
+class: left, middle
+
+## 自己紹介
+
+* 中村 学(Nakamura Manabu)
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value 代表取締役
+* Opt Technologies 技術顧問 <img src="./images/opt_logo_1.jpg" alt="Opt Technologies" width="450" style="margin-left: 0px" /> 
+* f-code チーフアーキテクト <img src="./images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+
+---
+class: center, middle
+
+## テスト、書いてますか？
+
+---
+class: middle
+
+# 型 ＞ テスト
+
+偉い人は言いました
+
+テストで示せるのはバグの存在であって、<br />バグの不在は証明できない
+
+型システムはある種のバグの不在を証明できる
+
+---
+class: center, middle
+
+## そうは言っても
+
+値に関するロジックのテストは必要
+
+---
+class: middle
+
+## テストの困りごと
+
+
+---
+class: middle
+
+## 良くあるケース１
+
+ReadStatus: Unread, Read があるとして、<br/>
+新着表示の時は ReadStatus: Unread のものだけ取得する
+
+```scala
+case class Message(id: Long, read: ReadStatus)
+```
+
+---
+class: middle
+
+## 良くあるケース１
+
+```
+// fixture
+Message(1, ReadStatus.Unread)
+Message(2, ReadStatus.Unread)
+Message(3, ReadStatus.Read)
+Message(4, ReadStatus.Read)
+```
+
+```scala
+it("新着表示の時は ReadStatus: Unread のものだけ取得する") {
+
+  val actual = listNewMessages()
+
+  assert(actual === List(
+    Message(1, ReadStatus.Unread),
+    Message(2, ReadStatus.Unread)
+  ))
+
+}
+```
+
+---
+class: middle
+
+## 良くあるケース１
+
+## 機能改修 Category の追加
+
+```scala
+case class Message(
+  id: Long, 
+  read: ReadStatus, 
+  category: Category = Category.Unknown
+)
+```
+
+---
+class: middle
+
+## 良くあるケース１
+
+追加したCategoryのテストのためにレコード追加
+
+```
+// fixture
+Message(1, ReadStatus.Unread, Category.Mathematics)
+Message(2, ReadStatus.Unread, Category.Physics)
+Message(3, ReadStatus.Read,   Category.Mathematics)
+Message(4, ReadStatus.Read,   Category.Physics)
+Message(5, ReadStatus.Unread, Category.Chemistry)
+Message(6, ReadStatus.Read,   Category.Chemistry)
+```
+
+---
+class: middle
+
+## 良くあるケース１
+
+結果 FooStatus: A のレコードが増えて既存テストが fail !!
+
+```scala
+it("新着表示の時は ReadStatus: Unread のものだけ取得する") {
+
+  val actual = listNewMessages()
+
+  assert(actual === List(    // 失敗
+    Message(1, ReadStatus.Unread),
+    Message(2, ReadStatus.Unread)
+  ))
+
+}
+```
+
+---
+class: middle
+
+## 良くあるケース 2
+
+fixtures を利用して、全てのテストでテストデータを共通化してるからさっきみたいな事が起こるのだ
+
+テスト毎に専用のデータを用意すればテストの独立性が保たれる！
+
+---
+class: middle
+
+## 良くあるケース 2
+
+機能改修が入りました<br/>テーブルαにカラムが追加になります
+
+---
+class: middle
+
+## 全テストメソッド毎のデータを<br/>全て修正する必要が！
+
+---
+class: center, middle
+
+こうしてテストが書かれない改修が増えていく……
+
+---
+class: middle
+
+## テストデータ管理したくない！
+
+---
+class: middle
+
+## そこで Property Based Testing 
+
+---
+class: middle
+
+## Property Based Testing とは
+
+テストデータをランダムに半自動生成して、<br/>その生成された全ての値について、<br/>満たすべき性質を満たしているかテストする
+
+
+```scala
+例)
+property("Listのreverseを2回行うと元のListに一致する") {
+  forAll { (list: List[String]) =>
+    assert(list.reverse.reverse === list)
+  }
+}
+```
+
+---
+class: middle
+
+## Property Based Testing とは
+
+Haskell だと [QuickCheck](https://hackage.haskell.org/package/QuickCheck)、<br/>Scala だと [scalaprops](https://github.com/scalaprops/scalaprops) や [ScalaCheck](https://www.scalacheck.org/) という<br/>ライブラリが有名
+
+
+---
+class: middle
+
+## テストデータを半自動生成とは
+
+乱数をもとに値を生成する Generator を定義する
+
+```scala
+case class User(name: String, age: Int)
+```
+
+```scala
+val userGen: Gen[User] = for {
+  name <- Gen.alphaNumStr
+  age  <- Gen.coose(0, 150)
+} yield User(name, age)
+```
+
+```scala
+it("全てのユーザは必ず空文字ではない名前を持つ") {
+  forAll { (user: User) =>
+    assert(user.name.nonEmpty)
+  }
+}
+```
+
+
+---
+class: middle
+
+## テストデータを半自動生成とは
+
+```scala
+case class User(name: String, age: Int)
+```
+
+```scala
+val userGen: Gen[User] = for {
+  name <- Gen.alphaNumStr
+  age  <- Gen.coose(0, 150)
+} yield User(name, age)
+```
+
+
+標準で様々なGeneratorが提供されていて、Generatorは合成可能なため、
+独自定義したエンティティなどのGeneratorも容易に定義できる
+
+---
+class: center,middle
+
+データの生成方法だけ定義すればよいので、<br>仕様変更や改修でフィールドが増減しても<br/>その生成方法だけ変更すれば OK
+
+---
+class: center,middle
+
+でも性質のテストと言われても……
+
+難しい数学的なライブラリとかじゃないと<br/>使い処がないのでは？
+
+---
+class: center,middle
+
+# そんなことないよ
+
+---
+class: left, middle
+
+## 普通のテスト
+
+```scala
+it("クレジットの期限が今日より前ならば、決済結果は期限切れとなる") {
+  val card = CreditCard(
+    number = "XXXX-XXXX-XXXX-XXXX", 
+    limit  = YearMonth(1999,10), 
+    holder = "MANABU NAKAMURA"
+  )
+  val order = Order(Item(id = 10, name = "Coffee") -> 3)
+  assert(card.charge(order) === ChargeResult.Expired)
+}
+```
+
+
+---
+class: left, middle
+
+## Property Based Testing してみる
+
+```scala
+it("クレジットの期限が今日より前ならば、決済結果は期限切れとなる") {
+  forAll { (card: CreditCard, order: Order) =>
+    whenever(card.limit < today) {
+      assert(card.charge(order) === ChargeResult.Expired)
+    }
+  }
+}
+```
+
+---
+class: center, middle
+
+## ドメインロジックで<br/><strong>「普遍的な性質」</strong><br/>を探そうとすると難しい
+
+---
+class: center, middle
+
+
+##<strong>「特定条件の時に満たす性質」</strong><br/>であれば見つけやすい
+
+---
+class: middle
+
+# 特定条件の表し方
+
+
+---
+class: middle
+
+## 特定条件の表し方は複数ある
+
+* 性質を定義する際にfilterする
+* 専用のGenを定義する
+* 生成された値に手を加える
+
+
+---
+class: middle
+
+## 性質を定義する際にfilterする
+
+```scala
+it("クレジットの期限が今日より前ならば、決済結果は期限切れとなる") {
+  forAll { (card: CreditCard, order: Order) =>
+    whenever(card.limit < today) {
+      assert(card.charge(order) === ChargeResult.Expired)
+    }
+  }
+}
+```
+
+* 一番手軽
+* 条件によってはテストの実行に時間がかかる場合が出てくる
+
+---
+class: middle
+
+## 専用のGenを定義する
+
+```scala
+val expiredCardGen = for {
+  num1   <- Gen.choose(0, 9999)
+  num2   <- Gen.choose(0, 9999)
+  num3   <- Gen.choose(0, 9999)
+  num4   <- Gen.choose(0, 9999)
+  holder <- Gen.alphaNumStr
+  diff   <- Gen.posNum
+} yield CredicCard(
+  f"$num1%04d-$num2%04d-$num3%04d-$num4%04d"
+  today - diff.months
+  holder
+)
+```
+
+```scala
+it("クレジットの期限が今日より前ならば、決済結果は期限切れとなる") {
+  forAll(expiredCardGen, orderGen) { 
+    (card: CreditCard, order: Order) =>
+      assert(card.charge(order) === ChargeResult.Expired)
+  }
+}
+```
+
+
+---
+class: middle
+
+## 専用のGenを定義する
+
+```scala
+it("クレジットの期限が今日より前ならば、決済結果は期限切れとなる") {
+  forAll(expiredCardGen, orderGen) { 
+    (card: CreditCard, order: Order) =>
+      assert(card.charge(order) === ChargeResult.Expired)
+  }
+}
+```
+
+
+* 複数のテストで繰り返し使われる条件の時便利
+* あまりに多くなるとテスト事にテストデータを定義しているのと変わらなくなり、仕様変更時に全部直すのがつらくなる
+
+---
+class: middle
+
+## 生成された値に手を加える
+
+```scala
+it("クレジットの期限が今日より前ならば、決済結果は期限切れとなる") {
+  forAll { (card: CreditCard, order: Order) =>
+    val expiredCard = card.copy(limit = today - 1.month)
+    assert(expiredCard.charge(order) === ChargeResult.Expired)
+  }
+}
+```
+
+* これも手軽
+* テスト失敗時に出力される値と実際にロジックに渡した値が異なるのでテスト失敗時に読みにくい場合がある（大抵は手を加えた値以外が原因のため問題にならない）
+
+
+---
+class: middle
+
+## 生成された値に手を加える
+
+```scala
+case class ZipCode(major: Int, minor: Int)
+case class Address(prefecture: String, city: String, zip: ZipCode)
+case class Person(name: String, address: Address)
+```
+
+```scala
+forAll { (person: Person) => 
+  val targetParson = person.copy(
+    address = person.address.copy(
+      zip = person.address.zip.copy(
+        major = 101
+      )
+    )
+  )
+  ...
+}
+```
+
+* 複雑な構造のオブジェクトを変更したい場合は煩雑になる
+
+
+---
+class: middle
+
+## 生成された値に手を加える
+
+こういう場合 Lens ライブラリが便利
+
+```scala
+import monocle.macros.syntax.lens._
+
+val majorLens = 
+
+forAll { (person: Person) => 
+  val targetParson = person.lens(_.address.zip.major).set(101)
+  ...
+}
+```
+
+※これは [Monocle](http://julien-truffaut.github.io/Monocle/) の例<br/>
+※Lensは様々なライブラリがあり [Shapeless](https://github.com/milessabin/shapeless) や [Scalaz](https://github.com/scalaz/scalaz) にもある
+
+
+---
+class: middle
+
+## 特定条件の表し方は複数ある
+
+* 性質を定義する際にfilterする
+* 専用のGenを定義する
+* 生成された値に手を加える
+
+
+---
+class: middle
+
+## その他ポイント
+
+* 制約を型で表現するとGenの定義が楽
+* 暗黙的に期待している制約に注意
+
+---
+class: middle
+
+## 制約を型で表現する
+
+型で表現しない例
+
+```scala
+case class User(name: String, isLeader: Boolean)
+case class Group(name: String, members: List[User]) {
+  require(memberes.count(_.isLeader) == 1)
+  // リーダーは一人だけ必ず存在するというのをロジックで明示
+}
+```
+
+```scala
+val userGen = ...
+val groupGen = for {
+  name    <- Gen.alphaNumStr
+  members <- Gen.listOf(userGen).suchThat(_.count(_.isLeader)==1)
+} yield Group(name, members)
+```
+
+テストデータの生成試行回数が増える
+
+---
+class: middle
+
+## 制約を型で表現する
+
+型で表現しない例（別パターン）
+
+```scala
+case class User(name: String, isLeader: Boolean)
+case class Group(name: String, members: List[User]) {
+  require(memberes.count(_.isLeader) == 1)
+  // リーダーは一人だけ必ず存在するというのをロジックで明示
+}
+```
+
+```scala
+val groupGen = for {
+  name    <- Gen.alphaNumStr
+  leader  <- userGen
+  others  <- Gen.listOf(userGen)
+} yield Group(
+  name, 
+  leader.copy(isLeader=true) +: others.map(_.copy(isLeader=false))
+)
+```
+
+---
+class: middle
+
+## 制約を型で表現する
+
+型で表現する例
+
+```scala
+case class User(name: String)
+case class Group(name: String, leader: User, members: List[User])
+```
+
+```scala
+val userGen = ...
+val groupGen = for {
+  name    <- Gen.alphaNumStr
+  leader  <- userGen
+  members <- Gen.listOf(userGen)
+} yield Group(name, memberes)
+```
+
+* すっきり
+
+---
+class: middle
+
+### 暗黙的に期待している制約に注意
+
+例）DBで採番しているIDがユニークであること
+
+---
+class: middle
+
+### 暗黙的に期待している制約に注意
+
+```scala
+case class User(id: Int, name: String)
+case class Group(id: Int, name: String, users: List[User])
+
+val userGen = for {
+  id    <- Gen.posNum[Int]
+  name  <- Gen.asciiPrintableStr
+} yield User(id, name)
+
+val groupGen = for {
+  id    <- Gen.posNum[Int]
+  name  <- Gen.asciiPrintableStr
+  users <- Gen.listOf(userGen)
+} yield Group(id, name, users)
+```
+
+```scala
+forAll { (group: Group) =>
+  group.users // 同じIDを持つUserがList中に含まれる可能性！
+  ...
+}
+```
+
+---
+class: middle
+
+
+## まとめ
+
+* テストデータの管理は大変
+* Property Based Testing でデータを半自動生成
+* 「特定条件時に満たす性質」は見つけやすい
+* 制約を型で表現すると捗る
+* 暗黙的に期待している制約に注意
+* ドメインロジックのテストにも<br />Property Based Testing は使える
+
+
+---
+class: middle
+
+## 質問とか
+
+    </textarea>
+    <script src="http://gnab.github.io/remark/downloads/remark-0.12.min.js" type="text/javascript"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+      slideshow.on('beforeShowSlide', function (slide) {
+        $("a[href^='http://']").attr("target", "_blank");
+        $("a[href^='https://']").attr("target", "_blank");
+      });
+    </script>
+  </body>
+</html>
