@@ -236,14 +236,14 @@ class: left, middle
 
 ```python
 # Python
-[x + 2 for x in range(0, 5)]
-# => [2, 3, 4, 5, 6]
+[x * y for x in range(1, 4) for y in range(5, 8)]
+# => [5, 6, 7, 10, 12, 14, 15, 18, 21]
 ```
 
 ```haskell
 -- Haskell
-[x + 2 | x <- [0..5]]
--> [2, 3, 4, 5, 6, 7]
+[x * y | x <- [1..3], y <- [5..7]]
+-> [5, 6, 7, 10, 12, 14, 15, 18, 21]
 ```
 
 ---
@@ -255,28 +255,258 @@ Scalaのfor内包表記もこれにあたります。
 
 ```scala
 // Scala
-for {x <- 0 to 5} yield x + 2
--> Vector(2, 3, 4, 5, 6, 7)
+for (x <- 1 to 3; y <- 5 to 7) yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
 ```
 
 比較用
 
 ```python
 # Python
-[x + 2 for x in range(0, 5)]
-# => [2, 3, 4, 5, 6]
+[x * y for x in range(1, 4) for y in range(5, 8)]
+# => [5, 6, 7, 10, 12, 14, 15, 18, 21]
 ```
 
 ```haskell
 -- Haskell
-[x + 2 | x <- [0..5]]
--> [2, 3, 4, 5, 6, 7]
+[x + 2 | x <- [1..3], y <- [5..7]]
+-> [5, 6, 7, 10, 12, 14, 15, 18, 21]
+```
+
+---
+class: left, middle
+
+# for-yield
+
+```scala
+for (x <- 1 to 3; y <- 5 to 7) yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+() を {} で書くこともできます。
+
+```scala
+for {x <- 1 to 3; y <- 5 to 7} yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+---
+class: left, middle
+
+# for-yield
+
+{} を使うと改行で ; の代わりにすることができます。
+
+```scala
+for {x <- 1 to 3; y <- 5 to 7} yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+```scala
+for {
+  x <- 1 to 3
+  y <- 5 to 7
+} yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+こちらの方が見やすくなるケースが多い印象です。
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+Pythonでは生成したいオブジェクト毎に内包表記が分かれています。
+
+```python
+# リスト内包表記
+[x * y for x in range(1, 4) for y in range(1, 4)]
+# => [1, 2, 3, 2, 4, 6, 3, 6, 9]
+```
+
+```python
+# セット内包表記
+{x * y for x in range(1, 4) for y in range(1, 4)}
+# => {1, 2, 3, 4, 6, 9}
+```
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+Haskell 標準ではリスト内包表記のみですが、GHC拡張でモナド内包表記がつかえるようになります。
+
+```haskell
+:set -XMonadComprehensions
+Prelude> [x * y | x <- Just 2, y <- Just 3]
+Just 6
+Prelude> [x * y | x <- Just 2, y <- Nothing]
+Nothing
+```
+
+内包表記で任意のモナドインスタンスの値を定義できます。
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+Scalaの場合モナド内包表記に近いですが、<br/>もっと<strong>ゆるふわ</strong>です。
+
+map メソッドと flatMap メソッドを持っていれば for-yield で使う事ができます。
+
+---
+class: left, middle
+
+## 余談
+
+Scalaにまつわるよくある誤解に<br/>
+<strong>「モナドを理解してないとScalaは使えない」</strong><br/>
+とか<br/>
+<strong>「Scalaのfor式はモナドのための構文である」</strong><br/>
+とかいうものがありますが、<br/>これは正しくありません。
+
+
+---
+class: left, middle
+
+## 余談
+
+そもそもScala標準ライブラリの範囲ではMonadという型は存在しません。
+
+Scalaのfor式ではモナドインスタンスを定義できない型につてもfor-yieldで扱うことができます。
+
+```scala
+val map = for {
+  (key, value) <- Map("a" -> 1, "b" -> 2)
+} yield (key+key) -> (value*10)
+-> Map("aa" -> 10, "bb" -> 20)
+```
+
+---
+class: left, middle
+
+## 余談
+
+Scalaはモナドを知らなくても普通に使えるように注意深く設計されています。
+
+<section>
+もちろんモナドを理解していると、Scalaに限らずいろんな言語でのプログラミングに役立つので、理解しようとする努力が無駄なわけではありません。
+</section>
+
+---
+class: left, middle
+
+## 閑話休題
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+Scala では map メソッドと flatMap メソッドを持っていればfor-yieldで使う事ができます。
+
+```scala
+for {
+  x <- Seq("1", "2", "abc", "4")
+  y <- Try(x.toInt).toOption
+} yield y * y
+-> Seq(1, 4, 16)
+```
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+なぜそんな事が可能なのかというと、
+実はScalaのfor-yieldは<strong>糖衣構文</strong>だからなのです。
+
+Scalaでは for-yield で書いた式はコンパイル時に map/flatMap を使った式に変換されます。
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+```scala
+for {
+  x <- Seq("1", "2", "abc", "4")
+  y <- Try(x.toInt).toOption
+} yield y * y
+```
+
+これが
+
+```scala
+Seq("1", "2", "abc", "4").flatMap { x =>
+  Try(x.toInt).toOption.map { y =>
+    y * y
+  }
+}
+```
+
+こうなります。
+
+---
+class: left, middle
+
+従って、for-yield の結果がどんな型になるかはほぼ最初の部分を見れば判明します。
+
+```scala
+for {
+  x <- Vector(1,2,3)
+  y <- List(1,2)
+} yield x * y
+-> Vector(1, 2, 3, 2, 4, 6) 
+// Vector#flatMap なので
+```
+
+```scala
+for {
+  x <- List(1,2,3)
+  y <- List(1,2)
+} yield x * y
+-> List(1, 2, 3, 2, 4, 6)
+// List#flatMap なので
+```
+
+---
+class: left, middle
+
+一部、最初の部分だけでは決定できない場合は、yield の式も含めて判断すればOKです。
+
+```scala
+val map = for {
+  (key, value) <- Map("a" -> 1, "b" -> 2)
+} yield (key+key) -> (value*10)
+-> Map("aa" -> 10, "bb" -> 20)
+```
+
+```scala
+val map = for {
+  (_, value) <- Map("a" -> 1, "b" -> 2)
+} yield value * 10
+-> Iterable(10, 20)
 ```
 
 ---
 class: middle
 
+## まとめ
 
+* Scala の for-yield は内包表記です
+* ゆるふわなので map/flatMap があれば何でもいけます
+    * モナドなんて言う人知らない
+* 最初の部分の型がわかれば結果の型がだいたいわかります
 
 ---
 class: middle
