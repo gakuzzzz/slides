@@ -1,0 +1,525 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <title>for式再入門</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-code, .remark-inline-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# for式再入門
+
+市ヶ谷Geek★Night#14 2017/09/22
+
+---
+class: left, middle
+
+## 自己紹介
+
+* 中村 学(Nakamura Manabu)
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value 代表取締役
+* Opt Technologies 技術顧問 <img src="./images/opt_logo_1.jpg" alt="Opt Technologies" width="450" style="margin-left: 0px" /> 
+* f-code チーフアーキテクト <img src="./images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+
+---
+class: left, middle
+
+## 前置き
+
+for という制御構造は多くの言語に見られますが、<br>
+Scalaにおけるfor式は他の言語のそれとは大きく趣を異にします。
+
+今日はそのScalaのfor式について解説します。
+
+---
+class: middle
+
+# for-yield
+
+---
+class: center, middle
+
+# for-yield
+
+Scalaのfor式は大きくわけて2種類あります。
+
+予約語 yield がつくものとつかないものです。
+
+今日は yield がつくものに限って話をします。
+
+---
+class: left, middle
+
+# for-yield
+
+```scala
+scala> for {
+     |   x <- 1 to 3
+     |   y <- 5 to 7
+     | } yield x * y
+res1: scala.collection.immutable.IndexedSeq[Int] = 
+  Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+---
+class: center,middle
+
+# for-yield
+
+yield が付くfor式のことを<br/>
+<strong>for comprehension</strong><br/>
+と言います。
+
+---
+class: left,middle
+
+# for comprehension
+
+---
+class: middle
+
+# for 内包表記
+
+---
+class: middle
+
+# ？？？？？？
+
+---
+class: middle
+
+## 突然ですが数学クイズです
+
+---
+class: middle
+
+## Question
+
+```scala
+{2, 3, 4, 5, X, ...}
+```
+
+X に入る数字は何でしょう？
+
+---
+class: left, middle
+
+## Answer
+
+```scala
+{2, 3, 4, 5, 4, ...}
+```
+
+　&nbsp;
+
+---
+class: left, middle
+
+## Answer
+
+```scala
+{2, 3, 4, 5, 4, ...}
+```
+
+これは歴代プリキュアの人数を表した数列の一例です。
+
+参考）[数列「2, 3, 4, 5, 6, 4, 4, 4」は歴代プリキュアの人数](https://togetter.com/li/894329)
+
+<section>
+※注意<br/>
+プリキュアの人数のカウント方法には諸説あるそうです。踏みこむと vim vs Emacs ばりに激しい激しい戦争になってますので、あくまで一例としてお考えください。<br/>
+僕個人がこのカウント方法を支持している訳ではありません
+</section>
+---
+class: left, middle
+
+## 外延的記法(外延表記)
+
+```scala
+{2, 3, 4, 5, 4, ...}
+```
+
+ある集合を表現する際にその要素の具体値を列挙して書く表現を<strong>外延的記法</strong>と言います。
+
+---
+class: middle
+
+## 外延的記法(外延表記)
+
+外延的記法は具体的でわかりやすいものの、全ての要素を列挙しきれない場合も多く省略が使われます。
+
+そうすると前述のように集合の要素に誤解を与えたりしますし、誤解無く表現するのが非常に難しくなったりします。
+
+---
+class: left, middle
+
+## 内包的記法(内包表記)
+
+```scala
+偶数 = {x | x ∈ 整数 かつ x ÷ 2 の剰余は 0}
+```
+
+この様に要素の条件を明示して集合を表す記法を<br><strong>内包的記法</strong>と言います。
+
+---
+class: left, middle
+
+## 内包表記inプログラム
+
+一部のプログラミング言語ではこの内包的記法をプログラム中に書けるようサポートしています。
+
+```python
+# Python
+[x * y for x in range(1, 4) for y in range(5, 8)]
+# => [5, 6, 7, 10, 12, 14, 15, 18, 21]
+```
+
+```haskell
+-- Haskell
+[x * y | x <- [1..3], y <- [5..7]]
+-> [5, 6, 7, 10, 12, 14, 15, 18, 21]
+```
+
+---
+class: middle
+
+## 内包表記inプログラム
+
+Scalaのfor内包表記もこれにあたります。
+
+```scala
+// Scala
+for (x <- 1 to 3; y <- 5 to 7) yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+比較用
+
+```python
+# Python
+[x * y for x in range(1, 4) for y in range(5, 8)]
+# => [5, 6, 7, 10, 12, 14, 15, 18, 21]
+```
+
+```haskell
+-- Haskell
+[x + 2 | x <- [1..3], y <- [5..7]]
+-> [5, 6, 7, 10, 12, 14, 15, 18, 21]
+```
+
+---
+class: left, middle
+
+# for-yield
+
+```scala
+for (x <- 1 to 3; y <- 5 to 7) yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+() を {} で書くこともできます。
+
+```scala
+for {x <- 1 to 3; y <- 5 to 7} yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+---
+class: left, middle
+
+# for-yield
+
+{} を使うと改行で ; の代わりにすることができます。
+
+```scala
+for {x <- 1 to 3; y <- 5 to 7} yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+```scala
+for {
+  x <- 1 to 3
+  y <- 5 to 7
+} yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+こちらの方が見やすくなるケースが多い印象です。
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+Pythonでは生成したいオブジェクト毎に内包表記が分かれています。
+
+```python
+# リスト内包表記
+[x * y for x in range(1, 4) for y in range(1, 4)]
+# => [1, 2, 3, 2, 4, 6, 3, 6, 9]
+```
+
+```python
+# セット内包表記
+{x * y for x in range(1, 4) for y in range(1, 4)}
+# => {1, 2, 3, 4, 6, 9}
+```
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+Haskell 標準ではリスト内包表記のみですが、GHC拡張でモナド内包表記がつかえるようになります。
+
+```haskell
+:set -XMonadComprehensions
+Prelude> [x * y | x <- Just 2, y <- Just 3]
+Just 6
+Prelude> [x * y | x <- Just 2, y <- Nothing]
+Nothing
+```
+
+内包表記で任意のモナドインスタンスの値を定義できます。
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+Scalaの場合モナド内包表記に近いですが、<br/>もっと<strong>ゆるふわ</strong>です。
+
+map メソッドと flatMap メソッドを持っていれば for-yield で使う事ができます。
+
+---
+class: left, middle
+
+## 余談
+
+Scalaにまつわるよくある誤解に<br/>
+<strong>「モナドを理解してないとScalaは使えない」</strong><br/>
+とか<br/>
+<strong>「Scalaのfor式はモナドのための構文である」</strong><br/>
+とかいうものがありますが、<br/>これは正しくありません。
+
+
+---
+class: left, middle
+
+## 余談
+
+そもそもScala標準ライブラリの範囲ではMonadという型は存在しません。
+
+Scalaのfor式ではモナドインスタンスを定義できない型につてもfor-yieldで扱うことができます。
+
+```scala
+val map = for {
+  (key, value) <- Map("a" -> 1, "b" -> 2)
+} yield (key+key) -> (value*10)
+-> Map("aa" -> 10, "bb" -> 20)
+```
+
+---
+class: left, middle
+
+## 余談
+
+Scalaはモナドを知らなくても普通に使えるように注意深く設計されています。
+
+<section>
+もちろんモナドを理解していると、Scalaに限らずいろんな言語でのプログラミングに役立つので、理解しようとする努力が無駄なわけではありません。
+</section>
+
+---
+class: left, middle
+
+## 閑話休題
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+Scala では map メソッドと flatMap メソッドを持っていればfor-yieldで使う事ができます。
+
+```scala
+for {
+  x <- Seq("1", "2", "abc", "4")
+  y <- Try(x.toInt).toOption
+} yield y * y
+-> Seq(1, 4, 16)
+```
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+なぜそんな事が可能なのかというと、
+実はScalaのfor-yieldは<strong>糖衣構文</strong>だからなのです。
+
+Scalaでは for-yield で書いた式はコンパイル時に map/flatMap を使った式に変換されます。
+
+---
+class: left, middle
+
+## List 以外の内包表記
+
+```scala
+for {
+  x <- Seq("1", "2", "abc", "4")
+  y <- Try(x.toInt).toOption
+} yield y * y
+```
+
+これが
+
+```scala
+Seq("1", "2", "abc", "4").flatMap { x =>
+  Try(x.toInt).toOption.map { y =>
+    y * y
+  }
+}
+```
+
+こうなります。
+
+---
+class: left, middle
+
+従って、for-yield の結果がどんな型になるかはほぼ最初の部分を見れば判明します。
+
+```scala
+for {
+  x <- Vector(1,2,3)
+  y <- List(1,2)
+} yield x * y
+-> Vector(1, 2, 3, 2, 4, 6) 
+// Vector#flatMap なので
+```
+
+```scala
+for {
+  x <- List(1,2,3)
+  y <- List(1,2)
+} yield x * y
+-> List(1, 2, 3, 2, 4, 6)
+// List#flatMap なので
+```
+
+---
+class: left, middle
+
+一部、最初の部分だけでは決定できない場合は、yield の式も含めて判断すればOKです。
+
+```scala
+val map = for {
+  (key, value) <- Map("a" -> 1, "b" -> 2)
+} yield (key+key) -> (value*10)
+-> Map("aa" -> 10, "bb" -> 20)
+```
+
+```scala
+val map = for {
+  (_, value) <- Map("a" -> 1, "b" -> 2)
+} yield value * 10
+-> Iterable(10, 20)
+```
+
+---
+class: middle
+
+## まとめ
+
+* Scala の for-yield は内包表記です
+* ゆるふわなので map/flatMap があれば何でもいけます
+    * モナドなんて言う人知らない
+* 最初の部分の型がわかれば結果の型がだいたいわかります
+
+---
+class: middle
+
+## 質問とか
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+    </script>
+  </body>
+</html>
