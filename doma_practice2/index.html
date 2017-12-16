@@ -1,0 +1,825 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <title>Refactoringで覚えるDomaの使い方</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-inline-code {
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      .remark-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Refactoringで覚える<br />Domaの使い方
+
+Doma勉強会in東京 2017/12/16
+
+---
+class: left, middle
+
+## 自己紹介
+
+* 中村 学(Nakamura Manabu)
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value 代表取締役
+* Opt Technologies 技術顧問 <img src="./images/opt_logo_1.jpg" alt="Opt Technologies" width="450" style="margin-left: 0px" /> 
+* f-code チーフアーキテクト <img src="./images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+
+---
+class: center, middle
+
+## 今日の内容
+
+実際のコードを修正していく過程を通じて、<br/>
+Domaの実用的な使い方を確認していきましょう。
+
+---
+class: middle
+
+## 前提となるコード(Entity)
+
+```java
+import org.seasar.doma.Entity;
+import lombok.Value;
+
+@Entity(immutable = true)
+@Value
+public class Group {
+  @Id
+  ID<Group> id;
+  Name<Group> name;
+}
+```
+
+<section>
+※LombokはJavaのボイラープレートを削減するライブラリです。<br />
+@Value を使うと全てのフィールドを private final にし、<br />
+全てのフィールド分の値を受け取るコンストラクタを定義し、<br />
+全てのgetterやequlasやhashCodeまで自動で定義してくれます。<br />
+<br />
+DomaのImmutableなEntityにはぴったりです。
+</section>
+
+---
+class: left, middle
+
+## 前提となるコード(Entity)
+
+もう一つ `User` という Entity を用意します。
+
+```java
+import org.seasar.doma.Entity;
+import lombok.Value;
+
+@Entity(immutable = true)
+@Value
+public class User {
+  @Id
+  ID<User> id;
+  Name<User> name;
+  ID<Group> groupId;
+}
+```
+
+`Group` と `User` は 1:N の関係になります。
+
+---
+class: left, middle
+
+## 前提となるコード
+
+`Group` と `User` の関係を表現する型も定義します。
+
+```java
+import lombok.Value;
+import java.util.List;
+
+@Value
+public class GroupView {
+  Group group;
+  List<User> users;
+}
+```
+
+`GroupView` は Doma の Entity にはなりません。
+
+---
+class: left, middle
+
+### 前提となるコード(再掲)
+
+```java
+@Entity(immutable = true)
+@Value
+public class User {
+  @Id
+  ID<User> id;
+  Name<User> name;
+  ID<Group> groupId;
+}
+
+@Entity(immutable = true)
+@Value
+public class Group {
+  @Id
+  ID<Group> id;
+  Name<Group> name;
+}
+
+@Value
+public class GroupView {
+  Group group;
+  List<Member> members;
+}
+```
+
+---
+class: left, middle
+
+## 要件
+
+この `GroupView` の一覧を画面に表示するための Service を書く必要が出てきました。
+
+```java
+import java.util.List;
+
+public class FindGroupService {
+
+  public List<GroupView> findGroups(int limit, int offset) {
+    ??? 
+  }
+
+}
+```
+
+これを実装していきましょう
+
+---
+class: left, middle
+
+## スタートのコード(Dao)
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import java.util.List;
+
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  @Select
+  List<User> findByGroupId(ID<Group> groupId);
+}
+```
+
+```sql
+-- UserDao/findByGroupId.sql
+SELECT * FROM user WHERE group_id = /* groupId */1
+```
+
+---
+class: left, middle
+
+## スタートのコード(Dao)
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.jdbc.SelectOptions;
+import java.util.List;
+
+@Dao(config = ComfigImpl.class)
+public interface GroupDao {
+  @Select
+  List<Group> findAll(SelectOptions option);
+}
+```
+
+```sql
+-- GroupDao/findAll.sql
+SELECT * FROM group
+```
+
+---
+class: left, middle
+
+### スタートのコード(Service)
+
+```java
+import static java.util.stream.Collectors.toList;
+import java.util.List;
+import org.seasar.doma.jdbc.SelectOptions;
+
+
+@Value
+public class FindGroupService {
+  UserDao userDao;
+  GroupDao groupDao;
+
+  public List<GroupView> findGroups(int limit, int offset) {
+    SelectOptions opt = SelectOptions.get().limit(limit).offset(offset);
+    List<Group> groups = groupDao.findAll(opt);
+    return groups.stream()
+      .map(this::groupToView)
+      .collect(toList());
+  }
+
+  private GroupView groupToView(Group group) {
+    List<User> users = userDao.findByGroupId(group.getId());
+    return new GroupView(group, users);
+  }
+}
+
+```
+
+---
+class: middle
+
+## 何が問題でしょう？
+
+---
+class: middle
+
+## 問題点： N+1 クエリ
+
+---
+class: left, middle
+
+`findByGroupId` が `Group` の件数回実行されます。
+
+```java
+import static java.util.stream.Collectors.toList;
+import java.util.List;
+import org.seasar.doma.jdbc.SelectOptions;
+
+
+@Value
+public class FindGroupService {
+  UserDao userDao;
+  GroupDao groupDao;
+
+  public List<GroupView> findGroups(int limit, int offset) {
+    SelectOptions opt = SelectOptions.get().limit(limit).offset(offset);
+    List<Group> groups = groupDao.findAll(opt);
+    return groups.stream()
+      .map(this::groupToView)
+      .collect(toList());
+  }
+
+  private GroupView groupToView(Group group) {
+    List<User> users = userDao.findByGroupId(group.getId());
+    return new GroupView(group, users);
+  }
+}
+```
+
+
+---
+class: left, middle
+
+## IN句の利用
+
+---
+class: middle
+
+## UserDao(再掲)
+
+これを
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import java.util.List;
+
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  @Select
+  List<User> findByGroupId(ID<Group> groupId);
+}
+```
+
+```sql
+-- UserDao/findByGroupId.sql
+SELECT * FROM user WHERE group_id = /* groupId */1
+```
+
+---
+class: middle
+
+## IN句の利用
+
+次のように変えます
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import java.util.List;
+
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  @Select
+  List<User> findByGroupIds(List<ID<Group>> groupIds);
+}
+```
+
+```sql
+-- UserDao/findByGroupId.sql
+SELECT * FROM user WHERE group_id IN /* groupIds */(1, 2, 3)
+```
+
+---
+class: left, middle
+
+### Service(再掲)
+
+すると以下のコードが
+
+```java
+@Value
+public class FindGroupService {
+  UserDao userDao;
+  GroupDao groupDao;
+
+  public List<GroupView> findGroups(int limit, int offset) {
+    SelectOptions opt = SelectOptions.get().limit(limit).offset(offset);
+    List<Group> groups = groupDao.findAll(opt);
+    return groups.stream()
+      .map(this::groupToView)
+      .collect(toList());
+  }
+
+  private GroupView groupToView(Group group) {
+    List<User> users = userDao.findByGroupId(group.getId());
+    return new GroupView(group, users);
+  }
+}
+```
+
+---
+class: left, middle
+
+次の様になります。
+
+```java
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.Collections.emptyList;
+// 中略
+  public List<GroupView> findGroups(int limit, int offset) {
+    SelectOptions opt = SelectOptions.get().limit(limit).offset(offset);
+    List<Group> groups = groupDao.findAll(opt);
+    List<ID<Group>> ids = 
+      groups.stream().map(Group::getId).collect(toList()) 
+    List<User> users = userDao.findByGroupIds(ids);
+    Map<ID<Group>, List<User>> refs = 
+      users.stream().collect(groupingBy(User::getGroupId))
+    return groups.stream().map(groupToView(refs)).collect(toList());
+  }
+
+  private Function<Group, GroupView> groupToView(
+      Map<ID<Group>, List<User>> userMap) {
+    return group -> new GroupView(
+      group, userMap.getOrDefault(group.getId(), emptyList())
+    );
+  }
+```
+
+---
+class: left, middle
+
+## 次の課題
+
+---
+class: left, middle
+
+### 問題点
+
+とまでは言い辛いですが、<br/>
+複数の `ID<Group>` を渡して `User` を取得する場合、<br/>
+直接 `Map<ID<Group>, List<User>>` で受け取りたい。
+
+```java
+public interface UserDao {
+  @Select
+  List<User> findByGroupIds(List<ID<Group>> groupIds);
+}
+```
+
+```java
+List<ID<Group>> groupIds = ...
+List<User> users = userDao.findByGroupIds(groupIds);
+Map<ID<Group>, List<User>> refs = 
+  users.stream().collect(groupingBy(User::getGroupId))
+```
+
+
+---
+class: left, middle
+
+## Collect検索の導入
+
+---
+class: middle
+
+## Collect検索とは
+
+[Stream検索](http://doma.readthedocs.io/ja/stable/query/select/#id8) のショートカット。
+
+Stream検索は検索結果を一度に全て`java.util.List`にして受け取るのではなく、`java.util.stream.Stream`で扱うための検索です。
+
+リソースのクローズがあるので、メソッド引数に `Function<Stream<ENTITY>, RESULT>` を渡すのが基本になります。
+
+---
+class: middle
+
+## Stream検索の例
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.SelectType;
+
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+@Dao(config = ConfigImpl.class)
+public interface FooDao {
+
+    @Select(strategy = SelectType.STREAM)
+    <R> R findAll(Function<Stream<Foo>, R> func);
+}
+```
+
+```java
+import static java.util.stream.Collectors.toList;
+
+List<Foo> foos = fooDao.findAll(s -> s.collect(toList()));
+```
+
+---
+## Collect検索
+
+Stream検索は、基本的に大量のレコードを扱うときに便利な検索ですが、`collect` を使って値を生成することで、任意の型の結果を返すことが可能になります。
+
+```java
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
+List<Foo> list = fooDao.findAll(s -> s.collect(toList()));
+Set<Foo>  set  = fooDao.findAll(s -> s.collect(toSet()));
+```
+
+そのため、Daoのメソッド引数に直接 `java.util.stream.Collector` を渡せるようにしたものがCollect検索になります。
+
+---
+class: middle
+
+### UserDao(再掲)
+
+そのCollect検索を使い、以下の `UserDao` を
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import java.util.List;
+
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  @Select
+  List<User> findByGroupIds(List<ID<Group>> groupIds);
+}
+```
+
+```sql
+-- UserDao/findByGroupId.sql
+SELECT * FROM user WHERE group_id IN /* groupIds */(1, 2, 3)
+```
+
+
+---
+class: middle
+
+### Collect検索の導入
+
+次のように変えます
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.SelectType;
+import java.util.List;
+import java.util.stream.Collector;
+
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  @Select(strategy = SelectType.COLLECT)
+  <R> R findByGroupIds(
+    List<ID<Group>> groupIds, Collector<User, ?, R> collector);
+}
+```
+
+クエリには変更ありません
+
+
+---
+class: left, middle
+
+### Service(再掲)
+
+すると以下のコードが
+
+```java
+  public List<GroupView> findGroups(int limit, int offset) {
+    SelectOptions opt = SelectOptions.get().limit(limit).offset(offset);
+    List<Group> groups = groupDao.findAll(opt);
+    List<ID<Group>> ids = 
+      groups.stream().map(Group::getId).collect(toList()) 
+    List<User> users = userDao.findByGroupIds(ids);
+    Map<ID<Group>, List<User>> refs = 
+      users.stream().collect(groupingBy(User::getGroupId))
+    return groups.stream().map(groupToView(refs)).collect(toList());
+  }
+
+  private Function<Group, GroupView> groupToView(
+      Map<ID<Group>, List<User>> userMap) {
+    return group -> new GroupView(
+      group, userMap.getOrDefault(group.getId(), emptyList())
+    );
+  }
+```
+
+---
+class: left, middle
+
+### Collect検索の導入
+
+次の様に変更できます。
+
+```java
+  public List<GroupView> findGroups(int limit, int offset) {
+    SelectOptions opt = SelectOptions.get().limit(limit).offset(offset);
+    List<Group> groups = groupDao.findAll(opt);
+    List<ID<Group>> ids = 
+      groups.stream().map(Group::getId).collect(toList()) 
+    Map<ID<Group>, List<User>> refs = 
+      userDao.findByGroupIds(ids, groupingBy(User::getGroupId));
+    return groups.stream().map(groupToView(refs)).collect(toList());
+  }
+
+  private Function<Group, GroupView> groupToView(
+      Map<ID<Group>, List<User>> userMap) {
+    return group -> new GroupView(
+      group, userMap.getOrDefault(group.getId(), emptyList())
+    );
+  }
+```
+
+---
+class: left, middle
+
+## 次の問題点
+
+---
+class: left, middle
+
+### 次の問題点
+
+このDaoにまだ問題が潜んでいます。
+
+一旦 今のService を忘れて、<br/>このDao単体で見て考えてみてください。
+
+```java
+// import略
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  @Select(strategy = SelectType.COLLECT)
+  <R> R findByGroupIds(
+    List<ID<Group>> groupIds, Collector<User, ?, R> collector);
+}
+```
+
+---
+class: middle
+
+### 次の問題点
+
+* groupIds の件数が膨大だった場合、<br/>RDBによってクエリの長さ上限や<br/>IN句の個数上限を超える場合がある
+* IN句の数が不定のためStatement Cacheに乗せ辛い
+
+```java
+// import略
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  @Select(strategy = SelectType.COLLECT)
+  <R> R findByGroupIds(
+    List<ID<Group>> groupIds, Collector<User, ?, R> collector);
+}
+```
+
+---
+class: middle
+
+## defaultメソッドの活用
+
+---
+class: middle
+
+## defaultメソッドの活用
+
+Java8から interface に defaultメソッド が定義できるようになりました。
+
+これを使い IN句の数を制御してみましょう。
+
+---
+class: middle
+
+### Dao(再掲)
+
+以下のコードにdefaultメソッドを追加すると、<br/>
+次のページの様になります。
+
+```java
+import org.seasar.doma.Dao;
+import org.seasar.doma.Select;
+import org.seasar.doma.SelectType;
+import java.util.List;
+import java.util.stream.Collector;
+
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  @Select(strategy = SelectType.COLLECT)
+  <R> R findByGroupIds(
+    List<ID<Group>> groupIds, Collector<User, ?, R> collector);
+}
+```
+
+---
+class: middle
+
+### defaultメソッドの活用
+
+まず、IN句の最大数を制限します。
+
+```java
+import org.seasar.doma.{Dao, Select, SelectType};
+import java.util.List;
+import java.util.stream.{Collector, Stream};
+import com.google.common.collect.Lists; // Guava
+
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  static final int __MAX_IN_NUM = 1000;
+
+  @Suppress(messages = { Message.DOMA4274 })
+  Stream<User> __findByGroupIds(List<ID<Group>> groupIds);
+
+  default <R> R findByGroupIds(
+      List<ID<Group>> groupIds, Collector<User, ?, R> collector) {
+    return Lists.partition(ids, __MAX_IN_NUM).stream()
+      .flatMap(this::__findByGroupIds)
+      .collect(collctor);
+    // partition は List<A> を第二引数の数ごと区切って
+    // List<List<A>> にする処理です
+  }
+}
+```
+
+---
+class: middle
+
+### defaultメソッドの活用
+
+次に、Statement Cache を活用するために、<br/>IN句の数を一定にします。
+
+---
+class: middle
+
+```java
+import org.seasar.doma.{Dao, Select, SelectType};
+import java.util.{Collections, List};
+import java.util.stream.{Collector, Collectors, Stream};
+import com.google.common.collect.Lists; // Guava
+
+@Dao(config = ComfigImpl.class)
+public interface UserDao {
+  static final int __MAX_IN_NUM = 1000;
+  static final List<ID<Group>> __COMPLEMENT =
+    Collections.nCopies(__MAX_IN_NUM, ID.notAssigned());
+
+  @Suppress(messages = { Message.DOMA4274 })
+  Stream<User> __findByGroupIds(List<ID<Group>> groupIds);
+
+  default <R> R findByGroupIds(
+      List<ID<Group>> groupIds, Collector<User, ?, R> collector) {
+    return Lists.partition(ids, __MAX_IN_NUM).stream()
+      .map(this::__fill)
+      .flatMap(this::__findByGroupIds)
+      .collect(collctor);
+  }
+
+  default List<GroupId> __fill(List<GroupId> list) {
+    return list.size() == __MAX_IN_NUM
+      ? list
+      : Stream.concat(list.stream(), __COMPLEMENT.stream())
+          .limit(__MAX_IN_NUM).collect(toList());
+  }
+}
+```
+
+---
+class: middle
+
+## 注意点
+
+* Statement Cache を優先して不必要なIDを送っていますが、転送量などによってはむしろパフォーマンスが落ちる場合もあるので、実際はきちんと計測してから実装しましょう。
+
+
+---
+class: left, middle
+
+## まとめ
+
+* IN句で複雑なオブジェクト構築のN+1が避けられる
+* Collect検索で柔軟に検索結果を受け取れる
+* defaultメソッドで引数や戻り値を制御できる
+
+---
+class: middle
+
+## 質問とか
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+    </script>
+  </body>
+</html>
