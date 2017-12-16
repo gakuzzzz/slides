@@ -726,7 +726,7 @@ class: middle
 まず、IN句の最大数を制限します。
 
 ```java
-import org.seasar.doma.{Dao, Select, SelectType};
+import org.seasar.doma.{Dao, Select};
 import java.util.List;
 import java.util.stream.{Collector, Stream};
 import com.google.common.collect.Lists; // Guava
@@ -735,7 +735,7 @@ import com.google.common.collect.Lists; // Guava
 public interface UserDao {
   static final int __MAX_IN_NUM = 1000;
 
-  @Suppress(messages = { Message.DOMA4274 })
+  @Select @Suppress(messages = { Message.DOMA4274 })
   Stream<User> __findByGroupIds(List<ID<Group>> groupIds);
 
   default <R> R findByGroupIds(
@@ -771,7 +771,7 @@ public interface UserDao {
   static final List<ID<Group>> __COMPLEMENT =
     Collections.nCopies(__MAX_IN_NUM, ID.notAssigned());
 
-  @Suppress(messages = { Message.DOMA4274 })
+  @Select @Suppress(messages = { Message.DOMA4274 })
   Stream<User> __findByGroupIds(List<ID<Group>> groupIds);
 
   default <R> R findByGroupIds(
