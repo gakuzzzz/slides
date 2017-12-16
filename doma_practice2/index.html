@@ -777,12 +777,12 @@ public interface UserDao {
   default <R> R findByGroupIds(
       List<ID<Group>> groupIds, Collector<User, ?, R> collector) {
     return Lists.partition(ids, __MAX_IN_NUM).stream()
-      .map(this::__fill)
+      .map(this::fill)
       .flatMap(this::__findByGroupIds)
       .collect(collctor);
   }
 
-  default List<GroupId> __fill(List<GroupId> list) {
+  private List<GroupId> fill(List<GroupId> list) {
     return list.size() == __MAX_IN_NUM
       ? list
       : Stream.concat(list.stream(), __COMPLEMENT.stream())
