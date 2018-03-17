@@ -1,0 +1,475 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <title>Why "Composability" Matters</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-inline-code {
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      .remark-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+      .translation {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background-color: #eeeeee;
+        padding: 0.5em 1em;
+        width: 100%;
+        line-height: 110%;
+      }
+      code {
+        font-size: 100%;
+        background-color: #eeeeff;
+        padding: 3px;
+      }
+      .translation code {
+        padding: 0px;
+        background-color: #cccccc;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td, th {
+        border: 1px solid #333333;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Why "Composability" Matters
+
+Scala Matsuri 2018 2018/03/17
+
+<div class="translation">
+なぜComposabilityは重要か
+</div>
+---
+class: left, middle
+
+## Who am I
+
+* Manabu Nakamura
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd.  CEO
+* Opt Technologies Inc. Technical advisor <img src="../images/opt_logo_1.jpg" alt="Opt Technologies" width="450" style="margin-left: 0px" /> 
+* F-CODE Inc. CTO <img src="../images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+<div class="translation">
+自己紹介: 中村 学<br/>Tech to Value代表 / Opt Technologies技術顧問 / F-CODE CTO
+</div>
+
+---
+class: left, middle
+
+## Introduction
+
+Scala is a programming language that integrates both object-oriented programming and functional programming.
+
+However, these days, most major object-oriented languages incorporate the essence of functional programming to some degree or another.
+
+<div class="translation">
+Scala はオブジェクト指向言語に関数型プログラミングを統合したマルチパラダイム言語です。<br/>
+また今日ではメジャーなオブジェクト指向言語の多くが<br/>
+大なり小なり関数型プログラミングのエッセンスを取り入れています。
+</div>
+
+---
+class: left, middle
+
+## Introduction
+
+If this is the case, then how are these languages different from Scala? One of the key notions to understand this, is the concept of composability.
+
+<div class="translation">
+ではこれらの言語と Scala では何が異なるのでしょうか。 <br/>
+そこに Composability という概念を見出す事ができます。
+</div>
+
+---
+class: left, middle
+
+## Introduction
+
+In this session, I will demonstrate what composability is, and how it affects our day-to-day programming.
+I hope to offer guiding principles to design better API and systems, and to master Scala at a deeper level.
+
+<div class="translation">
+このセッションでは、Composability とは何なのか、<br/>
+それが現実のプログラミングにどのように影響するのか、を示し<br/>
+より深くScalaを使いこなし、<br/>
+より良いAPI設計やシステム設計を行うための指針を提供します。
+</div>
+
+---
+class: left, middle
+
+## What does "Composability" mean?
+
+<div class="translation">
+そもそも "Composability" とはどういう意味なのでしょうか？
+</div>
+
+---
+class: left, middle
+
+## What does "Composability" mean?
+
+Before considering "Composability",
+First of all, let's think about what is "Composition"
+
+<div class="translation">
+いきなり "Composability" を考える前に、<br/>
+まずは「合成」とは何かを考えましょう
+</div>
+
+
+---
+class: left, middle
+
+## What does "Composition" mean?
+
+In programming, there are several kinds even if saying "composition" in one word.
+
+```scala
+// Function Composition
+val f: String => Int = ...
+val g: Date => String = ...
+
+val h: Date => Int = f compose g
+```
+
+```scala
+// Object Composition
+case class User(name: String)
+case class Group(name: String, users: Seq[User])
+```
+
+
+<div class="translation">
+プログラミングにおいて、一口に「合成」と言っても様々なものがあります。<br/>
+例えば関数合成やオブジェクト合成など
+</div>
+
+---
+class: left, middle
+
+## What does "Composition" mean?
+
+It says to compose multiple `Option` instances to create a new `Option` instance.
+
+```scala
+val o1: Option[Int] = ...
+val o2: Option[String] = ...
+
+val o3: Option[Int] = for {
+  v1 <- o1
+  v2 <- o2
+} yield v1 + v2.toInt
+```
+
+<div class="translation">
+複数の `Option` インスタンスを合成して<br/>
+新しい `Option` インスタンスを生成すると言ったりもします。
+</div>
+
+---
+class: left, middle
+
+## What does "Composition" mean?
+
+"Composition" means
+that combining different elements of the same concept in several ways to make another element of the same concept.
+
+<div class="translation">
+これらをまとめると、合成とは<br/>
+「同じ概念の異なる要素を特定の方法で組み合わせて同一概念の別要素を作ること」<br/>
+と言えます。
+</div>
+
+---
+class: left, middle
+
+## What does "Composability" mean?
+
+And "Composability" is the property that
+"When Composing things with certain properties, they retain the same properties after composition"
+
+<div class="translation">
+そして "Composability" とは本来<br/>
+「ある性質を持ったものを合成した際、合成後も同一の性質を保つ」<br/>
+という性質をさします
+</div>
+
+---
+class: left, middle
+
+## What does "Composability" mean?
+
+It is often said "higher Composability" or "lower Composability"
+
+What does this mean?
+
+
+<div class="translation">
+ただ、時折「"Composability" が高い」もしくは「低い」と表現されることがあります。<br/>
+これは何を意味するのでしょうか
+</div>
+
+---
+class: left, middle
+
+## What does "Composability" mean?
+
+Since I could not find an appropriate formal definition for this representation,
+In this session I would like to define as follows.
+
+By comparing the two concepts, we describe the side with "many ways" to compose as high Composability.
+In other words, the high and low of the Composability in this session,
+It means that it is a relative evaluation.
+
+.
+
+<div class="translation">
+この表現が通る形式的定義がみつけられなかったので、<br/>
+このセッションでは以下のように定義したいと思います。<br/>
+<br/>
+二つの概念を比較して、合成する「方法」が多い側を Composability が高いと表現します。<br/>
+つまり、このセッションで言うComposabilityの高低は、<br/>
+あくまで相対評価であるということです。<br/>
+</div>
+
+
+---
+class: left, middle
+
+## Why "Composability" Matters
+
+<div class="translation">
+では、なぜこの "Composability" という概念が重要なのでしょうか。
+</div>
+
+---
+class: left, middle
+
+## Why "Composability" Matters
+
+> "The ways in which one can divide up the original problem depend directly on the ways in which one can glue solutions together. "
+
+<p style="text-align:right">from <a href="http://www.cse.chalmers.se/~rjmh/Papers/whyfp.html">Why Functional Programming Matters</a></p>
+
+<div class="translation">
+「問題を分割する方法は、解を合成する方法に依存する」
+</div>
+
+---
+class: left, middle
+
+## Why "Composability" Matters
+
+The history of programming language evolution,
+It is the history of how to make complex problems "divide and conquer".
+Neither structured programming nor object-oriented programming,
+It is a method for dividing complex problems into simple partial problems and solving them.
+
+<div class="translation">
+プログラミング言語の進化の歴史は、<br/>
+いかに複雑な問題を「分割統治」できるようにするか、の歴史でもあります。<br/>
+構造化プログラミングもオブジェクト指向プログラミングも、</br/>
+複雑な問題を分割し簡単な部分問題にして解くための手法です。
+</div>
+
+---
+class: left, middle
+
+## Why "Composability" Matters
+
+Since "The ways in which one can divide up the original problem depend directly on the ways in which one can glue solutions together",
+The higher "Composability" make it easier to divide and solve the problem.
+
+<div class="translation">
+そして「問題を分割する方法は、解を合成する方法に依存する」ので<br/>
+"Composability" が高い程、問題を分割しやすくなり実装が簡単になります。
+</div>
+
+---
+class: left, middle
+
+## Why "Composability" Matters
+
+And Scala compared to other major object oriented languages,
+Many of language features and standard libraries and general frameworks etc
+It is designed to have "Composability".
+
+<div class="translation">
+そして Scalaは他のメジャーなオブジェクト指向言語と比較して、<br/>
+言語機能や標準ライブラリや一般的なフレームワークなどの多くが <br/>
+"Composability" を持つように設計されています。
+</div>
+
+---
+class: left, middle
+
+## Example.  Conversion Custom Types
+
+<div class="translation">
+例. 独自型の変換
+</div>
+
+---
+class: left, middle
+
+## Example.  Conversion Custom Types
+
+In Spring Web Framework
+
+```java
+@Controller
+@RequestMapping("/sample")
+public class SampleController {
+    @RequestMapping("/test")
+    @ResponseBody
+    public String test(@RequestParam("id") guava.Optional<UserId> id) {
+        ...
+    }
+}
+```
+
+<div class="translation">
+Spring Framework では、</br>
+リクエストパラメータに Guava の Optional で<br/>
+受け取るようなConverterは定義できません。
+</div>
+
+---
+class: left, middle
+
+## Example.  Conversion Custom Types
+
+In Play Framework2
+
+```scala
+implicit def myOptionPathBindable[A](
+    implicit ev: PathBindable[A]
+): PathBindable[Option[A]] = {
+  def bind(key: String, value: String): Either[String, Option[A]] = {
+    Right(ev.bind(key, value).toOption)
+  }
+}
+```
+
+<div class="translation">
+Play2の場合は、`PathBindable[A]` を合成して<br/>
+ `PathBindable[Option[A]]` を生成することができます。
+</div>
+
+---
+class: middle
+
+## Summary
+
+* "Composition" means
+that combining different elements of the same concept in several ways to make another element of the same concept.
+* As a relative evaluation, express concepts with many combinations as higher Composability
+* " The ways in which one can divide up the original problem depend directly on the ways in which one can glue solutions together. "
+* Scala has higher Composability of language mechanisms, standard libraries, etc. than other OOPL
+
+.
+
+<div class="translation">
+・同一概念の異なる要素を組み合わせて同一概念の別要素を作ることを合成と呼ぶ<br/>
+・比較論として組み合わせ方が多い概念をComposabilityが高いと表現する<br/>
+・「問題を分割する方法は、解を合成する方法に依存する」<br/>
+・Scalaは言語機構や標準ライブラリ等のComposabilityが他のOOPLより高い
+</div>
+
+---
+class: left, middle
+
+## Advertising (to Japanese)
+
+Opt Technologies ではエンジニアを募集しています
+
+* [Opt Technologies 採用情報](https://www.opt.ne.jp/opttechnologies/index.html#recruit)
+
+エフ・コードではエンジニアを募集しています
+
+* [エフ・コード 採用情報](https://f-code.co.jp/recruit/engineer.html)
+---
+class: middle
+
+## Any questions?
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+    </script>
+  </body>
+</html>
