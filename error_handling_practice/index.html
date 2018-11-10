@@ -1,0 +1,836 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>明日から使える実践エラーハンドリング</title>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-code, .remark-inline-code {
+        font-size: 90%;
+        color: #660000;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# 明日から使える<br/><strong>実践</strong><br/>エラーハンドリング
+
+Scala関西Summit 2018 11/10
+
+
+---
+class: left, middle
+
+## 自己紹介
+
+* 中村 学(Nakamura Manabu)
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value 代表取締役
+* Opt Technologies 技術顧問 <img src="../images/opt_logo_1.jpg" alt="Opt Technologies" width="450" style="margin-left: 0px" /> 
+* F-CODE CTO <img src="../images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+---
+class: center, middle
+
+## エラー処理の歴史
+
+---
+class: left, middle
+
+## C言語でのエラー処理
+
+C言語では戻り値で成功失敗を表す事が一般的でした。
+
+```c
+int ret = 0;
+ret = doSomething1();
+if (ret != 0) {
+  //エラー処理
+}
+ret = doSomething2();
+if (ret != 0) {
+  //エラー処理
+}
+```
+
+---
+class: left, middle
+
+```c
+int ret = 0;
+ret = doSomething1();
+if (ret != 0) {
+  //エラー処理
+}
+ret = doSomething2();
+if (ret != 0) {
+  //エラー処理
+}
+```
+
+このスタイルでは以下のような問題がありました。
+
+1. エラーのチェックを強制できない
+1. 成功失敗以外の値を返す時に複雑になる
+    * 関数内でグローバル変数を書き換えたり<br>引数にポインタ渡して書き換える等
+1. エラー処理で本筋の処理が埋もれる
+
+---
+class: left, middle
+
+## 例外機構の導入
+
+---
+class: left, middle
+
+### 例外機構の導入
+
+1. エラーのチェックを強制できない
+1. 成功失敗以外の値を返す時に複雑になる
+1. エラー処理で本筋の処理が埋もれる
+
+Java, Scala, Ruby, C#, etc... と言った言語では、<br/>
+上記を解決するために<strong>例外</strong>という仕組みを導入しました。
+
+<section>
+ちなみにGo言語では例外を使わずに「多値を返せるようにする」というアプローチで2.の問題を解決しました。<br/>
+Go 2 では 3. の問題を解決するために <span class="remark-inline-code">handle</span>/<span class="remark-inline-code">check</span> という構文が<a href="https://go.googlesource.com/proposal/+/master/design/go2draft-error-handling-overview.md">検討されています</a>。
+</section>
+
+---
+class: left, middle
+
+## Javaの例外機構
+
+---
+class: left, middle
+
+### Javaの例外機構 
+
+```java
+try {
+    doSomething1();
+    doSomething2();
+} catch(BadCaseException e) {
+    // エラー処理
+}
+```
+
+Javaでは `try` という予約語で失敗する可能性のある処理を囲む事ができます。
+
+そして `catch` という予約語で `try` 内の処理が失敗した時の対応処理を定義することができます。
+
+---
+class: left, middle
+
+### Javaの例外機構 
+
+```java
+public String doSomething1() throws BadCaseException {
+    if (...) {
+        ...
+        return "正常時の戻り値";
+    } else {
+        throw new BadCaseException();
+    }
+}
+```
+
+失敗する可能性のある処理では、失敗を呼び出し側に伝えるために `throw` という予約語を使用します。
+
+`throw` では例外と呼ばれる特殊なオブジェクトを投げる事ができ、これは通常の戻り値とは異なる扱いをされます。
+
+---
+class: left, middle
+
+### Javaの例外機構 
+
+この `throw` で投げられる例外には3種類があります。
+
+1. 致命的なエラー(Error)
+    * 捕捉してエラー処理をしてはいけないもの
+    * Out of Memory など
+1. 検査例外(Exception)
+    * 必ず捕捉してエラー処理をするべきもの
+    * 業務例外など
+1. 実行時例外(RuntimeException)
+    * 捕捉する必要のないもの
+    * バグに起因するものなど
+
+
+---
+class: left, middle
+
+### Javaの例外機構 
+
+この検査例外は必ず捕捉させたいので、<br/>`catch` をするか、あるいは呼び出し元へ伝搬させるか、</br>しない限りコンパイルエラーになります。
+
+```java
+public String doSomething1() throws BadCaseException {
+   ...
+}
+```
+
+従って検査例外を投げる可能性のあるメソッドでは、それが呼び出し元にわかるように、<br/>
+`throws` 予約語を使って明示する必要があります。
+
+
+---
+class: left, middle
+
+### Javaの例外機構 
+
+こういった例外機構を用いる事によって、<br/>
+「戻り値で成功失敗を表すスタイル」で起きていた問題を解決したのです。
+
+1. エラーのチェックを強制できない
+    * 検査例外によってエラーのチェックを強制する
+1. 成功失敗以外の値を返す時に複雑になる
+    * 戻り値は自由に任意の値を返すことができる
+1. エラー処理で本筋の処理が埋もれる
+    * 本筋の処理を`try`に、エラー処理を`catch`に書くことで本筋の処理を端的に記述できる
+
+
+---
+class: left, middle
+
+## めでたし、めでたし……？
+
+---
+class: left, middle
+
+### Javaの例外機構 
+
+という訳にもいきませんでした。
+
+Javaの例外機構には別の問題が発生していたのです。
+
+1. 高階関数や非同期プログラミング等で扱いづらく、合成可能性が低い
+1. 検査例外か否かは呼び出し側が選択したい事が多いが、メソッド定義時に決定する必要があるのでミスマッチを生んでいる
+    * 結果、意図しない例外の握り潰しなどが発生する
+
+---
+class: left, middle
+
+### Javaの例外機構 
+
+```java
+public int foo(String bar) throws BazException { // 検査例外
+    ...
+}
+```
+
+```java
+Stream.of(...).map(s -> foo(s)); // コンパイルエラー
+```
+
+`Stream#map` は `Function<A, B>` という型の引数を取りますが、検査例外を投げない関数として定義されているため、検査例外を投げるメソッドを単純に呼び出すことができません。
+
+
+---
+class: left, middle
+
+## Scalaの例外機構 
+
+---
+class: left, middle
+
+### Scalaの例外機構 
+
+1. 高階関数や非同期プログラミング等で扱いづらく、合成可能性が低い
+1. 検査例外か否かは呼び出し側が選択したい事が多いが、メソッド定義時に決定する必要があるのでミスマッチを生んでいる
+
+Javaの例外機構であったこれらの問題を解決するためにScalaが取ったアプローチは<strong>検査例外を無くす</strong>というものでした。
+
+<section>
+ちなみに検査例外を活かしたままこれらの問題に対応しようとしている言語に Swift があります。
+</section>
+
+
+---
+class: left, middle
+
+### Scalaの例外機構 
+
+```scala
+val ret = try {
+  val ret1 = doSomething1()
+  val ret2 = doSomething2()
+  ret1 + ret2
+} catch {
+  case e: BadCaseException => // エラー処理
+  case e: SadCaseException => // エラー処理
+}
+```
+
+ScalaもJavaと同じく `try` - `catch` を使用します。
+
+Javaと異なる点としては、`catch` を `match` 式と同様の書式で書く点です。パターンマッチが使えるので、より柔軟にエラー処理を統合/分岐させる事ができます。
+
+また、`try`-`catch` は式なので値を返す事ができます。
+
+---
+class: left, middle
+
+### Scalaの例外機構 
+
+```scala
+def doSomething1(): String = {
+  if (...) {
+    ...
+    "正常時の戻り値"
+  } else {
+    throw new BadCaseException()
+  }
+}
+```
+
+例外を投げる予約語はJavaと同様に `throw` です。
+
+全ての例外が非検査例外として扱われるので、メソッドのシグネチャに `throws` をつける必要はありません。 
+
+<section>
+Javaから呼び出す時のために、どうしても <span class="remark-inline-code">throws</span> をクラスファイルに埋め込みたい場合は
+<span class="remark-inline-code">@throws</span> アノテーションが使えます。
+</section>
+
+---
+class: left, middle
+
+### Scalaの例外機構 
+
+先にJavaの例外は3つに分類されると言いました。
+
+1. 致命的なエラー(Error)
+1. 検査例外(Exception)
+1. 実行時例外(RuntimeException)
+
+---
+class: left, middle
+
+### Scalaの例外機構 
+
+Scalaでは検査例外が無くなるため残りの2つを区別する必要があります。
+
+1. 致命的なエラー(Error)
+1. ~~検査例外(Exception)~~
+1. 実行時例外(RuntimeException)
+
+
+---
+class: left, middle
+
+### Scalaの例外機構 
+
+```scala
+try {
+  ...
+} catch {
+  case e => ... // 致命的なエラーも捕捉してしまう！
+  case e: Thrownable => ...
+}
+```
+
+仮に単純な変数パターンや、`Thrownable` の型パターンを使用してしまうと、捕捉してはいけない致命的なエラーも捕捉してしまいます。
+
+---
+class: left, middle
+
+### Scalaの例外機構 
+
+```scala
+try {
+  ...
+} catch {
+  case NonFatal(e) => ... // 致命的なエラーは捕捉しない！
+}
+```
+
+そこで `NonFatal` という Extractor が標準で用意されています。
+
+こちらを利用することで捕捉してはいけないエラーを捕捉せずにすませられます。
+
+---
+class: left, middle
+
+### Scalaの例外機構 
+
+さて、C言語で使われていた<br>「戻り値で成功失敗を表すスタイル」では、<br>「<strong>エラーのチェックを強制できない</strong>」<br>という問題がありました。
+
+それを解決するために Java では「検査例外」を導入したわけです。
+
+ところが Scala ではその「検査例外」を無くすアプローチを採用しました。
+
+---
+class: center, middle
+
+### Scalaの例外機構 
+
+つまり、Scalaの例外機構では、<br>
+「<strong>エラーのチェックを強制できない</strong>」<br>という問題が残ったままなのです。
+
+
+---
+class: left, middle
+
+## 成功失敗を値として表現する 
+
+---
+class: left, middle
+
+### 成功失敗を値として表現する
+
+「<strong>エラーのチェックを強制できない</strong>」という問題を解決するアプローチとして、成功失敗を値として表現する方法があります。
+
+元々C言語で行っていたスタイルもその一種とみなすことができますね。
+
+```c
+int ret = 0;
+ret = doSomething1();
+if (ret != 0) {
+  //エラー処理
+}
+ret = doSomething2();
+if (ret != 0) {
+  //エラー処理
+}
+```
+
+---
+class: left, middle
+
+### 成功失敗を値として表現する
+
+```c
+int ret = 0;
+ret = doSomething1();
+if (ret != 0) {
+  //エラー処理
+}
+ret = doSomething2();
+if (ret != 0) {
+  //エラー処理
+}
+```
+
+C言語でのスタイルでは、成功失敗を `int` で表現していました。
+
+そのため、本来の処理で返したい値を戻り値に使えない等の問題が起きていたわけです。
+
+
+---
+class: left, middle
+
+### 成功失敗を値として表現する
+
+そこで、`int` ではなく成功失敗を表現する新しいデータ型を作ってしまおうという考えが生まれました。
+
+そのデータ型の一つが `scala.util.Try` です。
+
+---
+class: left, middle
+
+### Try
+
+`Try` はおよそ以下の様な定義になっています。
+
+```scala
+// 実際のものより色々省略しています
+sealed abstract class Try[+A]
+case class Success[+A](value: A) extends Try[A]
+case class Failure[+A](exception: Throwable) extends Try[A]
+```
+
+`Try` は一つの型引数を持ちます。これが本来の戻り値として扱いたかった値の型になります。
+
+そして成功を表す `Success` というサブクラスがあり、こちらが本来の値を保持します。
+
+また、失敗を表す `Failure` というサブクラスがあり、こちらが例外を保持します。
+
+---
+class: left, middle
+
+### Try
+
+```scala
+def doSomething1(): Try[String] = {
+  if (...) {
+    ...
+    Success("正常時の戻り値")
+  } else {
+    Failure(new BadCaseException())
+  }
+}
+```
+
+失敗する可能性のある処理では、戻り値の型を `Try` にします。
+
+正常時は値を `Success` で包み、失敗時は例外を `throw` する代わりに `Failure` で包んで、どちらも戻り値として返します。
+
+
+---
+class: left, middle
+
+### Try
+
+```scala
+val ret = doSomething1() match {
+  case Success(v) => v
+  case Failure(e) => // エラー処理
+}
+```
+
+そうする事で、呼び出し元は値を取り出すためにパターンマッチ等で分岐を行う必要があるため、<strong>エラーチェックを強制する</strong>ことが可能になります。
+
+また `int` で成功失敗を表していた時のように本来の値を返せないという事もなく、呼び出し元で値を受け取ることもできています。
+
+---
+class: left, middle
+
+### Try
+
+そして例外機構で行えていた、本筋の処理からエラー処理を分離させる事についても、`Try` は `for` 式で合成が可能なため実現することができます。
+
+```scala
+// 例外版
+try {
+  val ret1 = doSomething1()
+  val ret2 = doSomething2()
+  ret1 + ret2
+} catch {
+  case NonFatal(e) => // エラー処理
+}
+```
+
+```scala
+// Try版
+val ret = for {
+  ret1 <- doSomething1()
+  ret2 <- doSomething2()
+} yield ret1 + ret2
+ret match {
+  case Success(v) => v
+  case Failure(e) => // エラー処理
+}
+```
+
+---
+class: left, middle
+
+### Try
+
+また、`Try.apply` は例外を投げる処理から `Try` インスタンスを簡単に作成できます。
+
+```scala
+def badMethod(): String = throw new BadException()
+```
+
+```scala
+val ret: Try[String] = Try(badMethod())
+```
+
+この際、`Failure` になるのは、`NonFatal` な例外であることに注意してください。
+
+---
+class: left, middle
+
+### Try
+
+さて、`Try` を使う事でC言語のスタイルで起きていた問題は解決できました。
+
+1. エラーのチェックを強制できない
+1. 成功失敗以外の値を返す時に複雑になる
+1. エラー処理で本筋の処理が埋もれる
+
+そしてJavaの検査例外での問題も解決できそうです。
+
+1. 高階関数や非同期プログラミング等で扱いづらく、合成可能性が低い
+1. 検査例外か否かは呼び出し側が選択したい事が多いが、メソッド定義時に決定する必要があるのでミスマッチを生んでいる
+
+
+---
+class: left, middle
+
+### Try
+
+1. 高階関数や非同期プログラミング等で扱いづらく、合成可能性が低い
+    * → ただの戻り値なので `Function1` への変換やコールスタックの問題にならない
+1. 検査例外か否かは呼び出し側が選択したい事が多いが、メソッド定義時に決定する必要があるのでミスマッチを生んでいる
+    * → 無視したければ `get` 等を使う事で無視できる
+
+---
+class: center, middle
+
+### Try
+
+つまり `Try` を使えば全て万全ですね！
+
+---
+class: left, middle
+
+### Try
+
+という訳でもなく `Try` には次の問題があります。
+
+1. 失敗がすべて `Throwable` に丸め込まれてしまう
+    * そのため、業務例外の網羅性検査などが行えない
+    * 型を見ても何の例外になるかわからない
+
+---
+class: left, middle
+
+## Either 
+
+---
+class: left, middle
+
+### Either 
+
+`Try` の場合は失敗がすべて `Throwable` で表されてしまうため、例外の詳細が型から読み取れないですし、エラー処理の網羅性検査が行えませんでした。
+
+そこで、成功時の型だけではなく、失敗時の型も指定できるようなデータ型があればどうでしょうか？
+
+こういった時に使われるのが `scala.util.Either` です。
+
+
+---
+class: left, middle
+
+### Either 
+
+`Either` はおよそ以下の様な定義になっています。
+
+```scala
+// 実際のものより色々省略しています
+sealed abstract class Either[+A, +B]
+case class Left[+A, +B](value: A) extends Either[A, B]
+case class Right[+A, +B](value: B) extends Either[A, B]
+```
+
+`Either` は本来、成功失敗の意味はなく、その名の通り「AかBかどちらか」の値を示すためのデータ型です。
+
+そのため「成功か失敗のどちらか」を表す際にも非常に有用なのでよく使われます。
+
+文化的な背景から `Left` に失敗の型を `Right` に成功の型を当てはめる使われ方が一般的です。
+
+---
+class: left, middle
+
+### Either 
+
+```scala
+sealed abstract class MyError
+object MyError {
+  object BadCase extends MyError
+  object SadCase extends MyError
+}
+
+def doSomething1(): Either[MyError, String] = {
+  if (...) {
+    ...
+    Right("正常時の戻り値")
+  } else {
+    Left(MyError.BadCase)
+  }
+}
+```
+
+失敗する可能性のある処理では、失敗の型を自由に指定する事ができます。
+
+
+---
+class: left, middle
+
+### Either 
+
+```scala
+val ret = doSomething1() match {
+  case Right(v)      => v
+  case Left(BadCase) => // エラー処理
+  case Left(SadCase) => // エラー処理
+}
+```
+
+呼び出し元では `Try` の時と同様にパターンマッチ等で値を取り出す必要があるため、エラーチェックが強制されます。
+
+また、今度は `Left` の型を静的に解決できるため、エラー処理の網羅性検査が可能になります。
+
+もし今後の改修で `doSomething1` が返す `MyError` の種類が増えた場合、ここがコンパイル時に警告されるため修正漏れを防ぐことができます。
+
+---
+class: left, middle
+
+### Either 
+
+エラー処理の分離についても、`Either` は `Try` と同様に合成ができるので `for`式を使って実現できます。
+
+```scala
+// 例外版
+try {
+  val ret1 = doSomething1()
+  val ret2 = doSomething2()
+  ret1 + ret2
+} catch {
+  case NonFatal(e) => // エラー処理
+}
+```
+
+```scala
+// Either版
+val ret = for {
+  ret1 <- doSomething1()
+  ret2 <- doSomething2()
+} yield ret1 + ret2
+ret match {
+  case Right(v) => v
+  case Left(e)  => // エラー処理
+}
+```
+
+---
+class: left, middle
+
+## どう使い分けるべき？
+
+
+---
+class: left, middle
+
+### どう使い分けるべき？
+
+必ずエラーチェックを行う必要があるような業務例外は `Either` を使った方が後々の改修での事故が減らせるでしょう。
+
+逆に本来は補足する必要が無いような実行時例外にあたるものは、そもそも適切な型やAPIを使用する事で発生させないようにするべきと思います。<br/>（NullPointerExceptionとか）
+
+---
+class: left, middle
+
+### どう使い分けるべき？
+
+従って `Try` はなるべくAPIに現れないようにするのがお勧めです。
+
+使うとしたらメソッド内部でJavaのライブラリが投げる例外を `Either` や `Option` に変換したりする用途で使ったり、特定のレイヤーに閉じた範囲で利用する形がよいかと思います。
+
+---
+class: left, middle
+
+### どう使い分けるべき？
+
+逆に捕捉してもしょうがないようなエラーに関しては非同期処理等が絡まない範囲で例外を使うと良いと思います。
+
+例えばごく薄いCRUDだけのマスターメンテ用Webアプリで、DB接続ができないとかであれば、早々にシステムを落としてしまう方が現実的でしょう。
+
+
+---
+class: left, middle
+
+## まとめ 
+
+* Javaの例外機構も過去の問題を解決している
+* Scalaの例外機構は「エラーチェックの強制」という側面ではJavaの例外機構よりも力が弱い
+* `Try`はエラーの型情報が落ち、網羅性検査も行えない
+* 必ずエラーチェックを行う必要があるような業務例外は `Either` を使うと便利
+* プログラムミスのような類は例外に頼るのではなくて型で保証しましょう
+
+---
+class: left, middle
+
+## 発展として
+
+* `Either` が複雑になるようなケースでは独自結果型の導入を検討
+* エラーハンドリングを含んだモジュールの再利用単位を変える継続渡しスタイル
+
+などなどありますが、<br/>このセッション内で話すには時間が足りないので、<br/>詳しく聞きたい方は →（次ページ）
+
+---
+class: left, middle
+
+# 宣伝
+
+Opt Technologies ではエンジニアを募集しています
+
+* [Opt Technologies 採用情報](https://www.opt.ne.jp/opttechnologies/index.html#recruit)
+
+エフ・コードではエンジニアを募集しています
+
+* [エフ・コード 採用情報](https://f-code.co.jp/recruit/engineer.html)
+
+---
+class: left, middle
+
+# 質問とか
+
+    </textarea>
+    <script src="http://gnab.github.io/remark/downloads/remark-0.12.min.js" type="text/javascript"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+      slideshow.on('beforeShowSlide', function (slide) {
+        $("a[href^='http://']").attr("target", "_blank");
+        $("a[href^='https://']").attr("target", "_blank");
+      });
+    </script>
+  </body>
+</html>
