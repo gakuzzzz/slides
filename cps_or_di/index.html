@@ -1,4 +1,4 @@
-<DOCTYPE html>
+<Doctype html>
 <html>
   <head>
     <title>CPS or DI</title>
@@ -360,15 +360,6 @@ By the way, if we write this CPS natulally, nesting will be deep.
 
 Therefore, it is possible to write in a for comprehension by defining `map` and` flatMap` with the function itself that receives and processes this continuation as a class.
 
-```scala
-case class Cont[R, A](run: (A => R) => R) {
-  def map[B](f: A => B): Cont[R, B] = 
-    Cont(k => run(a => k(f(a))))
-  def flatMap[B](f: A => Cont[R, B]): Cont[R, B] = 
-    Cont(k => run(a => f(a).run(k)))
-}
-```
-
 <div class="translation">
 ちなみにこのCPSは素直に書くとネストが多重になります。<br/>
 そこでこの継続を受け取って処理を行う関数自体をクラスとし、<br/>
@@ -380,23 +371,49 @@ class: left, middle
 
 ## Continuation-passing style
 
+```scala
+case class Cont[R, A](run: (A => R) => R) {
+  def map[B](f: A => B): Cont[R, B] = 
+    Cont(k => run(a => k(f(a))))
+  def flatMap[B](f: A => Cont[R, B]): Cont[R, B] = 
+    Cont(k => run(a => f(a).run(k)))
+}
+object Cont {
+  def unit[R, A](a: A): Cont[R, A] = new Cont(k => k(a))
+}
+```
+
+<div class="translation">
+　
+</div>
+
+---
+class: left, middle
+
+## Continuation-passing style
+
 
 ```scala
 def multipleFive[A](v: Int, k: Int => A): A = k(v * 5)
 def addTwo[A](v: Int, k: Int => A): A = k(v + 2)
+```
 
+```scala
+// not use Cont
 def main(): Unit = {
   addTwo(10, multipleFive(_, println))
 }
 ```
 
 ```scala
+// use Cont
 def main(): Unit = {
-  val f = for {
-    v <- Cont.unit(10)
-    a <- Cont.unit(10)
-
-  } yield 
+  val cont = for {
+    m <- Cont.unit(10)
+    n <- Cont(addTwo[Unit](m, _))
+    l <- Cont(multipleFive[Unit](n, _))
+  } yield l
+  cont.run(println)
 }
 
 ```
@@ -424,7 +441,7 @@ In OOPL, it can call methods of another object in a method.
 Providing the dependencies between these objects from outside is called Dependency Injection (DI).
 
 ```scala
-class LoginService(userDao: UserDao) {
+class LoginService(userDao: UserDao) { // depends on UserDao
 
   def authenticate(id:LoginId, pass:PlainPassword):Option[User]=
     for {
@@ -449,7 +466,7 @@ class: left, middle
 The same implementation can be reused by receiving dependent UserDao entities from the outside.
 
 ```scala
-class LoginService(userDao: UserDao) {
+class LoginService(userDao: UserDao) { // depends on UserDao
 
   def authenticate(id:LoginId, pass:PlainPassword):Option[User] =
   ...
@@ -481,7 +498,8 @@ The implementation can not be reused.
 ```scala
 class LoginService {
 
-  private val userDao: UserDao = new UserDaoImpl
+  // depends on UserDao
+  private val userDao: UserDao = new UserDaoImpl  
 
   def authenticate(id:LoginId, pass:PlainPassword):Option[User] =
   ...
@@ -550,6 +568,20 @@ When we want to use multiple processes that are strongly related to each other,
 CPS can not express the relevance of multiple continuations
 
 ```scala
+class LoginService(userDao: UserDao) {
+
+  def authenticate(id:LoginId, pass:PlainPassword):Option[User]=
+    for {
+      user <- userDao.findByLoginId(id)
+      if user.hashedPassword == pass.hash
+    } yield {
+      if (user.hashedPassword.isAlgorithmOld) {
+        val newPass = pass.hash(CurrentHashAlgorithm)
+        userDao.updatePassword(user.id, newPass)
+      }
+      user
+    }
+}
 
 ```
 
@@ -563,13 +595,77 @@ class: left, middle
 
 ## Strongly related multiple processes
 
-TODO: サンプルコード
+`findByLoginId` and `updatePassword` are strongly related.
+
+```scala
+class LoginService(userDao: UserDao) {
+
+  def authenticate(id:LoginId, pass:PlainPassword):Option[User]=
+    for {
+      user <- userDao.findByLoginId(id)
+      if user.hashedPassword == pass.hash
+    } yield {
+      if (user.hashedPassword.isAlgorithmOld) {
+        val newPass = pass.hash(CurrentHashAlgorithm)
+        userDao.updatePassword(user.id, newPass)
+      }
+      user
+    }
+}
+
+```
+
+<div class="translation">
+findByLoginId と updatePassword は強く関連しています。
+</div>
+
+---
+class: left, middle
+
+## Strongly related multiple processes
+
+If this is expressed in CPS, it will receive two functions, but we can not guarantee that each is a related function.
+
+```scala
+  def authenticate(
+     id: LoginId, 
+     pass: PlainPassword,
+     findByLoginId: UserId => Option[User]
+     updatePassword: (UserId, HashedPassword) => Unit
+  ): Option[User] = {
+    ...
+  }
+```
+
+
+<div class="translation">
+これをCPSで表現する場合、二つの関数を受け取る形になりますが、<br/>
+それぞれが関連した関数であることを保証できません
+</div>
+
+---
+class: left, middle
+
+## Strongly related multiple processes
+
+On the other hand, in OOP, it is possible to associate multiple strongly related operations in units of objects.
+
+Therefore, when several dependent processes are strongly related, it seems that DI is better than CPS.
+
+```scala
+trait UserDao {
+
+  def findByLoginId(id: UserId): Option[User]
+
+  def updatePassword(id: UserId, pass: HashedPassword): Unit
+
+}
+```
 
 <div class="translation">
 それに対しOOPでは強く関連する複数の処理を<br/>
 オブジェクトという単位で関連付けることが可能です。<br/>
 従って依存する複数の処理が強く関連性を持っている場合、<br/>
-（例えばドメイン層とインフラ層を合成する等）<br/>
 CPSよりDIの方が向いているように思われます。<br/>
 </div>
 
@@ -586,14 +682,20 @@ class: left, middle
 ---
 class: left, middle
 
-## Ad-hoc composition
+### Ad-hoc composition
 
-TODO: サンプルコード
+Whether CPS or DI, the process to be reused and the description for its composition are separated.
+
+In Scala, DI composition can be realized using mixin etc. However, in general, a framework for DI is often used.
+
+In that case, it will be a big deal if you try to control multiple dependency graphs by creating an instance of DI Container for each detailed process.
 
 <div class="translation">
 CPSにしてもDIにしても、再利用する処理とその合成のための記述が分離されます。<br/>
 ScalaではDIの合成をmixin等を使っても実現できますが、<br/>
-一般的にはDI用のフレームワークを用いる事が多いです。
+一般的にはDI用のフレームワークを用いる事が多いです。<br/>
+その場合、細かな処理毎にDI Container のインスタンスを作り<br/>
+複数の依存グラフをアドホックに制御しようとすると大掛かりになります。
 </div>
 
 ---
@@ -601,7 +703,24 @@ class: left, middle
 
 ## Ad-hoc composition
 
-TODO: サンプルコード
+On the other hand, CPS can be composed using for expressions.
+
+```scala
+    val foo = for {
+      in     <- Close(new FileInputStream(
+                        getClass.getResource("/source.txt").getPath))
+      reader <- Close(new InputStreamReader(in, "UTF-8"))
+      buff   <- Close(new BufferedReader(reader))
+      out    <- Close(new FileOutputStream("dest.txt"))
+      writer <- Close(new OutputStreamWriter(out, "UTF-8"))
+    } yield {
+      ...
+      "hello"
+    }
+```
+
+<span style="font-size: 50%;">Quote from [Loan パターンのネストは継続モナドでシュッと解決できるよという話](https://qiita.com/jwhaco/items/224113324fd454b8ca77) [@jwhaco](https://twitter.com/jwhaco)</span>
+
 
 <div class="translation">
 それに対しCPSではfor式をつかって合成することができます。<br/>
@@ -612,7 +731,13 @@ class: left, middle
 
 ## Ad-hoc composition
 
-TODO: サンプルコード
+Resource management, Web application Filter, etc.
+When recomposing common processing to ad hoc and using it
+It seems to be easier to use than DI.
+
+<span style="font-size: 60%;">ref [Loan パターンのネストは継続モナドでシュッと解決できるよという話](https://qiita.com/jwhaco/items/224113324fd454b8ca77) (Story that nest of Loan pattern can be solved by continuation monad) [@jwhaco](https://twitter.com/jwhaco)</span>
+
+<span style="font-size: 60%;">ref [継続モナドを使ってWebアプリケーションのコントローラーを自由自在に組み立てる](https://qiita.com/pab_tech/items/fc3d160a96cecdead622) (Assembling web application controllers freely using continuation monad) [@pab_tech](https://twitter.com/pab_tech)</span>
 
 <div class="translation">
 リソース管理やWebアプリケーションのFilterなど、<br/>
@@ -625,11 +750,11 @@ class: middle
 
 ## Summary
 
-* 
-* 
-* 
-* 
-* 
+* There are CPS and DI as composing methods to change module reuse unit.
+* In Scala, we can use both CPS and DI easily.
+* DI is recommended when we want to rely on multiple related processes or when you want to control the entire system.
+* CPS is recommended when we want to use ad hoc and processing in combination.
+* Let's know both FP and OOP methods and can choose a more appropriate option
 
 <div class="translation">
 ・モジュールの再利用粒度を変える合成方法としてCPSとDIがあります<br/>
