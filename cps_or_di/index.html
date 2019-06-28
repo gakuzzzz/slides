@@ -1,0 +1,672 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <title>CPS or DI</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-inline-code {
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      .remark-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+      .translation {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background-color: #eeeeee;
+        padding: 0.5em 1em;
+        width: 100%;
+        line-height: 110%;
+      }
+      code {
+        font-size: 100%;
+        background-color: #eeeeff;
+        padding: 3px;
+      }
+      .translation code {
+        padding: 0px;
+        background-color: #cccccc;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td, th {
+        border: 1px solid #333333;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# CPS or DI
+
+Scala Matsuri 2019 2019/06/28
+
+<div class="translation">
+継続とDI
+</div>
+---
+class: left, middle
+
+## Who am I
+
+* Manabu Nakamura
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd.  CEO
+* Opt Technologies Inc. Technical advisor <img src="../images/opt_logo_1.jpg" alt="Opt Technologies" width="450" style="margin-left: 0px" /> 
+* F-CODE Inc. CTO <img src="../images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+<div class="translation">
+自己紹介: 中村 学<br/>Tech to Value代表 / Opt Technologies技術顧問 / F-CODE CTO
+</div>
+
+---
+class: left, middle
+
+## Introduction
+
+Information system are solving more and more complex problems.
+
+To solve complex problems, you need to utilize the divide and conquer approach, which divides the problem first then composes solutions.
+
+<div class="translation">
+情報システムが解決しようとする問題はますます複雑化しています。<br />
+複雑な問題に解決するには、問題を分割し解を合成する分割統治のアプローチが必要です。<br />
+</div>
+
+---
+class: left, middle
+
+## Introduction
+
+> "The ways in which one can divide up the original problem depend directly on the ways in which one can glue solutions together. "
+
+<p style="text-align:right">from <a href="http://www.cse.chalmers.se/~rjmh/Papers/whyfp.html">Why Functional Programming Matters</a></p>
+
+<div class="translation">
+「問題を分割する方法は、解を合成する方法に依存する」とも言われます。
+</div>
+
+---
+class: left, middle
+
+## Introduction
+
+
+In this session, I will talk about two approaches, “Continuation-passing style(CPS)” and “Dependency Injection(DI)”, for composing reusable modules. 
+
+I will also discuss tools for dividing and conquering while comparing these approaches.Scala is a programming language that integrates both object-oriented programming and functional programming.
+
+<div class="translation">
+このセッションでは再利用可能なモジュールを合成する手法として<br>
+「継続渡しスタイル(CPS)」と「Dependency Injection(DI)」について解説し、<br>
+それらを比較しながら分割統治のためのツールを考察します。
+</div>
+
+---
+class: left, middle
+
+## Structured Programming
+
+In classical structured programming languages such as C,
+A function creates a multi-layered structure by calling another function internally
+
+<img src="./images/1_structured_programming.png" />
+
+<span style="font-size: 50%;">Quote from [並行プログラミングと継続モナド](https://www.slideshare.net/RuiccRail/ss-52718653?ref=http://connpass.com/event/16193/presentation/) [@ruicc](https://twitter.com/ruicc)</span>
+
+
+<div class="translation">
+C言語に代表されるような古典的な構造化プログラミング言語では、<br/>
+ある関数が内部で別の関数を呼び出すことで多層的な構造をつくります
+</div>
+
+---
+class: left, middle
+
+## Structured Programming
+
+In this case, the granularity that can reuse individual functions is as shown in the figure.
+
+<img src="./images/2_reuse_unit.png" />
+
+<span style="font-size: 50%;">Quote from [並行プログラミングと継続モナド](https://www.slideshare.net/RuiccRail/ss-52718653?ref=http://connpass.com/event/16193/presentation/) [@ruicc](https://twitter.com/ruicc)</span>
+
+<div class="translation">
+この際、個々の関数を再利用できる粒度は図のようになります。
+</div>
+
+---
+class: left, middle
+
+## Delegation and DI (OOPL)
+
+In contrast, OOPL allows you to change the granularity of reuse by using delegation and DI.
+
+<img src="./images/3_di_reuse_unit.png" />
+
+
+
+<div class="translation">
+これに対し、OOPLでは委譲とDIを使うことで<br/>
+再利用の粒度を変えることができるようになりました。
+</div>
+
+---
+class: left, middle
+
+## Delegation and DI (OOPL)
+
+For example, H can be switched to another implementation while reusing the same F and G.
+
+```scala
+case class F(g: G) { def f() = ... }
+case class G(h: H) { def g() = ... }
+case class H()     { def h() = ... }
+```
+
+```scala
+// Main DI configuration
+lazy val hModule = H()
+lazy val gModule = G(hModule)
+lazy val fModule = F(gModule)
+
+// Test DI configuration
+lazy val hModule = mock[H]
+lazy val gModule = G(hModule)
+lazy val fModule = F(gModule)
+```
+
+<div class="translation">
+例えばFとGは同じものを再利用しつつHだけ別の実装に切り替える等が可能になります。
+</div>
+
+---
+class: left, middle
+
+## CPS (FPL)
+
+Also, in Functional Programming language, it is possible to change the granularity of reuse by using CPS.
+
+<img src="./images/4_cps_reuse_unit.png" />
+
+<span style="font-size: 50%;">Quote from [並行プログラミングと継続モナド](https://www.slideshare.net/RuiccRail/ss-52718653?ref=http://connpass.com/event/16193/presentation/) [@ruicc](https://twitter.com/ruicc)</span>
+
+<div class="translation">
+またFunctional Programming言語では、CPSを使うことで<br/>
+再利用の粒度を変えることができるようになりました。
+</div>
+
+---
+class: left, middle
+
+## Continuation-passing style
+
+<div class="translation">
+改めてCPSとはどういったものか見ていきましょう<br/>
+</div>
+
+---
+class: left, middle
+
+## Continuation-passing style
+
+CPS is the way of that explicitly specifies the next processing that uses the calculated value instead of returning a value.
+
+It's hard to understand so let's look at a concrete example
+
+<div class="translation">
+継続渡しスタイルとは、<br>
+関数が値を返す代わりに計算した値を使う後続処理を明示的に指定する方法です。<br/>
+わかりにくいので具体例を見ていきましょう
+</div>
+
+---
+class: left, middle
+
+## Continuation-passing style
+
+```scala
+// not CPS
+def multipleFiveAndPrint(v: Int): Unit = println(v * 5)
+def calculateAndPrint(v: Int): Unit = multipleFiveAndPrint(v + 2)
+
+def main(): Unit = {
+  calculateAndPrint(10)
+}
+```
+
+```scala
+// CPS
+def multipleFive[A](v: Int, k: Int => A): A = k(v * 5)
+def addTwo[A](v: Int, k: Int => A): A = k(v + 2)
+
+def main(): Unit = {
+  addTwo(10, multipleFive(_, println))
+}
+```
+
+<div class="translation">
+　
+</div>
+
+---
+class: left, middle
+
+## Continuation-passing style
+
+The function that uses the value received by this argument is called continuation.
+
+It is called continuous passing style because it passes continuation as an argument.
+
+```scala
+// CPS
+def multipleFive[A](v: Int, k: Int => A): A = k(v * 5)
+def addTwo[A](v: Int, k: Int => A): A = k(v + 2)
+
+def main(): Unit = {
+  addTwo(10, multipleFive(_, println))
+}
+```
+
+
+<div class="translation">
+この引数で受け取る値を利用する関数のことを継続と呼びます。<br/>
+継続を引数で渡していくため継続渡しスタイルと呼ばれるわけです。
+</div>
+
+---
+class: left, middle
+
+## Continuation-passing style
+
+In this way, it is possible to change the granularity of reuse by passing the function which should be internally dependent on the function as an argument.
+
+<img src="./images/4_cps_reuse_unit.png" />
+
+<div class="translation">
+こうして本来関数が内部で依存するはずの関数を引数で渡すことにより、<br/>
+再利用の粒度を変える事ができるのです。
+</div>
+
+---
+class: left, middle
+
+## Continuation-passing style
+
+By the way, if we write this CPS natulally, nesting will be deep.
+
+Therefore, it is possible to write in a for comprehension by defining `map` and` flatMap` with the function itself that receives and processes this continuation as a class.
+
+```scala
+case class Cont[R, A](run: (A => R) => R) {
+  def map[B](f: A => B): Cont[R, B] = 
+    Cont(k => run(a => k(f(a))))
+  def flatMap[B](f: A => Cont[R, B]): Cont[R, B] = 
+    Cont(k => run(a => f(a).run(k)))
+}
+```
+
+<div class="translation">
+ちなみにこのCPSは素直に書くとネストが多重になります。<br/>
+そこでこの継続を受け取って処理を行う関数自体をクラスとし、<br/>
+`map`と`flatMap`を定義することでfor式で書き下す事が可能になります。
+</div>
+
+---
+class: left, middle
+
+## Continuation-passing style
+
+
+```scala
+def multipleFive[A](v: Int, k: Int => A): A = k(v * 5)
+def addTwo[A](v: Int, k: Int => A): A = k(v + 2)
+
+def main(): Unit = {
+  addTwo(10, multipleFive(_, println))
+}
+```
+
+```scala
+def main(): Unit = {
+  val f = for {
+    v <- Cont.unit(10)
+    a <- Cont.unit(10)
+
+  } yield 
+}
+
+```
+
+<div class="translation">
+　
+</div>
+
+---
+class: left, middle
+
+## Dependency Injection
+
+<div class="translation">
+さて次はDIについて見ていきましょう。
+</div>
+
+---
+class: left, middle
+
+## Dependency Injection
+
+In OOPL, it can call methods of another object in a method.
+
+Providing the dependencies between these objects from outside is called Dependency Injection (DI).
+
+```scala
+class LoginService(userDao: UserDao) {
+
+  def authenticate(id:LoginId, pass:PlainPassword):Option[User]=
+    for {
+      user <- userDao.findByLoginId(id) // other object's method
+      if user.hashedPassword == pass.hash
+    } yield user
+
+}
+```
+
+<div class="translation">
+OOPLでは、あるメソッド内で別のオブジェクトのメソッドを呼び出す事ができます。<br/>
+このオブジェクト同士の依存関係を外部から与えることを、<br/>
+Dependency Injection(DI) と呼びます。
+</div>
+
+---
+class: left, middle
+
+## Dependency Injection
+
+The same implementation can be reused by receiving dependent UserDao entities from the outside.
+
+```scala
+class LoginService(userDao: UserDao) {
+
+  def authenticate(id:LoginId, pass:PlainPassword):Option[User] =
+  ...
+```
+
+```scala
+// Main DI configuration
+lazy val userDao: UserDao = new UserDaoImpl
+lazy val loginService: LoginService = new UserService(userDao)
+
+// Test DI configuration
+lazy val userDao: UserDao = mock[UserDao]
+lazy val loginService: LoginService = new UserService(userDao)
+```
+
+<div class="translation">
+依存するUserDaoの実体を外部から渡せるようにすることで同じ実装を再利用できます。
+</div>
+
+
+---
+class: left, middle
+
+## Dependency Injection
+
+If the dependency on UserDao is internally completed,
+The implementation can not be reused.
+
+```scala
+class LoginService {
+
+  private val userDao: UserDao = new UserDaoImpl
+
+  def authenticate(id:LoginId, pass:PlainPassword):Option[User] =
+  ...
+```
+
+
+<div class="translation">
+もし仮に、UserDaoへの依存が内部で完結していた場合、<br/>
+実装を再利用することができません。
+</div>
+
+---
+class: left, middle
+
+## Dependency Injection
+
+In this way, DI makes objects loosely coupled, and can change the granularity of reuse.
+
+<img src="./images/3_di_reuse_unit.png" />
+
+
+<div class="translation">
+このようにDIすることによって、オブジェクト同士が疎結合になり、<br>
+再利用の粒度を変える事ができるのです。
+</div>
+
+---
+class: left, middle
+
+## Which should use in Scala?
+
+Scala is a language that realizes the integration of OOP and FP by expressing the function of FP on OOPL.
+
+So we can easily use both CPS and DI in Scala.
+
+<div class="translation">
+ScalaはOOPLの上にFPの機能を表現することで<br/>
+OOPとFPの統合を実現した言語です<br/>
+従って、ScalaではCPSもDIもどちらも簡単に利用することができます。
+</div>
+
+---
+class: left, middle
+
+## Which should use in Scala?
+
+<div class="translation">
+ではCPSとDIのどちらを使うべきなのでしょうか？
+</div>
+
+---
+class: left, middle
+
+## Strongly related multiple processes
+
+<div class="translation">
+相互に強く関連する複数の処理に依存したい場合
+</div>
+
+---
+class: left, middle
+
+## Strongly related multiple processes
+
+When we want to use multiple processes that are strongly related to each other, 
+CPS can not express the relevance of multiple continuations
+
+```scala
+
+```
+
+<div class="translation">
+相互に強く関連する複数の処理に依存したい場合、<br/>
+CPSでは複数の継続の関連性を表現することができません<br/>
+</div>
+
+---
+class: left, middle
+
+## Strongly related multiple processes
+
+TODO: サンプルコード
+
+<div class="translation">
+それに対しOOPでは強く関連する複数の処理を<br/>
+オブジェクトという単位で関連付けることが可能です。<br/>
+従って依存する複数の処理が強く関連性を持っている場合、<br/>
+（例えばドメイン層とインフラ層を合成する等）<br/>
+CPSよりDIの方が向いているように思われます。<br/>
+</div>
+
+
+---
+class: left, middle
+
+## Ad-hoc composition
+
+<div class="translation">
+アドホックな処理合成
+</div>
+
+---
+class: left, middle
+
+## Ad-hoc composition
+
+TODO: サンプルコード
+
+<div class="translation">
+CPSにしてもDIにしても、再利用する処理とその合成のための記述が分離されます。<br/>
+ScalaではDIの合成をmixin等を使っても実現できますが、<br/>
+一般的にはDI用のフレームワークを用いる事が多いです。
+</div>
+
+---
+class: left, middle
+
+## Ad-hoc composition
+
+TODO: サンプルコード
+
+<div class="translation">
+それに対しCPSではfor式をつかって合成することができます。<br/>
+</div>
+
+---
+class: left, middle
+
+## Ad-hoc composition
+
+TODO: サンプルコード
+
+<div class="translation">
+リソース管理やWebアプリケーションのFilterなど、<br/>
+共通の処理をアドホックに組み替えて利用する場合に<br/>
+DIよりも手軽に利用しやすいと思われます。
+</div>
+
+---
+class: middle
+
+## Summary
+
+* 
+* 
+* 
+* 
+* 
+
+<div class="translation">
+・モジュールの再利用粒度を変える合成方法としてCPSとDIがあります<br/>
+・ScalaではCPSとDIのどちらも手軽に使えます<br/>
+・関連する複数の処理に依存したい時やマクロにシステム全体を統制したい場合はDIがおすすめ<br/>
+・ミクロな単位でアドホックに処理を組み合わせて使いたい場合はCPSがおすすめ<br>
+・OOP/FPどちらの由来の手法も知って、より適切な選択肢を選べるようになりましょう
+</div>
+
+---
+class: left, middle
+
+## Advertising (to Japanese)
+
+Opt Technologies ではエンジニアを募集しています
+
+* [Opt Technologies 採用情報](https://www.opt.ne.jp/opttechnologies/index.html#recruit)
+
+エフ・コードではエンジニアを募集しています
+
+* [エフ・コード 採用情報](https://f-code.co.jp/recruit/engineer.html)
+---
+class: middle
+
+## Any questions?
+
+<div class="translation">
+質問とか
+</div>
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+    </script>
+  </body>
+</html>
