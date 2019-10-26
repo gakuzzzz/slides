@@ -1,0 +1,548 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Dependent method types を利用した軽量Clean Architecture の紹介</title>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-code, .remark-inline-code {
+        font-size: 90%;
+        color: #660000;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# <strong>Dependent method types</strong><br/>を利用した<br/>軽量<span style="color: blue;">Clean Architecture</span><br/>の紹介
+
+Scala関西Summit 2019 10/26
+
+
+
+---
+class: left, middle
+
+## 自己紹介
+
+* 中村 学(Nakamura Manabu)
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value 代表取締役
+* Opt Technologies 技術顧問 <img src="../images/opt_logo_1.jpg" alt="Opt Technologies" width="450" style="margin-left: 0px" /> 
+* F-CODE CTO <img src="../images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+---
+class: center, middle
+
+## ドメインを表現するコードから<br/>技術詳細を分離したい
+
+---
+class: left, middle
+
+### ドメインを表現するコードから<br/>技術詳細を分離したい
+
+これを実現するためにScalaの持つ高度な抽象化能力を使った方法が提案されています。
+
+- <span style="color:blue;">Free Monad</span>を利用したDSL
+- <span style="color:blue;">typed-final</span>(tagless-final) を利用したDSL
+
+以前のScala関西Summitや他のイベントでも様々な発表がありましたので、
+興味のある方はぜひ調べてみて下さい。
+
+---
+class: left, middle
+
+- Free Monadを利用したDSL
+- typed-final(tagless-final) を利用したDSL
+
+これらの方法は確かに技術詳細をきれいに分離する事ができ、利用側での柔軟性も高めることができて大変有用です。
+
+ただし、現在紹介されているような形ではモナド等の高度な抽象概念を利用するため、そういった概念を適切に理解していないとコード自体の理解も難しくなってしまうという状況があります。
+
+---
+class: left, middle
+
+### ドメインを表現するコードから<br/>技術詳細を分離したい
+
+そこで、このセッションでは<br/><strong>Dependent method types</strong> を利用して、<br/>モナド等の抽象化を使わずに技術詳細を分離する方法を紹介します。
+
+
+---
+class: left, middle
+
+# Dependent method types
+
+---
+class: left, middle
+
+## Dependent method types とは
+
+簡単に言うと、ある引数の値に応じて他の引数や戻り値の型が変わるメソッドを定義することができる仕組みです。
+
+例えば以下の`bar`メソッドは引数`foo`の値に応じて戻り値の型が変わります。
+
+```scala
+trait Foo {
+  type Result
+  def value: Result
+}
+```
+
+```scala
+def bar(foo: Foo): foo.Result = foo.value
+```
+---
+class: left, middle
+
+### Dependent method types とは
+
+```scala
+trait Foo {
+  type Result
+  def value: Result
+}
+```
+
+```scala
+def bar(foo: Foo): foo.Result = foo.value
+```
+
+```scala
+object StringFoo extends Foo {
+  type Result = String
+  val value = "piyopiyp"
+}
+object IntFoo extends Foo {
+  type Result = Int
+  val value = 10
+}
+```
+
+```scala
+// 渡す値によって戻り値の型が変わる
+scala> bar(StringFoo)
+res0: StringFoo.Result = piyopiyp
+
+scala> bar(IntFoo)
+res1: IntFoo.Result = 10
+```
+
+---
+class: left, middle
+
+## Dependent method types をどう使うのか
+
+
+---
+class: left, middle
+
+まず、ドメイン上の表現に実装詳細がべったり現れているコードから考えましょう。
+
+```scala
+package domain
+
+// ドメイン上の表現になんか色々実装上の都合がまざってる
+trait UserRepository {
+  def resolveByEmail(email: MailAddress)(
+    implicit ec: ExecutionContext, session: DBSession
+  ): Future[Either[UserNotFound, User]]
+}
+```
+
+この例ではドメイン上の表現である`UserRepository`に実装の詳細である`ExecutionContext`や`Future`, `DBSession`といった型が現れてしまっています。
+
+---
+class: left, middle
+
+```scala
+package domain
+
+// ドメイン上の表現になんか色々実装上の都合がまざってる
+trait UserRepository {
+  def resolveByEmail(email: MailAddress)(
+    implicit ec: ExecutionContext, session: DBSession
+  ): Future[Either[UserNotFound, User]]
+}
+```
+
+typed-final を使う方法ではここに高階型引数を導入してこれらの依存を切り離そうとしていました。
+
+```scala
+package domain
+
+// F[_] で抽象化
+trait UserRepository[F[_]] {
+  def resolveByEmail(email: MailAddress): F[User]
+}
+```
+
+---
+class: left, middle
+
+```scala
+package domain
+
+// ドメイン上の表現になんか色々実装上の都合がまざってる
+trait UserRepository {
+  def resolveByEmail(email: MailAddress)(
+    implicit ec: ExecutionContext, session: DBSession
+  ): Future[Either[UserNotFound, User]]
+}
+```
+
+こういった仕様と実装を分離するための仕組みとして、僕らが古典的に使ってる「<strong>名前をつけてインターフェイスと実装クラスに分離する</strong>」という方法を思い出して下さい。
+
+
+---
+class: left, middle
+
+「<strong>インターフェイスと実装クラスに分離する</strong>」という方法を考えると、ドメイン固有の名前をつけたtraitを定義して実装を隠蔽すればいいように思います。
+
+```scala
+package domain
+
+trait MyCoolAppContext
+trait MyCoolAppResult[+E, +A] {
+  def map[B](f: A => B): MyCoolAppResult[E, B]
+  def flatMap[B, EE >: E]
+    (f: A => MyCoolAppResult[EE, B]): MyCoolAppResult[EE, B]
+}
+```
+```scala
+package domain
+
+trait UserRepository {
+  def resolveByEmail(email: MailAddress)(
+    implicit ctx: MyCoolAppContext
+  ): MyCoolAppResult[UserNotFound, User]
+}
+```
+
+こうすれば`MyCoolAppContext`の実装クラスに`DBSession`などの実装詳細を分離することができます。
+
+---
+class: left, middle
+
+```scala
+package domain
+
+trait UserRepository {
+  def resolveByEmail(email: MailAddress)(
+    implicit ctx: MyCoolAppContext
+  ): MyCoolAppResult[UserNotFound, User]
+}
+```
+
+ただし上記のままでは `MyCoolAppContext` と `MyCoolAppResult` の実装クラスが密接に関係を持つ事を表現できない事が問題になってきます。
+
+例えば `MyCoolAppResult` の実装では`Future`を使いたいため`ExecutionContext`が必要ですが、`MyCoolAppContext`の実装クラスが`ExecutionContext`を保持してるとは限りません。
+
+---
+class: left, middle
+
+そこで Dependent method types を使って、この二つを結びつけてしまいます。
+
+```scala
+package domain
+
+trait MyCoolAppContext {
+  type Result[+E, +A] <: MyCoolAppResult[Result, E, A]
+}
+trait MyCoolAppResult[F[+_, +_], +E, +A] {
+  def map[B](f: A => B): F[E, B]
+  def flatMap[B, EE >: E](f: A => F[EE, B]): F[EE, B]
+}
+```
+```scala
+package domain
+
+trait UserRepository {
+  def resolveByEmail(email: MailAddress)(
+    implicit ctx: MyCoolAppContext
+  ): ctx.Result[UserNotFound, User] // ここで Dependent method types 使う
+}
+```
+
+---
+class: left, middle
+
+そうする事でinfra側では自由に実装クラスを定義することができます。
+
+```scala
+package infra
+
+class MyCoolAppContextImpl(ec: ExecutionContext, dbSession: DBSession) 
+    extends domain.MyCoolAppContext {
+  type Result[+E, +A] = MyCoolAppResultImpl[E, A]
+
+  private implicit val _ec: ExecutionContext = ec
+
+  case class MyCoolAppResultImpl[+E, +A](value: Future[Either[E, A]]) 
+      extends domain.MyCoolAppResult[MyCoolAppResultImpl, E, A] {
+
+    def map[B](f: A => B): MyCoolAppResultImpl[E, B] = 
+      MyCoolAppResultImpl(value.map(_.map(f)))
+    
+    def flatMap[B, EE >: E](
+      f: A => MyCoolAppResultImpl[EE, B]
+    ): MyCoolAppResultImpl[EE, B] = MyCoolAppResultImpl {
+      value.flatMap {
+        case Left(e)  => Future.successful(Left(e))
+        case Right(a) => f(a).value
+      }
+    }
+  }
+}
+```
+
+---
+class: left, middle
+
+またドメイン上の表現から`MyCoolAppResult`インスタンスを作れるように、`MyCoolAppContext`に諸々便利メソッドを足しておきます。
+
+```scala
+package domain
+
+trait MyCoolAppContext {
+  type Result[+E, +A] <: MyCoolAppResult[Result, E, A]
+  def success[A](a: A): Result[Nothing, A]
+  def fail[E](e: E): Result[E, Nothing]
+}
+```
+
+```scala
+package infra
+class MyCoolAppContextImpl(ec: ExecutionContext, dbSession: DBSession) 
+    extends domain.MyCoolAppContext {
+  type Result[+E, +A] = MyCoolAppResultImpl[E, A]
+
+  ...
+
+  def success[A](a: A): Result[Nothing, A] = 
+    MyCoolAppResultImpl(Future.successful(Right(a)))
+
+  def fail[E](e: E): Result[E, Nothing] = 
+    MyCoolAppResultImpl(Future.successful(Left(e)))
+
+}
+```
+
+---
+class: left, middle
+
+複数のドメイン表現が同じ`MyCoolAppContext`の実装を使うことを型上で表現できるようにするため、リポジトリなどに型引数を足していきます。
+
+```scala
+package domain
+
+trait UserRepository[Context <: MyCoolAppContext] {
+  def resolveByEmail(email: MailAddress)(
+   implicit ctx: Context
+  ): ctx.Result[UserNotFound, User]
+}
+```
+
+---
+class: left, middle
+
+そうすることで usecase などは完全にドメイン上の表現だけでコードを書く事ができます。
+
+```scala
+package usecase
+
+class LogsInConsole[Context <: domain.MyCoolAppContext](
+  repository: domain.UserRepository[Context],
+  auditService: domain.AuditService[Context],
+) {
+
+  def run(email: MailAddress, plainPassword: PlainPassword)(
+    implicit ctx: Context
+  ): ctx.Result[AuthenticationError, User] = {
+    import AuthenticationError._
+    for {
+      user        <- repository.resolveByEmail(email)
+      isValidPass =  user.hashedPassword.verify(plainPassword)
+      _           <- ctx.unless(isValidPass)(VerificationFailed)
+      _           <- auditService.recordLogin(user)
+    } yield user
+    // MyCoolAppResultにmapやflatMapを定義しておいたのでfor式で合成できる
+  }
+}
+```
+
+---
+class: left, middle
+
+こうなれば残るはinfra内でリポジトリ等の実装を定義してゆくだけとなります。
+
+```scala
+package infra
+
+trait UserRepositoryImpl 
+    extends domain.UserRepository[MyCoolAppContextImpl] {
+  def resolveByEmail(email: MailAddress)(
+    implicit ctx: MyCoolAppContextImpl
+  ): ctx.Result[UserNotFound, User] = {
+    implicit dbSession: DBSession = ctx.dbSession
+    val userOpt: Option[User] = withSQL {
+      select.from(User as u).where.eq(u.email, email)
+    }.map(User(u)).single.apply()
+    userOpt.fold(ctx.fail(UserNotFound))(ctx.success)
+  }
+}
+```
+
+---
+class: left, middle
+
+全ての要素が実装できたら後はアプリケーション層で単純にDIをしてやればおしまいです。
+
+```scala
+package application
+import com.softwaremill.macwire.wire
+// DI用ライブラリ Macwire を使った例
+trait Components {
+
+  type Context = MyCoolAppContextImpl
+
+  lazy val loginUsecase: usecase.LogsInConsole[Context] = 
+    wire[usecase.LogsInConsole]
+
+  lazy val userRepo: domain.UserRepository[Context] = 
+    wire[infra.UserRepositoryImpl]
+  lazy val auditService: domain.AuditService[Context] = 
+    wire[infra.AuditServiceImpl]
+
+}
+```
+
+これで実装の都合を完全にドメイン上の表現から排除してinfra内に限定させることができました。
+
+---
+class: left, middle
+
+このようにドメイン上のコンテキストと戻り値の表現に専用のインターフェイスを用意し、Dependent method types を使ってその二つを関連付けることによって、ドメイン上の表現から実装詳細を分離することができます。
+
+ここまで見てきたように、Scalaz や cats の `Monad` 等の型クラスがコード上に現れることもありません。
+
+```scala
+// 再掲
+package domain
+
+trait UserRepository {
+  def resolveByEmail(email: MailAddress)(
+    implicit ctx: MyCoolAppContext
+  ): ctx.Result[UserNotFound, User] // ここで Dependent method types 使う
+}
+```
+
+---
+class: left, middle
+
+`MyCoolAppContextImpl` の実装は少し慣れてないと難しいですが、それ以外のコードについてはfor式が使えれば特に躓くポイントは少ないと思います。
+
+従って `MyCoolAppContextImpl` の実装だけテックリードなどがガッと書いてしまえれば、Scalaにまだ不慣れなメンバーがいるチームでも採用しやすいアプローチかと思います。
+
+---
+class: left, middle
+
+
+## まとめ 
+
+* ドメインと実装詳細を分離する手法についてScalaの言語機構を活かした方法が様々提案されています。
+* Dependent method typesを使うとScalazやcatsなどの高度に抽象化された概念を使わなくても標準の言語機構だけで分離を行うことができます。
+* インターフェイスを定義して実装クラスを分離するという古典的アプローチは単純で扱いやすいです。
+* 今つくろうとしているシステムの要件に最適な実装手段を選択しましょう。
+
+
+---
+class: left, middle
+
+# 宣伝
+
+Opt Technologies ではエンジニアを募集しています
+
+* [Opt Technologies 採用情報](https://www.opt.ne.jp/opttechnologies/index.html#recruit)
+
+エフ・コードではエンジニアを募集しています
+
+* [エフ・コード 採用情報](https://f-code.co.jp/recruit/engineer.html)
+
+---
+class: left, middle
+
+# 質問とか
+
+    </textarea>
+    <script src="http://gnab.github.io/remark/downloads/remark-0.12.min.js" type="text/javascript"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+      slideshow.on('beforeShowSlide', function (slide) {
+        $("a[href^='http://']").attr("target", "_blank");
+        $("a[href^='https://']").attr("target", "_blank");
+      });
+    </script>
+  </body>
+</html>
