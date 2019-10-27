@@ -13,6 +13,6 @@
 - 2017/12/16 [Refactoringで覚えるDomaの使い方](https://gakuzzzz.github.io/slides/doma_practice2/)
 - 2018/03/16 [Implicit 入門](https://gakuzzzz.github.io/slides/implicit_introduction/)
 - 2018/03/17 [なぜComposabilityは重要か](https://gakuzzzz.github.io/slides/why_composability_matters/)
-- 2018/11/10 [明日から使える実践エラーハンドリング](https://gakuzzzz.github.io/slides/why_composability_matters/error_handling_practice/)
+- 2018/11/10 [明日から使える実践エラーハンドリング](https://gakuzzzz.github.io/slides/error_handling_practice/)
 - 2019/06/28 [継続とDI](https://gakuzzzz.github.io/slides/cps_or_di/)
 - 2019/10/26 [Dependent method types を利用した軽量Clean Architecture の紹介](https://gakuzzzz.github.io/slides/lightweight_clean_architecture_with_dmt/)
