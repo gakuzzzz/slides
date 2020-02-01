@@ -1,0 +1,804 @@
+<DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Java で Scala の Type Safe Builder パターンをエミュレートする</title>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-code, .remark-inline-code {
+        font-size: 90%;
+        color: #660000;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+## Java で Scala の <br/><strong>Type Safe Builder パターン</strong><br/>をエミュレートする
+
+Burikaigi2020 02/01
+
+
+
+---
+class: left, middle
+
+## 自己紹介
+
+* 中村 学(Nakamura Manabu)
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value 代表取締役
+* Opt Technologies 技術顧問 <img src="../images/opt_logo_1.jpg" alt="Opt Technologies" width="450" style="margin-left: 0px" /> 
+* F-CODE CTO <img src="../images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+---
+class: center, middle
+
+# Builder パターン
+
+皆さん、ご存じでしょうか？
+
+---
+class: left, middle
+
+## 今日話すのは
+
+- <strong>×</strong> GoF の Builder パターン 
+- <strong style="color:blue;">〇</strong> Effective Java の Builder パターン
+
+解決したい問題が異なるので別のパターンとして扱います。
+
+混同しないよう気を付けてください。
+
+
+<section>
+Effective Java が初出かどうかは確認がとれなかったのですが、<br/>
+広く知らしめた功績は大きいと思われるので、<br/>
+このセッションではEffective Java の Builder パターンと呼びます<br/>
+また何もつけずただのBuilder パターンと言った場合、<br/>
+Effective Java の Builder パターンを指します
+</section>
+
+---
+class: left, middle
+
+# Effective Java の <br/>Builder パターン
+
+---
+class: left, middle
+
+### Effective Java の Builder パターン
+
+
+- 元々は、多くの<strong>オプショナルな</strong>パラメータを持つ<br/>オブジェクトの生成に使用するパターン
+- 最近では Immutable Object の台頭により、<br/>必須パラメータが多い場合でも使用されています
+
+---
+class: left, middle
+
+### Effective Java の Builder パターン
+
+```java
+// 定義側
+public class Contract {
+  private final String name; // 必須
+  private String mail;       // Optional
+  private String lineId;     // Optional
+  private Contract(String name, String mail, String lineId) {
+    this.name = name;
+    this.mail = mail;
+    this.lineId = lineId;
+  }
+
+  public static Builder builder(String name) {return new Builder(name);}
+
+  public static final class Builder {
+    private final String name;
+    private String mail;
+    private String lineId;
+    private Builder(String name) { this.name = name; }
+    public Builder mail(String mail) { this.mail = mail; return this; }
+    public Builder lineId(String lId) { this.lineId = lId; return this; }
+    public Contract build() {
+      return new Contract(name, mail, lineId);
+    }
+  }
+
+}
+```
+
+
+---
+class: left, middle
+
+### Effective Java の Builder パターン
+
+```java
+// 利用側
+Contract contract = Contract.builder("gakuzzzz")       // 必須
+                            .mail("test@example.com")  // Optional
+                            .lineId("xxxxxxxxx")       // Optional
+                            .build();
+```
+
+---
+class: left, middle
+
+### Effective Java の Builder パターン
+
+```java
+Contract contract = Contract.builder("gakuzzzz")       // 必須
+                            .mail("test@example.com")  // Optional
+                            .lineId("xxxxxxxxx")       // Optional
+                            .build();
+```
+
+
+- 元々は、多くの<strong>オプショナルな</strong>パラメータを持つ<br/>オブジェクトの生成に使用するパターン
+
+
+- Python 等にある「名前付き引数呼び出し」の模倣
+
+```python
+# Python Code
+contract = Contract(name = "gakuzzzz", mail = "test@example.com")
+```
+
+---
+class: left, middle
+
+### Effective Java の Builder パターン
+
+- Python 等にある「名前付き引数呼び出し」の模倣
+
+従って、名前付き引数呼び出しが言語機構にある<br/> Scala や Kotlin では<strong>基本的に使いません</strong>
+
+
+---
+class: left, middle
+
+## Scala の <strong style="color:blue;">Type Safe</strong> Builder パターン
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+基本的に Scala では名前付き引数呼び出しがあるので<br/> Builder パターンを使わないのですが、<br/>これを拡張した Type Safe Builder と呼ばれるパターンが使われることがあります。
+
+<section>
+ここでわざわざ「Scalaの」と書いているのは、実は <a href="https://kotlinlang.org/docs/reference/type-safe-builders.html">Kotlin にも Type Safe Builder と呼ばれているパターン</a>があり、ここで取り上げるパターンとは全く別物だからです。
+<br/>
+<br/>
+GoFのBuilder / Effective JavaのBuilder<br/>
+ScalaのType Safe Builder / KotlinのType Safe Builder<br/>
+まじ……
+</section>
+
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+Builder パターンの紹介時に以下のように述べました
+- 元々は、多くの<strong>オプショナルな</strong>パラメータを持つ<br/>オブジェクトの生成に使用するパターン
+- 最近では Immutable Object の台頭により、<br/>必須パラメータが多い場合でも使用されています
+
+必須パラメータでBuilderパターンを使った場合、<br/>
+パラメータの指定漏れが、<br/>
+<strong>コンパイルエラーから実行時エラーに移ってしまう</strong><br/>
+という問題があります
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+Scala の Type Safe Builder パターンは、<br/>
+こういった実行時例外になってしまいがちな条件を<br/>
+Scalaの型システムを利用することで<br/>
+コンパイル時にチェックするよう拡張したものです
+
+---
+class: center, middle
+
+### Scala の Type Safe Builder パターン
+
+具体例を見てみましょう
+
+<section>
+これから示すサンプルコードは、<br/>
+説明の簡略化のため必要なアクセス制御などを削っています<br/>
+実際に使う場合にはその辺適切にする必要がありますので<br/>
+ご注意ください
+</section>
+
+---
+class: left, middle
+
+```scala
+class Contract(
+  val name: String,    // 必須
+  val mail: String,    
+  val lineId: String,  // mail か lineId のどちらかは必ず必要
+)
+```
+```scala
+abstract class Status
+abstract class Ok extends Status
+abstract class Ng extends Status
+
+object Contract {
+
+  class Builder[HasName <: Status, HasContactInfo <: Status](
+    name: String, mail: String, lineId: String,
+  ) {
+    def name(name: String): Builder[Ok, HasContactInfo] = 
+      new Builder(name, mail, lineId)
+    def mail(mail: String): Builder[HasName, Ok] = 
+      new Builder(name, mail, lineId)
+    def lineId(lineId: String): Builder[HasName, Ok] = 
+      new Builder(name, mail, lineId)
+
+    def build(implicit ev1: HasName =:= Ok, 
+                       ev2: HasContactInfo =:= Ok): Contract = 
+      new Contract(name, mail, lineId)
+  }
+  def builder: Builder[Ng, Ng] = new Builder(null, null, null)
+}
+```
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+まず条件がtrue/falseを型で表現できるように、<br/>
+Boolean的な型を定義します。
+
+```scala
+abstract class Status
+abstract class Ok extends Status
+abstract class Ng extends Status
+```
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+次に Builder に「チェックしたい条件」を表す型引数を宣言します
+
+
+```scala
+  class Builder[HasName <: Status, HasContactInfo <: Status](
+```
+
+<section>
+Scalaの型引数は &lt;&gt; の代わりに [] で表現します。<br/>
+<: は extends の意味です。<br/>
+Javaで書くと HasName extends Status になります
+</section>
+
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+Builderインスタンスの生成メソッドでは、<br/>
+全ての型引数を `Ng` として宣言します
+
+```scala
+  def builder: Builder[Ng, Ng] = new Builder(null, null, null)
+```
+
+<section>
+これはOptionの説明時間を省くためのサンプルです<br/>
+よい子の皆さんは null 使わないようにしましょう
+</section>
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+ある条件を満たすパラメータ設定のメソッドでは、<br/>
+条件を表す型引数を `Ok` にし、<br/>
+関係ない条件は自身の型引数をそのまま引き継いで<br/>
+戻り値型を宣言します
+
+```scala
+  class Builder[HasName <: Status, HasContactInfo <: Status](
+
+    ...中略
+
+    def name(name: String): Builder[Ok, HasContactInfo] = 
+      new Builder(name, mail, lineId)
+```
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+したがって、<br/>全ての条件を満たすパラメータ設定がされていれば<br/>
+Builderインスタンスの型引数は全て `Ok` になります
+
+```scala
+val b: Builder[Ok, Ok] = Contract.builder
+                                 .name("gakuzzzz")
+                                 .mail("test@example.com")
+```
+
+満たさない条件があれば、<br/>型引数のどこかに `Ng` が現れます
+
+```scala
+val b: Builder[Ng, Ok] = Contract.builder
+                                 .mail("test@example.com")
+                                 .lineId("xxxxx")
+
+```
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+そのため、最後の build メソッドの呼び出しを<br/>
+全ての型引数が `Ok` の時だけ呼び出せるようにすれば<br/>
+条件漏れをコンパイルエラーにする事ができます
+
+```scala
+    def build(implicit ev1: HasName =:= Ok, 
+                       ev2: HasContactInfo =:= Ok): Contract = 
+      new Contract(name, mail, lineId)
+```
+
+Scala では implicit parameter という言語機能で<br/>
+型引数が特定の型の時だけ呼べるメソッド<br/>
+を定義することができます
+
+---
+class: left, middle
+
+### Scala の Type Safe Builder パターン
+
+これを使うことで、<br/>
+全ての条件を満たさないとコンパイルエラーになる<br/>
+Builderを作ることができます
+
+```scala
+val contract = Contract.builder
+                       .name("gakuzzzz")
+                       .mail("test@example.com")
+                       .build // コンパイル通る
+```
+
+
+```scala
+val contract = Contract.builder
+                       .mail("test@example.com")
+                       .lineId("xxxxx")
+                       .build // コンパイルエラー
+```
+
+これが Scala の<br/>
+Type Safe Builder パターン です
+
+---
+class: left, middle
+
+# 今日の本題
+
+
+---
+class: left, middle
+
+# これを Java で再現しよう
+
+---
+class: left, middle
+
+## Java でエミュレートする
+
+満たすべき条件を型引数で表現するテクニックは<br/>
+所謂 Phantom Type なので<br/>Javaでも馴染みの深い？手法だと思います
+
+```scala
+  // Scala
+  class Builder[HasName <: Status, HasContactInfo <: Status](
+```
+
+```java
+  // Java
+  public static class Builder<
+    HasName extends Status, 
+    HasContactInfo extends Status
+  >
+```
+
+---
+class: left, middle
+
+## Java でエミュレートする
+
+問題は<br/>「型引数が特定の型の時だけ呼び出せるメソッド」<br/>
+が Java では定義できない事ですね。
+
+```scala
+    def build(implicit ev1: HasName =:= Ok, 
+                       ev2: HasContactInfo =:= Ok): Contract = 
+      new Contract(name, mail, lineId)
+```
+
+---
+class: left, middle
+
+### Java でエミュレートする
+
+確かに Java では<br/>
+「型引数が特定の型の時だけ呼び出せるメソッド」<br/>
+は定義できませんが、<br/>
+<strong>「特定の型引数を持つ型を、引数に取るメソッド」</strong><br/>
+は定義できることを思い出してください。
+
+例えば、<br/>
+型引数が String である List を引数に取るメソッド<br/>
+は定義できますよね？
+
+```java
+  public void foo(List<String> arg) {
+```
+
+```java
+  List<Integer> ints = ...
+  foo(ints); // コンパイルエラー
+```
+
+---
+class: left, middle
+
+### Java でエミュレートする
+
+したがって、Builder の build メソッドも、<br/>
+インスタンスメソッドにする事をあきらめて、<br/>
+Builderインスタンスを引数に取るstaticメソッド<br/>
+にすれば、<strong>条件を満たしたBuilderだけbuildできる</strong><br/>
+という状況を再現することができます
+
+試しにやってみましょう
+
+---
+class: left, middle
+
+### Java でエミュレートする
+
+生成対象のクラスは特に変わった事は無いですね
+
+```java
+public class Contract {
+  private final String name;    // 必須
+  private final String mail;    
+  private final String lineId;  // mail か lineId のどちらかは必ず必要
+
+  private Contract(String name, String mail, String lineId) {
+    this.name = name;
+    this.mail = mail;
+    this.lineId = lineId;
+  }
+
+}
+```
+
+---
+class: left, middle
+
+### Java でエミュレートする
+
+Boolean的な型定義も普通な感じです
+
+```java
+public abstract class Status {}
+public abstract class Ok extends Status {}
+public abstract class Ng extends Status {}
+```
+
+---
+class: left, middle
+
+### Java でエミュレートする
+
+Builder の型引数に満たすべき条件を指定します
+
+
+```java
+public class Contract {
+  ...中略
+
+  public static class Builder<
+    HasName extends Status,
+    HasContactInfo extends Status
+  > {
+    private final String name;
+    private final String mail;
+    private final String lineId;
+    private Builder(String name, String mail, String lineId) {
+      this.name = name;
+      this.mail = mail;
+      this.lineId = lineId;
+    }
+  }
+
+```
+
+---
+class: left, middle
+
+### Java でエミュレートする
+
+Builder のファクトリメソッドは<br/>
+全ての型引数が `Ng` になるようにします
+
+```java
+  public static Builder<Ng, Ng> builder() {
+    return new Builder<>(null, null, null);
+  }
+```
+
+---
+class: left, middle
+
+### Java でエミュレートする
+
+ある条件を満たすパラメータ設定のメソッドでは、<br/>
+
+条件を表す型引数を `Ok` にし、<br/>
+関係ない条件は自身の型引数をそのまま引き継いで<br/>
+戻り値型を宣言します
+
+```java
+  public static class Builder<
+    HasName extends Status,
+    HasContactInfo extends Status
+  > {
+
+    ...中略
+
+    public Builder<Ok, HasContractInfo> name(name: String) {
+      return new Builder<>(name, mail, lineId);
+    }
+```
+---
+class: left, middle
+
+### Java でエミュレートする
+
+そして、全ての型引数が `Ok` になった<br/>
+Builderを引数にとる build メソッドを定義します
+
+```java
+public class Contract {
+  ...中略
+
+  public static Contract build(Builder<Ok, Ok> builder) {
+    return new Contract(
+      builder.name,
+      builder.mail,
+      builder.lineId
+    )
+  }
+
+```
+
+---
+class: left, middle
+
+### Java でエミュレートする
+
+こうすることで条件を全て満たした時だけ<br/>
+コンパイルが通るBuilderを作ることができます
+
+```java
+var contract = Contract.build(
+                 Contract.builder
+                         .name("gakuzzzz")
+                         .mail("test@example.com")
+               ); // コンパイル通る
+```
+
+
+```java
+var contract = Contract.build(
+                 Contract.builder
+                         .mail("test@example.com")
+                         .lineId("xxxxx")
+               ); // コンパイルエラー
+```
+
+---
+class: left, middle
+
+# おまけ
+
+---
+class: left, middle
+
+### 使い勝手を考える
+
+これで一応意図した挙動にすることはできました
+
+```java
+var contract = Contract.build(
+                 Contract.builder
+                         .name("gakuzzzz")
+                         .mail("test@example.com")
+               ); // コンパイル通る
+```
+
+が、static メソッドを二つ呼ぶような使い方は<br/>
+若干 Fluent な API より使い方の想像がつきにくい<br/>
+印象が個人的にはありました
+
+---
+class: left, middle
+
+### 使い勝手を考える
+
+そこで、build と Builder生成 を同時に呼び出せる<br/>
+メソッドを足してみました。
+
+```java
+public class Contract {
+  ...中略
+
+  // 再掲
+  public static Builder<Ng, Ng> builder() { 
+    return new Builder<>(null, null, null);
+  }
+  public static Contract build(Builder<Ok, Ok> builder) {
+    return new Contract(
+      builder.name,
+      builder.mail,
+      builder.lineId
+    )
+  }
+  // 追加
+  public static Contract build(
+      Function<Builder<Ng, Ng>, Builder<Ok, Ok>> f) {
+    return build(f.apply(builder()));
+  }
+```
+
+---
+class: left, middle
+
+### 使い勝手を考える
+
+こうすることで以下のような使い方ができます
+
+```java
+var contract = Contract.build(builder ->
+                 builder.name("gakuzzzz")
+                        .mail("test@example.com")
+               );
+```
+
+---
+class: left, middle
+
+### Java での問題点
+
+これで Scala の Type Safe Builder パターンを<br/>
+Java で再現することができました。
+
+不正な使われ方はコンパイルエラーで検出できるようになり、
+必須、オプショナルだけではないちょっと込み入った条件も表現する事が可能になりました。
+
+ただし Scala 版と比較すると、コンパイルエラーがただの型の不一致としか表現できないため、
+エラーになった時に何が悪かったのか利用者に説明しづらいという問題があります
+
+---
+class: left, middle
+
+### Java での問題点
+
+Scala の場合は<br/>
+implicit parameter が見つからなかった時の<br/>
+エラーメッセージをカスタマイズ可能なため、<br/>
+「mail か lineId のどちらかは必ず指定してください」<br/>
+等のメッセージを出す事が可能です。
+
+その辺まではさすがにJavaで再現しきれないのでちょっと残念です
+
+---
+class: left, middle
+
+## まとめ
+
+- GoFのBuilderとEffective JavaのBuilder違う
+- 名前付き引数呼び出しがある言語では基本使わない
+- Phantom Typeを使うことで必須パラメータ等の条件を静的検査することが可能になる
+
+---
+class: left, middle
+
+# 質問とか
+
+    </textarea>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.js" type="text/javascript"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+  crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+      slideshow.on('beforeShowSlide', function (slide) {
+        $("a[href^='http://']").attr("target", "_blank");
+        $("a[href^='https://']").attr("target", "_blank");
+      });
+    </script>
+  </body>
+</html>
+

@@ -16,3 +16,4 @@
 - 2018/11/10 [明日から使える実践エラーハンドリング](https://gakuzzzz.github.io/slides/error_handling_practice/)
 - 2019/06/28 [継続とDI](https://gakuzzzz.github.io/slides/cps_or_di/)
 - 2019/10/26 [Dependent method types を利用した軽量Clean Architecture の紹介](https://gakuzzzz.github.io/slides/lightweight_clean_architecture_with_dmt/)
+- 2020/02/01 [Java で Scala の Type Safe Builder パターンをエミュレートする](https://gakuzzzz.github.io/slides/type_safe_builder_in_java/)
