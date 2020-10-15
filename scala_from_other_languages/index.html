@@ -100,7 +100,7 @@
 
 class: center, middle
 
-# Beginning Scala from zero <br/>for <strong>other language</strong> exparts
+# Beginning Scala from zero, <br/>for <strong>other language</strong> exparts
 
 ### - block exp, for exp, type classes -
 
@@ -130,7 +130,7 @@ class: left, middle
 
 Scala is sometimes said to be expensive to learn.
 
-I think some people feel difficult to learn because follows.
+I think some people feel it is difficult to learn because of the follows.
 
 - The existence of language mechanisms that are difficult to analogize from the experience of other languages.
 - Features that are specially prepared in other languages are realized by a combination of simple features.
@@ -225,7 +225,7 @@ class: left, middle
 
 ## Expression
 
-When an expression was evaluated successfully, it becomes a value.
+When an expression it evaluated successfully, it becomes a value.
 
 ```scala
 "foo" // evaluated to "foo" 
@@ -235,7 +235,7 @@ When an expression was evaluated successfully, it becomes a value.
 1 + 2 + 3 // evaluated to 6 
 ```
 
-On the other hand, that does not become a value when it is evaluated are called a statement.
+On the other hand, those that do not become values when evaluated are called statements.
 
 ```scala
 val bar = "assignments is a statement"
@@ -307,10 +307,9 @@ class: left, middle
 def add(a: Int, b: Int): Int = a + b
 ```
 
-Occasionally "`return` and `{ }` can be omitted in Scala method definitions"
-Is sometimes explained, but strictly speaking, it is not correct.
+Occasionally "`return` and `{ }` can be omitted in Scala method definitions" is sometimes explained, but strictly speaking, it is not correct.
 
-As mentioned above, the general form is not, and the exact is that we may write return if necessary.
+As mentioned above, the general form is not correct. The exact is that we may write `return` if necessary.
 
 <div class="translation">
 時折「Scalaのメソッド定義では return や { } を省略することができる」<br/>
@@ -441,7 +440,7 @@ def average(list: List[String]): Int = {
 }
 ```
 
-`return` is just a syntax for escaping evaluation an expression, on the way in a method.
+`return` is just syntax for escaping evaluation an expression on the way within a method.
 
 So, it cannot be used outside the method definition,
 It is unnecessary to use it unless you want to stop the evaluation.
@@ -457,7 +456,7 @@ class: left, middle
 
 ## 
 
-Using `return` at the end of the block expression is only overlooked, as the result will be the same.
+Using `return` at the end of a block expression is only overlooked, becase the result will be the same.
 
 ```scala
 def add(a: Int, b: Int): Int = {
@@ -652,7 +651,7 @@ class: left, middle
 
 ## Comprehension in program
 
-for-yield in scala is same of them.
+for-yield in scala is one of them.
 
 ```scala
 // Scala
@@ -720,7 +719,7 @@ for {
 -> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
 ```
 
-I think that there are many cases where it becomes easier to see when many conditions are.
+I think that there are many cases where it becomes easier to see when there are many conditions.
 
 <div class="translation">
 {} を使うと改行で ; の代わりにすることができます。<br/>
@@ -755,7 +754,7 @@ class: left, middle
 
 ## Comprehension other than List
 
-The Haskell standard only uses list comprehensions, but the GHC extension allows we to use monad comprehensions.
+The Haskell standard only uses list comprehensions, but the GHC extension allows us to use monad comprehensions.
 
 ```haskell
 :set -XMonadComprehensions
@@ -870,7 +869,7 @@ class: left, middle
 
 ## for comprehension
 
-When It cannot decision based on only the first part, it is OK by looking at the yield expression.
+When a decision cannot be made based solely only the first part, it is OK to look to the `yield` expressions.
 
 ```scala
 for {
@@ -896,7 +895,7 @@ class: left, middle
 ## Summary
 
 - for-yield in Scala is comprehensions.
-- It's loose so It can use anything what has  `map` / `flatMap`.
+- It's loose, so it can use anything what has  `map` / `flatMap`.
 - If we know the type of the first part, we can know the type of the result.
 
 <div class="translation">
@@ -1097,7 +1096,7 @@ implicit val fooComparator: Comparator[Foo] = new Comparator[Foo] {
 ---
 class: left, middle
 
-## Compareing mix-in
+## Comparing mix-in
 
 ```scala
 trait Comparable[A] {
@@ -1130,7 +1129,7 @@ mixin と比較してみるとこうなります
 ---
 class: left, middle
 
-## Compareing mix-in
+## Comparing mix-in
 
 A type class can be defined as providing a type class instance only if a type argument has a particular type class instance.
 
