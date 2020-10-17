@@ -1,0 +1,1229 @@
+<Doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>他言語経験者が0から始めるScala ～block式とfor式と型クラス～</title>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-inline-code {
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      .remark-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+      .translation {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background-color: #eeeeee;
+        padding: 0.5em 1em;
+        width: 100%;
+        line-height: 110%;
+      }
+      code {
+        font-size: 100%;
+        background-color: #eeeeff;
+        padding: 3px;
+      }
+      .translation code {
+        padding: 0px;
+        background-color: #cccccc;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td, th {
+        border: 1px solid #333333;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Beginning Scala from zero, <br/>for <strong>other language</strong> exparts
+
+### - block exp, for exp, type classes -
+
+Scala Matsuri 2020 2020/10/17
+
+<div class="translation">
+他言語経験者が0から始めるScala
+</div>
+---
+class: left, middle
+
+## Who am I
+
+* Manabu Nakamura
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd.  CEO <img src="../images/t2v-logo.png" alt="Tech to Value" height="120" style="margin-left: 0px" />
+* F-CODE Inc. CTO <img src="../images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+<div class="translation">
+自己紹介: 中村 学<br/>Tech to Value代表 / F-CODE CTO
+</div>
+
+---
+class: left, middle
+
+### Introduction
+
+Scala is sometimes said to be expensive to learn.
+
+I think some people feel it is difficult to learn because of the follows.
+
+- The existence of language mechanisms that are difficult to analogize from the experience of other languages.
+- Features that are specially prepared in other languages are realized by a combination of simple features.
+
+<div class="translation">
+Scalaは時折、学習コストが高いと言われる事があります。<br />
+以下のような事から取っ付きづらさを感じてしまう方もいらっしゃる様です<br />
+- 他言語の経験から類推しにくい言語機構の存在<br />
+- 他言語では専用で用意されている機能が、<br>&nbsp;シンプルな機能の組み合わせで実現されていたりする事
+</div>
+
+---
+class: left, middle
+
+## Introduction
+
+In this session I would like to explain the effective language mechanisms that are difficult to learn by analogy from other languages.
+
+<div class="translation">
+このセッションでは、最初に知っておくと理解が進みやすかったり、<br/>
+実務で効果を発揮しやすかったりするものの、<br/>
+なかなか他言語からの類推では学習し難い言語機構について、簡単に解説します。
+</div>
+
+---
+class: left, middle
+
+## Block expression
+
+
+
+<div class="translation">
+ブロック式
+</div>
+
+---
+class: left, middle
+
+## Expression
+
+Before explaining the block expression, what is the expression in the first place?
+
+<div class="translation">
+ブロック式の説明の前に、そもそも式とは何でしょうか？
+</div>
+
+---
+class: left, middle
+
+## Expression
+
+Formal definition is written in the language specification.
+
+In Scala, the expression is the basic element of program execution.
+
+<div class="translation">
+形式的な定義は言語仕様に譲るとして、<br/>
+Scalaにおいて式とはプログラムの実行における基本的な要素です。
+</div>
+
+---
+class: left, middle
+
+## Examples of Expressions
+
+```scala
+"foo"
+```
+
+A single literal is an expression, 
+
+```scala
+1 + 2 + 3
+```
+
+Operator and method calls are also expressions.
+
+```scala
+if (bar.isEmpty) List(1, 2) else Nil
+```
+
+`if` is also an expression.
+
+<div class="translation">
+単一のリテラルも式ですし、<br/>
+演算子やメソッド呼び出しも式です。<br/>
+if も式だったりします。
+</div>
+
+---
+class: left, middle
+
+## Expression
+
+When an expression it evaluated successfully, it becomes a value.
+
+```scala
+"foo" // evaluated to "foo" 
+```
+
+```scala
+1 + 2 + 3 // evaluated to 6 
+```
+
+On the other hand, those that do not become values when evaluated are called statements.
+
+```scala
+val bar = "assignments is a statement"
+```
+
+<div class="translation">
+式は評価(実行)が成功すると値になります。<br/>
+それに対し、評価しても値にならないものを文と言います。
+</div>
+
+---
+class: left, middle
+
+## Method definition
+
+The method definition is the above syntax.
+
+```scala
+def methodName(parameter list): ResultType = Expression
+```
+
+```scala
+def メソッド名(引数リスト): 戻り値型 = 式
+```
+
+Separated by `=`, it takes a signature on the left side and a single expression on the right side.
+
+The evaluation result value of the expression is the return value of the method.
+
+<div class="translation">
+メソッド定義は上記のような構文になっています。<br/>
+= で区切られ、左辺にシグネチャを、右辺に単一の式をとります。<br/>
+式の評価結果値がメソッドの戻り値となるわけです。
+</div>
+
+---
+class: left, middle
+
+## Method definition
+
+```scala
+def methodName(parameter list): ResultType = Expression
+```
+
+```scala
+def メソッド名(引数リスト): 戻り値型 = 式
+```
+
+Therefore, the following code is the complete method definition code.
+
+
+```scala
+def add(a: Int, b: Int): Int = a + b
+```
+
+Notice that neither `return` nor `{ }` exists here.
+
+<div class="translation">
+従って、上記のようなコードが完全なメソッド定義のコードになります。<br/>
+ここに return も { } も存在しない事に注目してください。
+</div>
+
+---
+class: left, middle
+
+## Method definition
+
+```scala
+def add(a: Int, b: Int): Int = a + b
+```
+
+Occasionally "`return` and `{ }` can be omitted in Scala method definitions" is sometimes explained, but strictly speaking, it is not correct.
+
+As mentioned above, the general form is not correct. The exact is that we may write `return` if necessary.
+
+<div class="translation">
+時折「Scalaのメソッド定義では return や { } を省略することができる」<br/>
+という解説がされる事がありますが、厳密に言うと正しくありません。<br/>
+あくまで上記のように無い形が一般的で「必要に応じて return 等を書いても良い」<br>
+というのが正確なところです。
+</div>
+
+---
+class: left, middle
+
+## Block expression
+
+```scala
+def hoge(foo: Int, bar: Int): Int = 
+  doSomething1(calculate(foo), calculate(bar)) + 
+  doSomething2(calculate(bar), calculate(foo))
+```
+
+Since expressions are easy to compose, it is often possible to express complex processing with a single expression.
+
+However, it is often easier to understand when you separate the expressions, such as when you use the value once evaluated multiple times, or when you express the intention of processing declaratively.
+
+<div class="translation">
+式は合成が簡単なため、複雑な処理を単一式で表現することも可能な場合も多いですが、<br/>
+一度評価した値を複数回使いたい時や、処理の意図を宣言的に表現したい場合など、<br/>
+式を分けたほうがわかりやすくなる場合も多くあります。<br/>
+</div>
+
+---
+class: left, middle
+
+### Block expression
+
+In such cases, The block expression can be used.
+
+```scala
+{
+  expression
+  ...
+  expression
+}
+```
+
+A block expression combines multiple expressions and statements into a single expression.
+
+When a block expression is evaluated, it is evaluated in order from the first expression, and the value of the last expression becomes the value of the entire block expression.
+
+<div class="translation">
+こういう時に使えるのがブロック式です。<br/>
+ブロック式は複数の式や文をまとめて一つの式とします。<br/>
+ブロック式が評価されると、先頭の式から順に評価され、<br/>
+最後の式の値がブロック式全体の値となります。
+</div>
+
+---
+class: left, middle
+
+### Block expression
+
+```scala
+def hoge(foo: Int, bar: Int): Int = 
+  doSomething1(calculate(foo), calculate(bar)) + 
+  doSomething2(calculate(bar), calculate(foo))
+```
+
+Using the block expression, the above code can also be written as follows.
+
+```scala
+def hoge(foo: Int, bar: Int): Int = {
+  val baz = calculate(foo)
+  val qux = calculate(bar)
+  doSomething1(baz, qux) + doSomething2(qux, baz)
+}
+```
+
+Notice that this also is not omission `return`.
+
+<div class="translation">
+ブロック式を使うと上記のコードも下記のように書くことができます。<br/>
+これも return が省略されているわけではない事に注意してください。
+</div>
+
+---
+class: left, middle
+
+### Block expression
+
+The block expression is just a expression, so you can put a block expression anywhere you can put an expression.
+
+```scala
+val foo = {
+  println("aaa")
+  10 + 30
+}
+```
+
+```scala
+if (list.isEmpty) {
+  println("then case")
+  100
+} else {
+  println("else case")
+  -1
+}
+```
+
+<div class="translation">
+ブロック式はあくまでただの式なので、<br/>
+式が置ける場所にはどこにでも置くことができます。
+</div>
+
+---
+class: left, middle
+
+```scala
+class Foo {
+  val bar = {    // can use a block expression
+    return "baz" // can not use return. compile error
+  }
+}
+```
+
+```scala
+def average(list: List[String]): Int = {
+  if (list.isEmpty) return 0  // valid
+  ...
+}
+```
+
+`return` is just syntax for escaping evaluation an expression on the way within a method.
+
+So, it cannot be used outside the method definition,
+It is unnecessary to use it unless you want to stop the evaluation.
+
+<div class="translation">
+return はあくまでメソッドの中で、式の評価の途中で脱出して値を返すための構文です。<br/>
+従ってメソッド定義の外では使えませんし、<br/>
+式の評価を途中で打ち切りたい時以外は使う必要がありません。
+</div>
+
+---
+class: left, middle
+
+## 
+
+Using `return` at the end of a block expression is only overlooked, becase the result will be the same.
+
+```scala
+def add(a: Int, b: Int): Int = {
+  return a + b         // unnecessary return
+}
+```
+
+```java
+// Java Code
+for (var obj : list) {
+  obj.doSomething();
+  continue;            // similer
+}
+```
+
+It's like using `continue` at the end of a loop in another language.
+
+<div class="translation">
+逆に言うと、ブロック式の最後で return を使うのは、<br/>
+結果的に結果が同じになるから問題が無いだけです。<br/>
+例えるなら他言語でループの最後に continue を書くのと似ています。
+</div>
+
+---
+class: left, middle
+
+## Summary
+
+- An expression is a component of a program that becomes a value when evaluated.
+- A block expression combines multiple expressions and statements into one expression.
+- Block expressions can be placed anywhere the expression can be placed.
+- Avoiding `Return` and `{ }` is not omission, it may be used when necessary.
+
+<div class="translation">
+- 式は評価すると値になるプログラムの構成部分<br/>
+- ブロック式は複数の式や文をまとめて一つの式とする<br/>
+- ブロック式は式が置けるあらゆる所に置くことができる<br/>
+- return や { } は省略できるのではなく、必要であれば使用するもの<br/>
+</div>
+
+---
+class: left, middle
+
+## for expression
+
+<div class="translation">
+for式
+</div>
+
+---
+class: left, middle
+
+## for expression
+
+`for` in Scala is an expression, in other words, it becomes a value when evaluated.
+
+There are two kinds for expression in Scala.
+
+It is the one with `yield` and the one without.
+
+<div class="translation">
+for<b>式</b>と言うようにScalaのforは式です。<br/>
+つまり評価すると値になります。<br/>
+Scalaのfor式は大きくわけて2種類あります。<br/>
+予約語 yield がつくものとつかないものです。<br/>
+</div>
+
+---
+class: left, middle
+
+## for-yield
+
+The for expression without yield is almost similar to the foreach control structure of other languages, so we will focus on for-yield here.
+
+<div class="translation">
+yield がつかないfor式は他言語のforeach制御構造とだいたい似ているので、<br/>
+ここでは for-yield を中心に解説します。
+</div>
+
+---
+class: left, middle
+
+## for-yield
+
+```scala
+scala> for {
+     |   x <- 1 to 3
+     |   y <- 5 to 7
+     | } yield x * y
+res1: scala.collection.immutable.IndexedSeq[Int] = 
+  Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+A for expression with yield is called<br/> <strong>for comprehension</strong>.
+
+<div class="translation">
+yield が付くfor式のことを for comprehension と言います。
+</div>
+
+---
+class: left, middle
+
+## for comprehension
+
+
+<div class="translation">
+for 内包表記
+</div>
+
+---
+class: left, middle
+
+## Extensional notation
+
+When expressing a set, the expression that enumerates and writes the concrete values of the elements is called extensional notation.
+
+```scala
+{2, 3, 4, 5, 6, 4, ...}
+```
+
+
+<div class="translation">
+外延的記法(外延表記)<br/>
+ある集合を表現する際にその要素の具体値を列挙して書く表現を外延的記法と言います。
+</div>
+
+---
+class: left, middle
+
+## Extensional notation
+
+```scala
+{2, 3, 4, 5, 6, 4, ...}
+```
+
+Although extensional notation is concrete and easy to understand, abbreviations are often used when not all elements can be listed.
+
+In such a case, it may be difficult to represent the entire set without misunderstanding.
+
+<div class="translation">
+外延的記法は具体的でわかりやすいものの、<br/>
+全ての要素を列挙しきれない場合も多く省略が使われる事があります。<br/>
+そうした場合、誤解無く集合全体を表現する事が難しくなる場合があります。
+</div>
+
+---
+class: left, middle
+
+## Comprehension
+
+```scala
+Even = {x | x ∈ Integer and x modulo 2 is 0}
+```
+
+```scala
+偶数 = {x | x ∈ 整数 かつ x ÷ 2 の剰余は 0}
+```
+
+The notation that expresses the condition of an element and expresses a set in this way is called comprehension.
+
+<div class="translation">
+内包的記法(内包表記)<br/>
+この様に要素の条件を明示して集合を表す記法を内包的記法と言います。
+</div>
+
+---
+class: left, middle
+
+## Comprehension in program
+
+Some programming languages support you to write this comprehension in your program.
+
+```python
+# Python
+[x * y for x in range(1, 4) for y in range(5, 8)]
+# => [5, 6, 7, 10, 12, 14, 15, 18, 21]
+```
+
+```haskell
+-- Haskell
+[x * y | x <- [1..3], y <- [5..7]]
+-> [5, 6, 7, 10, 12, 14, 15, 18, 21]
+```
+
+<div class="translation">
+一部のプログラミング言語ではこの内包的記法を<br/>
+プログラム中に書けるようサポートしています。
+</div>
+
+---
+class: left, middle
+
+## Comprehension in program
+
+for-yield in scala is one of them.
+
+```scala
+// Scala
+for (x <- 1 to 3; y <- 5 to 7) yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+compare
+
+```python
+# Python
+[x * y for x in range(1, 4) for y in range(5, 8)]
+# => [5, 6, 7, 10, 12, 14, 15, 18, 21]
+```
+
+```haskell
+-- Haskell
+[x * y | x <- [1..3], y <- [5..7]]
+-> [5, 6, 7, 10, 12, 14, 15, 18, 21]
+```
+
+
+<div class="translation">
+Scalaのfor内包表記もこれにあたります。
+</div>
+
+---
+class: left, middle
+
+## for-yield
+
+```scala
+for (x <- 1 to 3; y <- 5 to 7) yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+It can also replace `( )` with `{ }`.
+
+```scala
+for {x <- 1 to 3; y <- 5 to 7} yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+<div class="translation">
+() を {} で書くこともできます。
+</div>
+
+---
+class: left, middle
+
+## for-yield
+
+Using "{}" it can replace ";" with a newline.
+
+```scala
+for {x <- 1 to 3; y <- 5 to 7} yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+```scala
+for {
+  x <- 1 to 3
+  y <- 5 to 7
+} yield x * y
+-> Vector(5, 6, 7, 10, 12, 14, 15, 18, 21)
+```
+
+I think that there are many cases where it becomes easier to see when there are many conditions.
+
+<div class="translation">
+{} を使うと改行で ; の代わりにすることができます。<br/>
+条件が多くなるとこちらの方が見やすくなるケースが多い印象です。
+</div>
+
+---
+class: left, middle
+
+## Comprehension other than List
+
+In Python, the comprehension is divided for each object we want to create.
+
+```python
+# リスト内包表記
+[x * y for x in range(1, 4) for y in range(1, 4)]
+# => [1, 2, 3, 2, 4, 6, 3, 6, 9]
+```
+
+```python
+# セット内包表記
+{x * y for x in range(1, 4) for y in range(1, 4)}
+# => {1, 2, 3, 4, 6, 9}
+```
+
+<div class="translation">
+Pythonでは生成したいオブジェクト毎に内包表記が分かれています。
+</div>
+
+---
+class: left, middle
+
+## Comprehension other than List
+
+The Haskell standard only uses list comprehensions, but the GHC extension allows us to use monad comprehensions.
+
+```haskell
+:set -XMonadComprehensions
+Prelude> [x * y | x <- Just 2, y <- Just 3]
+Just 6
+Prelude> [x * y | x <- Just 2, y <- Nothing]
+Nothing
+```
+
+It can define the value of any monad instance by using comprehension.
+
+<div class="translation">
+Haskell 標準ではリスト内包表記のみですが、<br/>
+GHC拡張でモナド内包表記がつかえるようになります。<br/>
+内包表記で任意のモナドインスタンスの値を定義できます。
+</div>
+
+---
+class: left, middle
+
+## Comprehension other than List
+
+In Scala, it is similar to the monad comprehension, but the conditions are looser.
+
+When the object has a `map` method and a `flatMap` method, it can be used with for-yield.
+
+```scala
+for {
+  x <- Seq("1", "2", "abc", "4")
+  y <- Try(x.toInt).toOption
+} yield y * y
+-> Seq(1, 4, 16)
+```
+
+
+<div class="translation">
+Scalaの場合モナド内包表記に近いですが、もっとゆるふわです。<br/>
+map メソッドと flatMap メソッドを持っていれば for-yield で使う事ができます。<br/>
+</div>
+
+---
+class: left, middle
+
+## for comprehension
+
+The reason why such a thing is possible is that for-yield is actually syntactic sugar.
+
+for-yield expressions are converted to expressions with `map` / `flatMap` at compile time.
+
+<div class="translation">
+なぜそんな事が可能なのかというと、実はfor-yieldは糖衣構文だからなのです。<br/>
+for-yield で書いた式はコンパイル時に map/flatMap を使った式に変換されます。
+</div>
+
+---
+class: left, middle
+
+## for comprehension
+
+```scala
+for {
+  x <- Seq("1", "2", "abc", "4")
+  y <- Try(x.toInt).toOption
+} yield y * y
+```
+
+The above code will translate to below.
+
+```scala
+Seq("1", "2", "abc", "4").flatMap { x =>
+  Try(x.toInt).toOption.map { y =>
+    y * y
+  }
+}
+```
+
+<div class="translation">
+上記のコードが下記に変換されます。
+</div>
+
+---
+class: left, middle
+
+## for comprehension
+
+Therefore, We can know what the result type of for-yield will be by looking at the first part.
+
+```scala
+for {
+  x <- Vector(1,2,3)
+  y <- List(1,2)
+} yield x * y
+-> Vector(1, 2, 3, 2, 4, 6) 
+// because Vector#flatMap
+```
+
+```scala
+for {
+  x <- List(1,2,3)
+  y <- List(1,2)
+} yield x * y
+-> List(1, 2, 3, 2, 4, 6)
+// because List#flatMap
+```
+
+<div class="translation">
+従って、for-yield の結果がどんな型になるかはほぼ最初の部分を見れば判明します。
+</div>
+
+---
+class: left, middle
+
+## for comprehension
+
+When a decision cannot be made based solely only the first part, it is OK to look to the `yield` expressions.
+
+```scala
+for {
+  (key, value) <- Map("a" -> 1, "b" -> 2)
+} yield (key+key) -> (value*10)
+-> Map("aa" -> 10, "bb" -> 20)
+```
+
+```scala
+for {
+  (_, value) <- Map("a" -> 1, "b" -> 2)
+} yield value * 10
+-> Iterable(10, 20)
+```
+
+<div class="translation">
+一部、最初の部分だけでは決定できない場合は、yield の式も含めて判断すればOKです。
+</div>
+
+---
+class: left, middle
+
+## Summary
+
+- for-yield in Scala is comprehensions.
+- It's loose, so it can use anything what has  `map` / `flatMap`.
+- If we know the type of the first part, we can know the type of the result.
+
+<div class="translation">
+- Scala の for-yield は内包表記です<br/>
+- ゆるふわなので map/flatMap があれば何でもいけます<br/>
+- 最初の部分の型がわかれば結果の型がだいたいわかります<br/>
+</div>
+
+---
+class: left, middle
+
+## type classes
+
+<div class="translation">
+型クラス
+</div>
+
+---
+class: left, middle
+
+## type classes
+
+In Scala, type classes imported from Haskell etc. are often used.
+
+However, there is no specific language mechanism,
+It is realized by using a language mechanism called implicit parameter.
+
+<div class="translation">
+ScalaではHaskell等から輸入された型クラスというものがよく使われます。<br/>
+といっても専用の言語機構があるわけではなく、<br/>
+implicit parameterという言語機構を使って実現しています。
+</div>
+
+---
+class: left, middle
+### What is Implicit Parameter
+
+- Add implicit modifier to method parameter group
+
+```scala
+def foo(bar: Bar)(implicit baz: Baz)
+```
+
+- In method calls, Scalac complements implicit values which the type match in scope.
+
+```scala
+foo(new Bar)  // complements parameter baz
+```
+
+- If there are no value which the type match in scope or there are more than one values, the compilation is failed.
+
+<div class="translation">
+メソッドの引数グループに `implicit` 修飾子をつける。<br/>
+メソッド呼び出しで、スコープ中に型が一致するimplicitな値をコンパイラが補う。<br/>
+スコープ中に型が一致する値が存在しない、<br/>
+もしくは複数存在しているとコンパイルエラーになる<br/>
+</div>
+
+---
+class: left, middle
+
+## What is Implicit Parameter
+
+An "implicit value" is a value that is annotated by implicit modifier.
+
+```scala
+implicit val foo: Foo = ...
+implicit object Bar extends BarLike {
+  ...
+}
+implicit def baz: Baz = ... // can use def
+```
+
+It can also be defined with `def` instead of `val`.
+
+<div class="translation">
+Implicit な値とは、定義時に implicit 修飾子がついた値です。<br/>
+val の代わりに def でも定義可能です。
+</div>
+
+---
+class: left, middle
+
+## The Motivation of type classes
+
+The motivation for type classes is to provide composable constraints to types.
+
+<div class="translation">
+型クラスの動機は合成可能性のある制約を型に提供することです。
+</div>
+
+---
+class: left, middle
+
+## Type constraints
+
+In terms of type constraints, it can also be represented by a regular trait mixin.
+
+```scala
+trait Comparable[A] {
+  def compare(other: A): Int
+}
+```
+
+```scala
+class Foo(i: Int) extends Comparable[Foo] {
+  ...
+  def compare(other: A): Int = {
+    this.i - other.i
+  }
+}
+```
+
+<div class="translation">
+型への制約という意味では、通常の trait の mixin でも表現することができます。
+</div>
+
+---
+class: left, middle
+
+## the plain traits problem
+
+However, regular trait mixins do not provide sufficient constraints on generic classes.
+
+```scala
+trait Comparable[A] {
+  def compare(other: A): Int
+}
+```
+
+```scala
+class Bar[A](a: A) extends Comparable[Bar[A]] {
+  ...
+  def compare(other: A): Int = {
+    ???
+    // when A is comparable Bar[A] can compare,
+    // But when A is not comparable Bar[A] can not compare.
+  }
+}
+```
+
+
+<div class="translation">
+しかし通常の trait の mixin では<br/>
+ジェネリックなクラスに対して十分な制約をかけることができません。
+</div>
+
+---
+class: left, middle
+
+## the plain traits problem
+
+That said, if you always put a Comparable constraint on `A`,
+We will not be able to use `Bar` with classes that cannot be compared.
+
+```scala
+class Bar[A <: Comparable[A]](a: A) extends Comparable[Bar[A]] {
+  ...
+  def compare(other: A): Int = {
+    ...
+  }
+}
+```
+
+<div class="translation">
+だからといって常に A に Comparable の制約をつけてしまっては、<br/>
+比較できないクラスと共にBarを使うことができなくなってしまいます。
+</div>
+
+---
+class: left, middle
+
+## The motivation of type classes
+
+
+```scala
+trait Comparator[A] {
+  def compare(o1: A, o2: A): Int
+}
+```
+
+So let's separate the constraint from the class definition.
+
+```scala
+class Foo(i: Int) {
+  ...
+}
+implicit val fooComparator: Comparator[Foo] = new Comparator[Foo] {
+  def compare(o1: Foo, o2: Foo): Int = o1.i - o2.i
+}
+```
+
+
+<div class="translation">
+そこで制約をクラスの定義と分離できるようにします。
+</div>
+
+---
+class: left, middle
+
+## Comparing mix-in
+
+```scala
+trait Comparable[A] {
+  def compare(other: A): Int
+}
+class Foo(i: Int) extends Comparable[Foo] {
+  ...
+  def compare(other: A): Int = {
+    this.i - other.i
+  }
+}
+```
+
+```scala
+trait Comparator[A] {
+  def compare(o1: A, o2: A): Int
+}
+class Foo(i: Int) {
+  ...
+}
+implicit val fooComp: Comparator[Foo] = new Comparator[Foo] {
+  def compare(o1: Foo, o2: Foo): Int = o1.i - o2.i
+}
+```
+
+<div class="translation">
+mixin と比較してみるとこうなります
+</div>
+
+---
+class: left, middle
+
+## Comparing mix-in
+
+A type class can be defined as providing a type class instance only if a type argument has a particular type class instance.
+
+```scala
+trait Comparator[A] {
+  def compare(o1: A, o2: A): Int
+}
+```
+
+```scala
+class Bar[A](a: A) { ... }
+implicit def barComp[A](implicit aComp: Comparator[A])
+    : Comparator[Bar[A]] = new Comparator[Foo] {
+  def compare(o1: Foo, o2: Foo): Int = aComp.compare(o1.a, o2.a)
+}
+```
+
+<div class="translation">
+ある型引数が特定の型クラスインスタンスをもっているときに限り<br/>
+型クラスインスタンを提供する、<br/>
+という定義をすることができます。
+</div>
+
+---
+class: left, middle
+
+## Use side
+
+It can use it like mixin.
+
+```scala
+// Plain trait
+def sort[A <: Comparable[A]](in: Traversable[A]): Seq[A] = ...
+val foos: Seq[Foo] = ...
+val sorted = sort(foos)
+```
+
+```scala
+// type classes
+def sort[A](in: Traversable[A])(implicit c: Comparator[A]): Seq[A]
+val foos: Seq[Foo] = ...
+val sorted = sort(foos) // scalac complements Comparator[Foo]
+```
+
+<div class="translation">
+利用側でも mixin と変わらない使い勝手で使えます
+</div>
+
+---
+class: middle
+
+## Summary
+
+- In Scala, sometimes uses typeclasses when expressing type constraints.
+- Type classes are implemented using implicit parameters.
+- It can express more composable constraints by using typeclasses.
+
+<div class="translation">
+- Scalaでは型の制約を表現する時に型クラスを使うことがあります<br/>
+- 型クラスは implicit parameter を使って実現されます<br/>
+- 型クラスを使うことでより柔軟な制約を表現することができます
+</div>
+
+---
+class: left, middle
+
+## Advertising (to Japanese)
+
+Tech to Value ではScalaコードレビューサービスを提供しています。
+
+* [Tech to Value](http://www.t2v.jp/)
+
+エフ・コードではエンジニアを募集しています。
+
+* [エフ・コード 採用情報](https://f-code.co.jp/recruit/engineer.html)
+
+---
+class: middle
+
+## Any questions?
+
+<div class="translation">
+質問とか
+</div>
+
+    </textarea>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.js" type="text/javascript"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+  crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+    </script>
+  </body>
+</html>
