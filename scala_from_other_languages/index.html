@@ -1104,7 +1104,7 @@ trait Comparable[A] {
 }
 class Foo(i: Int) extends Comparable[Foo] {
   ...
-  def compare(other: A): Int = {
+  def compare(other: Foo): Int = {
     this.i - other.i
   }
 }
