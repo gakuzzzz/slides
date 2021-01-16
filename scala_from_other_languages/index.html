@@ -1029,7 +1029,7 @@ trait Comparable[A] {
 ```scala
 class Bar[A](a: A) extends Comparable[Bar[A]] {
   ...
-  def compare(other: A): Int = {
+  def compare(other: Bar[A]): Int = {
     ???
     // when A is comparable Bar[A] can compare,
     // But when A is not comparable Bar[A] can not compare.
@@ -1054,7 +1054,7 @@ We will not be able to use `Bar` with classes that cannot be compared.
 ```scala
 class Bar[A <: Comparable[A]](a: A) extends Comparable[Bar[A]] {
   ...
-  def compare(other: A): Int = {
+  def compare(other: Bar[A]): Int = {
     ...
   }
 }
@@ -1142,8 +1142,8 @@ trait Comparator[A] {
 ```scala
 class Bar[A](a: A) { ... }
 implicit def barComp[A](implicit aComp: Comparator[A])
-    : Comparator[Bar[A]] = new Comparator[Foo] {
-  def compare(o1: Foo, o2: Foo): Int = aComp.compare(o1.a, o2.a)
+    : Comparator[Bar[A]] = new Comparator[Bar[A]] {
+  def compare(o1: Bar[A], o2: Bar[A]): Int = aComp.compare(o1.a, o2.a)
 }
 ```
 
