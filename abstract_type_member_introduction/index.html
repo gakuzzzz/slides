@@ -1,0 +1,540 @@
+<Doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Abstract Type Members 入門</title>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-inline-code {
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      .remark-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 8%;
+      }
+      .translation {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background-color: #eeeeee;
+        padding: 0.5em 1em;
+        width: 100%;
+        line-height: 110%;
+      }
+      code {
+        font-size: 100%;
+        background-color: #eeeeff;
+        padding: 3px;
+      }
+      .translation code {
+        padding: 0px;
+        background-color: #cccccc;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td, th {
+        border: 1px solid #333333;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Introduction of <br/> Abstract Type Members
+
+Scala Matsuri 2022 2022/03/19
+
+<div class="translation">
+Abstract Type Members 入門
+</div>
+---
+class: left, top
+
+## Who am I
+
+* Manabu Nakamura
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd.  CEO <img src="../images/t2v-logo.png" alt="Tech to Value" height="120" style="margin-left: 0px" />
+* F-CODE Inc. CTO <img src="../images/f-code_logo.png" alt="f-code" height="120" style="margin-left: 0px" />
+
+<div class="translation">
+自己紹介: 中村 学<br/>Tech to Value代表 / F-CODE CTO
+</div>
+
+---
+class: left, top
+
+## Preface
+
+Scala has a language feature called Abstract Type Members.
+
+There is a similar feature called Associated Types in Swift and Rust, but it is not present in Java, Kotlin, C#, etc., so it is not widely recognized.
+
+It also often overlaps from some problems that can be solved with Generics, so it is often not used in situations where it is better to use abstract members.
+
+<div class="translation">
+Scala には Abstract Type Members(抽象型メンバー) と呼ばれる言語機能があります。<br />
+<br />
+Swift や Rust には Associated Types と呼ばれる同種の機能がありますが、<br />
+Java や Kotlin, C# などには存在しないため、あまり認知されていない状況があるようです。<br />
+<br />
+また、Generics と解決できる問題が一部被っていたりすることから、<br />
+抽象型メンバーを利用した方が良い場面でも活用されていないことがしばしばあります。</div>
+
+---
+class: left, top
+
+## Preface
+
+In this session, I would like to explain what Abstract Type Members are, how they are useful, and how to use them differently from Generics, so that you can start using them tomorrow.
+
+<div class="translation">
+このセッションでは、<br />
+抽象型メンバーとはどんな機能でどんな役に立つのか、<br/>
+Generics との使い分け等について解説し、<br/>
+皆さんが明日から使えるようになる助けにしたいと思います。
+</div>
+
+---
+class: left, top
+
+## Abstract Type Members
+
+First of all, what is the function of an Abstract Type Member? 
+
+It is a type member that is abstract.
+
+```scala
+trait Foo {
+  type AbstractType
+}
+```
+
+```scala
+class FooImpl extends Foo {
+  type AbstractType = String
+}
+```
+
+<div class="translation">
+まず、抽象型メンバーとはどんな機能かと言うと、<br />
+そのままずばり抽象的な型メンバーです。<br />
+</div>
+
+---
+class: left, top
+
+### Abstract Type Members
+
+Just as abstract methods are expected to be implemented in subtypes, 
+type members are expected to define the actual types in subtypes.
+
+```scala
+trait Bar {
+  def abstractMethod(param: Int): Int
+}
+class BarImpl extends Bar {
+  def abstractMethod(param: Int): Int = param * 10
+}
+```
+
+```scala
+trait Foo {
+  type AbstractType
+}
+class FooImpl extends Foo {
+  type AbstractType = String
+}
+```
+
+<div class="translation">
+抽象メソッドがサブタイプで実装されることを期待されるのと同様に、<br/>
+サブタイプで実際の定義が示されることを期待される型メンバーになります。
+</div>
+
+---
+class: left, top
+
+### Abstract Type Members
+
+It can be used for type signatures of other members as well as normal type members.
+
+```scala
+trait KeyValueStore {
+  type Key
+
+  def generateKey(): Key
+  def save(key: Key, value: String): Unit
+}
+```
+```scala
+class HashMapStore extends KeyValueStore {
+  private val table = new mutable.HasMap[String, String]()
+
+  type Key = String
+
+  def generateKey(): Key = UUID.random().toString
+  def save(key: Key, value: String): Unit = table.put(key, value)
+}
+```
+
+<div class="translation">
+通常の型メンバーと同様に他のメンバーの型シグネチャに使うことができます。
+</div>
+
+---
+class: left, top
+
+## Difference from generics
+
+You may think that this example can be expressed using Generics. In fact, it can be defined using Generics.
+
+```scala
+trait KeyValueStore2[Key] {
+  def generateKey(): Key
+  def save(key: Key, value: String): Unit
+}
+class HashMapStore2 extends KeyValueStore2[String] {
+  private val table = new mutable.HasMap[String, String]()
+  def generateKey(): Key = UUID.random().toString
+  def save(key: Key, value: String): Unit = table.put(key, value)
+}
+```
+
+<div class="translation">
+この例であれば Generics でも表現できると思われるかもしれません。<br />
+実際に Generics を使っても定義できます。
+</div>
+
+---
+class: left, top
+
+So what is different between the two is the use-side.
+
+```scala
+trait KeyValueStore {
+  type Key
+  def generateKey(): Key
+  def save(key: Key, value: String): Unit
+}
+class HashMapStore extends KeyValueStore {
+  private val table = new mutable.HasMap[String, String]()
+  type Key = String
+  def generateKey(): Key = UUID.random().toString
+  def save(key: Key, value: String): Unit = table.put(key, value)
+}
+```
+
+```scala
+trait KeyValueStore2[Key] {
+  def generateKey(): Key
+  def save(key: Key, value: String): Unit
+}
+class HashMapStore2 extends KeyValueStore2[String] {
+  private val table = new mutable.HasMap[String, String]()
+  def generateKey(): Key = UUID.random().toString
+  def save(key: Key, value: String): Unit = table.put(key, value)
+}
+```
+
+<div class="translation">
+ではこの両者で何が変わってくるかと言うと、利用側が異なってきます。
+</div>
+
+---
+class: left, top
+
+### Difference from generics
+
+In the Abstract Type Member version, the use-side does not need to know the concrete type of the key.
+In the Generics version, the use-side needs to know the concrete type of the key.
+
+```scala
+// abstract type members version
+val store: KeyValueStore = HashMapStore
+val key: store.Key = store.generateKey()
+//       ^ 利用側が Key の具体型を知る必要が無い
+val store.save(key, "fooo")
+```
+
+```scala
+// generics version
+val store: KeyValueStore2[String] = HashMapStore2
+//                       ^ Key の具体型が利用側に漏れている
+val key: String = store.generateKey()
+//       ^ 利用側が Key の具体型を知っている必要がある
+val store.save(key, "fooo")
+```
+
+<div class="translation">
+抽象型メンバー版では利用側が Key の具体的な型を知る必要がないのに対し、<br/>
+Generics版では具体の型を利用側が知る必要が出てきます。
+</div>
+
+---
+class: left, top
+
+### Difference from generics
+
+Therefore, by using Abstract Type Members, It can safely switch implementations even if the specification changes the type of Key in the future.
+
+```scala
+// abstract type members version
+val store: KeyValueStore = HashMapStore
+val key: store.Key = store.generateKey()
+//       ^ 利用側が Key の具体型を知る必要が無い
+val store.save(key, "fooo")
+```
+
+```scala
+// generics version
+val store: KeyValueStore2[String] = HashMapStore2
+//                       ^ Key の具体型が利用側に漏れている
+val key: String = store.generateKey()
+//       ^ 利用側が Key の具体型を知っている必要がある
+val store.save(key, "fooo")
+```
+
+<div class="translation">
+従って、抽象型メンバーを使うことで、<br/>
+仮に将来 Key の型を変更するような仕様変更が生じたとしても<br/>
+安全に実装を切り替えることができます。
+</div>
+
+---
+class: left, top
+
+### Difference from generics
+
+```scala
+var names: List[Name] = List(...)
+var ids: List[UserId] = List(...)
+
+names = ids // compile error!
+```
+
+On the other hand, if it wants to be explicitly aware of the concrete type, then Generics is more better.
+
+```scala
+class MyList {
+  type T
+  ...
+}
+```
+
+```scala
+var names: MyList = new MyList(...) { type T = Name }
+var ids: MyList   = new MyList(...) { type T = UserId }
+
+names = ids // same type! compile successful
+```
+
+
+<div class="translation">
+逆に、利用側が明確に具体の型を意識して利用したい場合は、<br/>
+Genericsを使う方が適しています。
+</div>
+
+---
+class: left, top
+
+### Associated types
+
+One of the usage examples of Abstract Type Members is to show the relationship between types.
+
+For example, consider a function that takes a value and converts it to Json.
+Rather than rounding the result type to Json, it can be converted to JNumber when Int is passed, to JArray when a collection is passed, and so on.
+
+Is it really possible to define such a magical function?
+
+<div class="translation">
+Abstract type members の利用例の一つに、型同士の関連性を表す使い方があります。<br />
+<br/>
+例えば、ある値を受け取って Json に変換する関数を考えましょう。<br/>
+ここで結果型を Json に丸めてしまうよりも、Int を渡したときは JNumber に、<br/>
+コレクションを渡したときは JArray に、といった形で、<br/>
+引数に合わせた結果を返してくれた方が取り回しがしやすそうです。<br/>
+<br/>
+はたして、そんな魔法の様な関数を定義することが可能なのでしょうか？
+</div>
+
+---
+class: left, top
+
+### Associated types
+
+It may be possible to use overload to achieve this if it is only for a few predefined types.
+
+```scala
+def jsonize(value: Int): JNumber = ...
+def jsonize(value: String): JString = ...
+```
+
+However, this cannot be applied to user-defined types.
+
+
+<div class="translation">
+決まりきった型だけであれば overload を使って実現も可能かもしれません。<br/>
+しかしこれではユーザの独自定義型に適用することができません。<br/>
+</div>
+
+---
+class: left, top
+
+### Associated types
+
+Therefore, we can use a combination of Type Classes and Abstract Type Members.
+
+```scala
+trait Jsonable[A] {
+  type Result
+  def toJson(a: A): Result
+}
+object Jsonable {
+  given Jsonable[Int] with {
+    type Result = JNumber
+    def toJson(a: Int): Result = JNumber(a)
+  }
+  ...
+```
+```scala
+def jsonize[A](v: A)(using J: Jsonable[A]): J.Result = J.toJson(v)
+
+```
+<div class="translation">
+そこで、型クラスと抽象型メンバーを組み合わせて利用します。
+</div>
+
+---
+class: left, top
+
+### Associated types
+
+The combination of type classes and Abstract Type Members allows for a flexible API, where the the result type is determined by the argument type.
+
+```scala
+def jsonize[A](v: A)(using J: Jsonable[A]): J.Result = J.toJson(v)
+```
+
+```scala
+jsonize("String value") // JString(String value)
+jsonize(100)            // JNumber(100)
+```
+
+
+<div class="translation">
+型クラスと抽象型メンバーを組み合わせた事で、<br/>
+引数の型に応じて結果の型が定まり、柔軟なAPIにすることができました。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+* Abstract type member is a type member that specifies a concrete type by subtype
+* Like Generics, abstract type memberss can be used for abstraction of types.
+* The difference from Generics is that there is no need to disclose the entity to the user (Information Hiding).
+* Can be combined with typeclasses to express the relationship between types
+
+<div class="translation">
+- 抽象型メンバーはサブタイプで具体の型を指定する型メンバー<br/>
+- Generics と同様にメソッドなどの型を抽象化することができる<br/>
+- Generics との違いは利用側にその実体を漏らす必要がないこと(情報隠蔽)<br/>
+- 型クラスと組み合わせることで型同士の関係性を表現できる<br/>
+</div>
+
+---
+class: left, top
+
+## Advertising (to Japanese)
+
+Tech to Value ではScalaコードレビューサービスを提供しています。
+
+* [Tech to Value](http://www.t2v.jp/)
+
+エフ・コードではエンジニアを募集しています。
+
+* [エフ・コード 採用情報](https://f-code.co.jp/recruit/engineer.html)
+
+---
+class: top
+
+## Any questions?
+
+<div class="translation">
+質問とか
+</div>
+
+    </textarea>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.js" type="text/javascript"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+  crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+    </script>
+  </body>
+</html>
