@@ -1,5 +1,6 @@
 
 
+- 2022/12/10 [Java の進化と Kotlin の未来](https://gakuzzzz.github.io/slides/evolution_java_future_kotlin/)
 - 2022/04/19 [Abstract Type Members 入門](https://gakuzzzz.github.io/slides/abstract_type_member_introduction/)
 - 2020/10/17 [他言語経験者が0から始めるScala ～block式とfor式と型クラス～](https://gakuzzzz.github.io/slides/scala_from_other_languages/)
 - 2020/02/01 [Java で Scala の Type Safe Builder パターンをエミュレートする](https://gakuzzzz.github.io/slides/type_safe_builder_in_java/)
