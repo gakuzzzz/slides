@@ -1,0 +1,499 @@
+<Doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Javaの進化とKotlinの未来</title>
+    <style type="text/css">
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body {
+        font-family: 'Droid Serif';
+      }
+      ul li ul li {
+        font-size: 75%;
+      }
+      ul li ul li:last-child {
+        margin-bottom: 0.5em;
+      }
+      p {
+        font-size: 150%;
+      }
+      li {
+        font-size: 30px;
+      }
+      .remark-slide-content h1 {
+        font-size: 70px;
+      }
+      .remark-slide-content h2 {
+        font-size: 50px;
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+        text-align: center;
+      }
+      img {
+        max-width : 100%;
+        max-height : 70%;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+      }
+      .remark-inline-code {
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        background-color: #eeeeee;
+      }
+      .remark-code {
+        font-size: 20px;
+        font-family: Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      }
+      /* Two-column layout */
+      .left-column {
+        width: 50%;
+        float: left;
+      }
+      .right-column {
+        width: 45%;
+        float: right;
+      }
+      strong {
+        color: red;
+      }
+      section {
+        background-color: #eeeeee;
+        color: #333333;
+        padding: 0.5em;
+        text-align: left;
+        margin: 4%;
+      }
+      .translation, .note {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        background-color: #eeeeee;
+        padding: 0.5em 1em;
+        width: 100%;
+        line-height: 110%;
+      }
+      code {
+        font-size: 100%;
+        background-color: #eeeeff;
+        padding: 3px;
+      }
+      .translation code, .note code {
+        padding: 0px;
+        background-color: #cccccc;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      td, th {
+        border: 1px solid #333333;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Java の進化と Kotlin の未来
+
+Kotlin Fest 2022 2022/12/10
+
+---
+class: left, top
+
+## 自己紹介
+
+* がくぞ
+* [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd. 代表 <img src="../images/t2v-logo.png" alt="Tech to Value" height="120" style="margin-left: 0px" />
+* アルプ株式会社 Tech Lead (仮) <img src="../images/alp-logo.svg" alt="Alp, Inc." height="120" style="margin-left: 0px" />
+
+
+---
+class: left, top
+
+## はじめに
+
+Kotlin はその最初のリリースから Java との高い相互運用性を持ち Better Java としての地位を確立してきました。
+
+2022年現時点では Kotlin も 1.7 系がリリースされ Java も 19 系がリリースされています。
+
+
+---
+class: left, top
+
+## はじめに
+
+Java に既に実装されている・これから導入が検討されている機能の中には、現在の Kotlin では表現できない機能も存在しています。
+
+ここでは Kotlin がどのようにその機能差分を埋めていく想定なのかを [KEEP](https://github.com/Kotlin/KEEP) を見ながら紹介し、未来について考えてみたいと思います。
+
+<section>
+KEEP とは <strong>K</strong>otlin <strong>E</strong>volution and <strong>E</strong>nhancement <strong>P</strong>rocess の事で、Kotlin の言語仕様関する提案です。<br/>
+GitHubのリポジトリに設計ノートや議論がまとめられています。<br/>
+Context Receivers や Coroutines などもここでながらく議論されていました。
+</section>
+
+---
+class: left, middle
+
+# Pattern Matching
+
+---
+class: left, top
+
+# Pattern Matching
+
+現在 Java では段階的に Pattern Matching の導入が進められています。
+
+- JDK 14
+    - [JEP 305: Pattern Matching for instanceof (Preview)](https://openjdk.org/jeps/305)
+- JDK 15
+    - [JEP 375: Pattern Matching for instanceof (Second Preview)](https://openjdk.org/jeps/375)
+- JDK 16
+    - [JEP 394: Pattern Matching for instanceof](https://openjdk.org/jeps/394)
+- JDK 17 
+    - [JEP 406: Pattern Matching for switch (Preview)](https://openjdk.org/jeps/406)
+
+<section>
+JEP とは <strong>J</strong>DK <string>E</strong>nhancement-<strong>P</strong>roposal の事で、JDKに関する重要な変更についての提案です。OpenJDKのサイトにてまとめらられています。
+</section>
+
+---
+class: left, top
+
+# Pattern Matching
+
+現在 Java では段階的に Pattern Matching の導入が進められています。
+
+- JDK 18
+    - [JEP 420: Pattern Matching for switch (Second Preview)](https://openjdk.org/jeps/420)
+- JDK 19 ← 今ここ
+    - [JEP 405: Record Patterns (Preview)](https://openjdk.org/jeps/405)
+    - [JEP 427: Pattern Matching for switch (Third Preview)](https://openjdk.org/jeps/427)
+- JDK 20
+    - [JEP 432: Record Patterns (Second Preview)](https://openjdk.org/jeps/432)
+    - [JEP 433: Pattern Matching for switch (Fourth Preview)](https://openjdk.org/jeps/433)
+
+
+---
+class: left, top
+
+# Pattern Matching
+
+Java 19 においては以下のようなコードを書くことができます。
+
+```java
+public sealed interface Contact {
+  public record EMail(String address) implements Contact {}
+  public record Phone(String number)  implements Contact {}
+}
+```
+
+```java
+public void notify(Contact contact, String message) {
+  switch (contact) {
+    case EMail mail  -> sendMail(mail.address(), "件名", message);
+    case Phone phone -> sendSms(phone.number(), message);
+  }
+}
+```
+
+---
+class: left, middle
+
+```java
+// Java
+public void notify(Contact contact, String message) {
+  switch (contact) {
+    case EMail mail  -> sendMail(mail.address(), "件名", message);
+    case Phone phone -> sendSms(phone.number(), message);
+  }
+}
+```
+
+Kotlin 1.7 では同等のコードを以下のように書けます。
+
+```kotlin
+// Kotlin
+fun notify(contact: Contact, message: String) {
+  when (contact) {
+    is EMail -> sendMail(contact.address(), "件名", message)
+    is Phone -> sendSms(contact.number(), message)
+  }
+}
+```
+
+Smart Cast (Flow Sensitive Typing) があるため、より簡潔な印象がありますね。
+
+---
+class: left, top
+
+# Pattern Matching
+
+ただし Java の Pattern Matching は将来的にネストした構造に対するパターンもサポートする想定です。
+
+
+```java
+public enum Country { Japan, Other; }
+public sealed interface Contact {
+  public record EMail(String address) implements Contact {}
+  public record Phone(String number, Country country)
+    implements Contact {}
+}
+```
+
+```java
+public void notify(Contact contact, String message) {
+  switch (contact) {
+    case EMail(var addr)       -> sendMail(addr, "件名", message);
+    case Phone(var num, Japan) -> call(num, toAudio(message));
+    case Phone(var num, var c) -> sendSms(num, message);
+  }
+}
+```
+
+---
+class: left, top
+
+```java
+public void notify(Contact contact, String message) {
+  switch (contact) {
+    case EMail(var addr)       -> sendMail(addr, "件名", message);
+    case Phone(var num, Japan) -> call(num, toAudio(message));
+    case Phone(var num, var c) -> sendSms(num, message);
+  }
+}
+```
+
+残念ながら、こういったネストした構造に対する分岐を現在の Kotlin ではそのまま書くことはできません。
+
+```kotlin
+fun notify(contact: Contact, message: String) {
+  when (contact) {
+    is EMail -> sendMail(contact.address(), "件名", message)
+    is Phone -> when(contract.country) {
+      Japan -> call(num, toAudio(message))
+      else  -> sendSms(contact.number(), message)
+    }
+  }
+}
+```
+
+上記のように `when` をネストさせる必要があります。
+
+---
+class: left, top
+
+# Pattern Matching
+
+Kotlin においても Pattern Matching を表現できるようにするため、KEEP に Proposal が提案されていました。
+
+[KEEP: Pattern matching](https://github.com/Kotlin/KEEP/pull/213)
+
+現在は議論が [KT-186](https://youtrack.jetbrains.com/issue/KT-186) に引き継がれて、こちらで進められています。
+
+---
+class: left, top
+
+# Pattern Matching
+
+Kotlin での導入の難しさ
+
+- 既存のwhen式との互換性
+- Contracts や Smart Cast との統合
+- Destructuring Declarations との整合性
+- 位置ベースによる分解のバイナリ互換性
+- Java との相互運用性
+- etc...
+
+---
+class: left, top
+
+# Pattern Matching
+
+こういった課題を解決するために関連提案がいくつも出されています。
+
+- KT-4608  [Support recursive/nested destructuring](https://youtrack.jetbrains.com/issue/KT-4608/Support-recursive-nested-destructuring)
+- KT-13333 [View patterns in Kotlin](https://youtrack.jetbrains.com/issue/KT-13333/View-patterns-in-Kotlin)
+- KT-13626 [Guard conditions in when-with-subject](https://youtrack.jetbrains.com/issue/KT-13626/Guard-conditions-in-when-with-subject)
+- KT-19627 [Object (name-based) destructuring](https://youtrack.jetbrains.com/issue/KT-19627/Object-name-based-destructuring)
+- KT-21661 [Allow calling Boolean functions (and properties) in 'when' branches](https://youtrack.jetbrains.com/issue/KT-21661/Allow-calling-Boolean-functions-and-properties-in-when-branches)
+- KT-25698 [Declare local variables in 'if'/`while` conditions and 'when' subjects](https://youtrack.jetbrains.com/issue/KT-25698/Declare-local-variables-in-if-while-conditions-and-when-subjects)
+- KT-28359 [Arbitrary predicates in branches of when with argument](https://youtrack.jetbrains.com/issue/KT-28359/Arbitrary-predicates-in-branches-of-when-with-argument)
+- KT-48107 [`when` structure member selection](https://youtrack.jetbrains.com/issue/KT-48107/when-structure-member-selection)
+
+---
+class: left, top
+
+Kotlin で現在出されているアイデア例
+
+```kotlin
+sealed class Developer
+data class Company(val name: String, val devs: Set<Person>): Developer()
+data class Person(val name: String): Developer()
+
+data class Director(name: String)
+
+sealed class Download
+data class App(val name: String, val developer: Developer): Download()
+data class Movie(val title: String, val director: Director): Download()
+
+val download: Download = // ...
+```
+
+```kotlin
+val result = when(download) {
+  is App(.name, .developer: Company)
+    if "Alice" in developer.devs -> "Alice's team's app $name"
+    if "Bob"   in developer.devs -> "Bob's team's app $name"
+  is Movie(.title, .director)
+    if (director.name == "Alice") -> "Alice's movie $title"
+    if (title == "Pulp Fiction")  -> "I know this movie!"
+    else -> "We didn't find the movie we were looking for"
+  is App -> "404"
+}
+```
+
+---
+class: left, top
+
+# Pattern Matching
+
+2022/12/10 現在においては Kotlin の Pattern Matching の議論自体はそこまで活発ではない様です。(最新コメントが 2022/08/31)
+
+というのも JetBrains では現在新コンパイラK2の開発にフォーカスしているためですね。
+
+K2 ではこれら機能を実装しやすくなるとの事ですので、今後を期待して待ちたいところです。
+
+---
+class: left, middle
+
+# String Templates
+
+---
+class: left, top
+
+# String Templates
+
+これはまだ Java でも Preview Features ですが、String Templates という提案が出されています。
+
+[JEP 430: String Templates (Preview)](https://openjdk.org/jeps/430)
+
+```java
+var name = "Joan";
+var info = STR."My name is \{name}";
+
+assert info.equals("My name is Joan");   // true
+```
+
+---
+class: left, top
+
+# String Templates
+
+Kotlin で言うところの String Interpolation ですね。
+
+```java
+// Java
+var name = "Joan";
+var info = STR."My name is \{name}";
+
+assert info.equals("My name is Joan");   // true
+```
+
+```kotlin
+// Kotlin
+val name = "Joan"
+val info = "My name is $name"
+
+assert(info == "My name is Joan")   // true
+```
+
+---
+class: left, top
+
+# String Templates
+
+Java の String Templates のポイントとしては以下の点があげられます。
+
+- ユーザーが拡張可能
+- String 以外のオブジェクトの構築が可能
+
+
+---
+class: left, top
+
+# String Templates
+
+例えば SQL Injection を防ぐために、SQL文字列を Placeholder を利用した Sql オブジェクトにする、といった応用が考えられます。
+
+```java
+public record Sql(String query, List<Object> parameters);
+
+var name = "Joan"
+var sql = SQL."SELECT * FROM user WHERE name = \{name}";
+
+assert sql.equals(
+  Sql("SELECT * FROM user WHERE name = ?", List.of("Joan"))
+); // true
+```
+
+---
+class: left, top
+
+# String Templates
+
+Kotlin の String Interpolation は prefix を付ける必要が無いため簡単に扱えますが、逆にこういった拡張の手段が提供されていません。
+
+```kotlin
+val name = "Joan"
+String info = "My name is $name"
+
+assert info == "My name is Joan"   // true
+```
+
+---
+class: left, top
+
+# String Templates
+
+Kotlin の String Interpolation にこのようなユーザー拡張を提供する提案が存在するか探してみたのですが、現状 KEEP には存在していませんでした。
+
+逆に言うと提案のチャンスでもあります。
+
+ぜひ良いアイデアがあれば提案してみては如何でしょうか？
+
+---
+class: left, top
+
+# まとめ
+
+- Java の言語機構も進化しています
+- Kotlin の仕様は [KEEP](https://github.com/Kotlin/KEEP) で議論されています
+- 新コンパイラ K2 で新しい言語機能が実装しやすくなるとの事なので楽しみですね
+
+---
+class: middle
+
+# 質問とか
+
+
+    </textarea>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.js" type="text/javascript"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"
+  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+  crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var slideshow = remark.create({
+        highlightStyle: "railscasts"
+      });
+    </script>
+  </body>
+</html>
