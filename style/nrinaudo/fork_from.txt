@@ -1,0 +1,2 @@
+This style is a fork of https://github.com/nrinaudo/nrinaudo.github.com under the CC by 4.0.
+THANKS @nrinaudo
