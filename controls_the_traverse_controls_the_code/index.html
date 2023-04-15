@@ -1696,11 +1696,11 @@ class: left, top
 
 The `Applicative` can also be compose in various ways.
 
-For example, if you want to find the total value and the maximum value in a List, 
+For example, if you want to calculate the sum value and the product value in a List, 
 we can compose each of them as a tuple.
 
 <div class="translation">
-  例えば List の中から合計値と最大値を探したい時、それぞれをタプルで合成できます。
+  例えば List の中から和と積を計算したい時、それぞれをタプルで合成できます。
 </div>
 
 
@@ -1711,20 +1711,20 @@ class: left, top
 
 The `Applicative` can also be compose in various ways.
 
-For example, if you want to find the total value and the maximum value in a List, 
+For example, if you want to calculate the sum value and the product value in a List, 
 we can compose each of them as a tuple.
 
 ```scala
 val list = List(1, 2, 3, 4, 5)
-val (sum, max) = list.traverse { i =>
-  (Const(i), Const(Max(i)))
+val Const(sum, product) = list.traverse { i =>
+  Const(Sum(i), Product(i))
 }
 println(s"sum: $sum")
-println(s"max: $max")
+println(s"product: $product")
 ```
 
 <div class="translation">
-  例えば List の中から合計値と最大値を探したい時、それぞれをタプルで合成できます。
+  例えば List の中から和と積を計算したい時、それぞれをタプルで合成できます。
 </div>
 
 ---
@@ -1734,25 +1734,25 @@ class: left, top
 
 The `Applicative` can also be compose in various ways.
 
-For example, if you want to find the total value and the maximum value in a List, 
+For example, if you want to calculate the sum value and the product value in a List, 
 we can compose each of them as a tuple.
 
 ```scala
 val list = List(1, 2, 3, 4, 5)
-val (sum, max) = list.traverse { i =>
-  (Const(i), Const(Max(i)))
+val Const(sum, product) = list.traverse { i =>
+  Const(Sum(i), Product(i))
 }
 println(s"sum: $sum")
-println(s"max: $max")
+println(s"product: $product")
 ```
 
 ```scala
 sum: 15
-max: 5
+product: 120
 ```
 
 <div class="translation">
-  例えば List の中から合計値と最大値を探したい時、それぞれをタプルで合成できます。
+  例えば List の中から和と積を計算したい時、それぞれをタプルで合成できます。
 </div>
 
 ---
@@ -1762,27 +1762,27 @@ class: left, top
 
 The `Applicative` can also be compose in various ways.
 
-For example, if you want to find the total value and the maximum value in a List, 
+For example, if you want to calculate the sum value and the product value in a List, 
 we can compose each of them as a tuple.
 
 ```scala
 val list = List(1, 2, 3, 4, 5)
-val (sum, max) = list.traverse { i =>
-  (Const(i), Const(Max(i)))
+val Const(sum, product) = list.traverse { i =>
+  Const(Sum(i), Product(i))
 }
 println(s"sum: $sum")
-println(s"max: $max")
+println(s"product: $product")
 ```
 
 ```scala
 sum: 15
-max: 5
+product: 120
 ```
 
-The important point here is that the process of summarizing and finding the maximum value can be defined separately from the loop.
+The important point here is that the process of summarizing and producting can be defined separately from the loop.
 
 <div class="translation">
-  ここでのポイントは、合計を求める処理と最大値を求める処理を、<br>
+  ここでのポイントは、和を求める処理と積を求める処理を、<br>
   ループとは別にそれぞれ定義できることです。
 </div>
 
