@@ -1,0 +1,1981 @@
+
+<!Doctype html>
+<html>
+    <head>
+        <title>The programmer that controls the `traverse`, controls the code.</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <link rel="stylesheet" type="text/css" href="../style/nrinaudo/css/style.css"/>
+        <style type="text/css">
+.translation {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.5em 4em;
+    width: 100%;
+    line-height: 110%;
+}            
+        </style>
+    </head>
+    <body>
+        <textarea id="source">
+class: center, middle
+
+# The programmer that controls the `traverse`, controls the code.
+
+Scala Matsuri 2023 2023/04/15<br>
+@gakuzzzz
+
+<div class="translation">
+    traverse を制する者はコードを制す
+</div>
+
+---
+class: left, top
+
+## Who am I
+
+* Manabu NAKAMURA
+* Twitter: [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd. CEO
+* Alp, Inc. Tech Lead
+
+<div class="translation">
+    自己紹介: 中村 学 / Twitter: @gakuzzzz<br/>
+    株式会社Tech to Value 代表 / アルプ株式会社 テックリード
+</div>
+    
+---
+class: left, top
+
+## Note
+
+The Scala code in this slide uses version 3.2.2.
+
+It uses [cats](https://typelevel.org/cats/) and assumes that the following imports have been written for all sample code.
+
+```Scala
+import cats._
+import cats.data._
+import cats.syntax.all._
+```
+
+
+<div class="translation">
+    このスライドにおける Scala コードは version 3.2.2 を利用しています。<br/>
+    また cats を利用しており、全てのサンプルコードには上記 import が行われている前提です。
+</div>
+
+---
+class: left, top
+
+## the Iterator pattern
+
+Loops are an important component of programs.
+
+<div class="translation">
+    プログラムを構成する重要な要素としてループがあります。
+</div>
+
+
+---
+class: left, top
+
+## the Iterator pattern
+
+Loops are an important component of programs.
+
+Among them, loop processing to iterate over data structures such as collections is frequently used.
+
+<div class="translation">
+    中でもコレクションなどのデータ構造に対し<br>その要素をイテレートするループ処理は頻出します。
+</div>
+
+---
+class: left, top
+
+## the Iterator pattern
+
+Loops are an important component of programs.
+
+Among them, loop processing to iterate over data structures such as collections is frequently used.
+
+It is patterned as the Iterator pattern in the GoF design patterns (Gamma et al., 1995).
+
+<div class="translation">
+    GoFのデザインパターンにおいてもイテレータパターンとしてパターン化されています。
+</div>
+
+---
+class: left, top
+
+## the Iterator pattern
+
+Nowadays, many major languages have a special syntax for the Iterator pattern.
+
+```typescript
+// JavaScript / TypeScript
+const list = [1, 2, 3, 4, 5];
+for (const value of list) {
+    console.log(value);
+}
+```
+
+<div class="translation">
+    多くのメジャーな言語でイテレータパターンを特別扱いした構文が用意されています。
+</div>
+
+---
+class: left, top
+
+## the Iterator pattern
+
+Nowadays, many major languages have a special syntax for the Iterator pattern.
+
+```java17
+// Java
+var list = List.of(1, 2, 3, 4, 5);
+for (var value : list) {
+    System.out.println(value);
+}
+```
+
+<div class="translation">
+    多くのメジャーな言語でイテレータパターンを特別扱いした構文が用意されています。
+</div>
+
+---
+class: left, top
+
+## the Iterator pattern
+
+Nowadays, many major languages have a special syntax for the Iterator pattern.
+
+```python
+# Python
+list = [1, 2, 3, 4, 5]
+for value in list:
+    println(value)
+```
+
+<div class="translation">
+    多くのメジャーな言語でイテレータパターンを特別扱いした構文が用意されています。
+</div>
+
+---
+class: left, top
+
+## Higher order functions
+
+
+On the other hand, many major languages now support higher-order functions.
+
+
+<div class="translation">
+    一方、現在のメジャーな言語の多くでは高階関数がサポートされるようになり、
+</div>
+
+---
+class: left, top
+
+## Higher order functions
+
+On the other hand, many major languages now support higher-order functions.
+
+For simple iterations, it is common to use higher-order functions such as `map` and `filter`.
+
+<div class="translation">
+    単純なイテレーションに関しては map や filter といった<br>高階関数が使われる事も一般的になってきました。
+</div>
+
+---
+class: left, top
+
+## Higher order functions
+
+On the other hand, many major languages now support higher-order functions.
+
+For simple iterations, it is common to use higher-order functions such as `map` and `filter`.
+
+
+```typescript
+// JavaScript / TypeScript
+const list   = [1, 2, 3, 4, 5];
+const result = list.map(i => i * 2);
+```
+
+<div class="translation">
+    単純なイテレーションに関しては map や filter といった<br>高階関数が使われる事も一般的になってきました。
+</div>
+
+---
+class: left, top
+
+## Higher order functions
+
+On the other hand, many major languages now support higher-order functions.
+
+For simple iterations, it is common to use higher-order functions such as `map` and `filter`.
+
+```java17
+// Java
+var list   = List.of(1, 2, 3, 4, 5);
+var result = list.stream().map(x -> x * 2).toList();
+```
+
+<div class="translation">
+    単純なイテレーションに関しては map や filter といった<br>高階関数が使われる事も一般的になってきました。
+</div>
+
+---
+class: left, top
+
+## Higher order functions
+
+On the other hand, many major languages now support higher-order functions.
+
+For simple iterations, it is common to use higher-order functions such as `map` and `filter`.
+
+```python
+# Python
+list   = [1, 2, 3, 4, 5]
+result = list(map(lambda i: i * 2, list))
+```
+
+<div class="translation">
+    単純なイテレーションに関しては map や filter といった<br>高階関数が使われる事も一般的になってきました。
+</div>
+
+---
+class: left, top
+
+## Complex Iteration
+
+However, there are still many situations where the loop syntax is used for complex iterations.
+
+<div class="translation">
+    しかしながら、複雑なイテレーションについては<br>
+    まだループ構文が使われる状況が多い様です。
+</div>
+
+---
+class: left, top
+
+## Complex Iteration
+
+However, there are still many situations where the loop syntax is used for complex iterations.
+
+for example: Using `break`, Depending previous and next elements, Returning multiple results.
+
+<div class="translation">
+  break が必要だったり、前後の要素に依存したり、<br>
+  複数の値を返す必要があったりなど
+</div>
+
+---
+class: left, top
+
+## Complex Iteration
+
+Such loops are difficult to write tests, and are difficult to tune the performance by using parallel loops.
+
+
+<div class="translation">
+    こういったループはそのままではテストが書きづらかったり<br>並列ループによる高速化が難しかったりします。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+In fact, there is a higher-order function that can express all of the same content 
+about the loop process that can be written by the Iterator pattern.
+
+<div class="translation">
+  実はこの the Iterator pattern によって書くことができるループ処理について、<br/>
+  同じ内容を全て表現する事ができる高階関数が存在しています。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+In fact, there is a higher-order function that can express all of the same content 
+about the loop process that can be written by the Iterator pattern.
+
+That is the `traverse`.
+
+<div class="translation">
+  それが traverse です。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]: Applicative, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+Now let's look at the definition of `traverse`.
+
+
+
+<div class="translation">
+  まずは traverse の定義を見てみましょう。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]: Applicative, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+Now let's look at the definition of `traverse`.
+
+The `traverse` method can be defined for various data structures, 
+here we define it as an extension method of `List` as an example.
+
+<div class="translation">
+  traverse メソッドは 色々なデータ構造で定義できるのですが、<br/>
+  ここでは例として List の拡張メソッドとして定義しましょう。
+</div>
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]: Applicative, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+Now let's look at the definition of `traverse`.
+
+The `traverse` method can be defined for various data structures, 
+here we define it as an extension method of `List` as an example.
+
+This is a little difficult, but let's look at them in order.
+
+<div class="translation">
+  いきなりちょっと難しい定義が出てきましたが、順番に見ていきましょう。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [`A`](self: List[`A`]) with {
+  def traverse[G[_]: Applicative, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+First, `List` has a type parameter `A` that indicates the type of its own elements.
+
+<div class="translation">
+  まず List は自身が持つ要素の型を示す A という型パラメータを持っています。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[`G`[_]: Applicative, `B`](f: (A) => G[B]): G[List[B]]
+}
+```
+
+And the `traverse` method introduces two type parameters, `G` and `B`.
+
+<div class="translation">
+  そして traverse メソッドでは G と B という二つの型パラメータを導入しています。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[`G[_]`: Applicative, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+`G` is `G[_]`, which also represents a type that takes one type parameter.
+
+
+
+<div class="translation">
+  G は G[_] となっており、これも型パラメータを一つとる型を表します。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[`G[_]`: Applicative, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+`G` is `G[_]`, which also represents a type that takes one type parameter.
+
+For example, we can assign `List`, `Option`, or `Either[String, *]` to `G[_]`.
+
+<div class="translation">
+  例えば List とか Option とか Either[String, *] とかを G[_] に指定することができます。
+</div>
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]`: Applicative`, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+In addition, `G[_]` has a constraint, requiring a typeclass of `Applicative`.
+
+<div class="translation">
+  さらに G[_] には制約がついており、Applicative の型クラスを要求しています。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]`: Applicative`, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+In addition, `G[_]` has a constraint, requiring a typeclass of `Applicative`.
+
+We will talk about what is `Applicative` later.
+
+<div class="translation">
+  Applicative については後ほどまた触れますので、<br/>
+  ここではそういうものがあるんだーくらいに思って頂ければ。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]: Applicative, B](f: `(A) => G[B]`): G[List[B]]
+}
+```
+
+It then takes as its argument "a function that takes an element type `A` and returns a `B` wrapped in a `G`".
+
+<div class="translation">
+  「要素型の A を受け取り G に包まれた B を返す関数」を引数として受け取ります。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]: Applicative, B](f: `(A) => G[B]`): G[List[B]]
+}
+```
+
+It then takes as its argument "a function that takes an element type `A` and returns a `B` wrapped in a `G`".
+
+For example, if the instance is of type `List[String]`, 
+then `A` becomes `String` and functions of type `String => Option[Int]` are accepted as arguments.
+
+<div class="translation">
+  例えば List[String] 型のインスタンスだったとしたら、<br>
+  A が String になり、String => Option[Int] 型の関数などが引数として渡せます。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]: Applicative, B](f: (A) => G[B]): `G[List[B]]`
+}
+```
+
+The result is `List[B]` wrapped in `G`.
+
+<div class="translation">
+  結果として G に包まれた List[B] が返されます。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]: Applicative, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+Let's look at an example of actual use.
+
+<div class="translation">
+  実際に利用例を見てみましょう。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+```scala
+extension [A](self: List[A]) with {
+  def traverse[G[_]: Applicative, B](f: (A) => G[B]): G[List[B]]
+}
+```
+
+Let's look at an example of actual use.
+
+The above definition is just a hypothetical example, 
+Using cats we can be used as an instance method of `List` as if it were defined as such.
+
+<div class="translation">
+  上記の定義はあくまで仮定の例ですが、 <br>
+  cats を使うとあたかもこのような定義がされてるかのように<br>
+  List のインスタンスメソッドとして使う事ができます。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+If `Some` is returned for all elements, 
+
+```scala
+val list: List[String] = List("1", "2", "3", "4", "5")
+
+val result: Option[List[Int]] = list.traverse(_.toIntOption)
+println(result)
+```
+
+
+<div class="translation">
+  全ての要素で Some を返した場合、
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+If `Some` is returned for all elements,
+
+```scala
+val list: List[String] = List("1", "2", "3", "4", "5")
+
+val result: Option[List[Int]] = list.traverse(_.toIntOption)
+println(result)
+```
+
+the result is a `List` wrapped in `Some`.
+
+```scala
+Some(List(1, 2, 3, 4, 5))
+```
+
+<div class="translation">
+  結果は Some で包まれた List が返されます。
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+If there is an element that is `None` on the way, 
+
+```scala
+val list: List[String] = List("1", "2", `"aaa"`, "4", "5")
+
+val result: Option[List[Int]] = list.traverse(_.toIntOption)
+println(result)
+```
+
+<div class="translation">
+  途中 None になる要素が存在した場合、
+</div>
+
+---
+class: left, top
+
+## `traverse` of `List`
+
+If there is an element that is `None` on the way, 
+
+```scala
+val list: List[String] = List("1", "2", `"aaa"`, "4", "5")
+
+val result: Option[List[Int]] = list.traverse(_.toIntOption)
+println(result)
+```
+
+the result is `None`.
+
+```scala
+None
+```
+
+<div class="translation">
+  結果は None が返されます。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list: List[String] = List("1", "2", "3", "4", "5")
+
+val result: Option[List[Int]] = list.traverse(_.toIntOption)
+println(result)
+```
+
+```scala
+Some(List(1, 2, 3, 4, 5))
+```
+
+In short, a `traverse` method is an operation that takes a function that returns an element as some `Applicative` value and keeps the original structure as an `Applicative` value.
+
+<div class="translation">
+  要するに traverse メソッドは、「要素を何かしらの Applicative な値にして返す関数」<br>
+  を引数にとり Applicative な値として元の構造を保つ操作、と言えます。
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+It is difficult to understand what is meant by "a function that returns an element as some `Applicative` value" and keeps the original structure as an `Applicative` value," isn't it?
+
+<div class="translation">
+  「要素を何かしらの Applicative な値にして返す関数」を引数にとり<br>
+  Applicative な値として元の構造を保つ操作、と言われても何が何やらですよね？
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+It is difficult to understand what is meant by "a function that returns an element as some `Applicative` value" and keeps the original structure as an `Applicative` value," isn't it?
+
+Many of you may be wondering what an `Applicative` value is.
+
+<div class="translation">
+  そもそも Applicative な値とはなんぞや？となってる方も多いかと思います。
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+It is difficult to explain what `Applicative` is in this session, because it is too abstract a concept.
+
+<div class="translation">
+  あまりにも抽象的な概念のため<br>
+  Applicative とは何か、をこのセッション内で判りやすく伝える事は難しいです。
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+It is difficult to explain what `Applicative` is in this session, because it is too abstract a concept.
+
+Here, it is sufficient to understand that Applicative is a typeclass with the following two methods.
+
+<div class="translation">
+  ここでは以下の二つのメソッドを持った型クラスとだけ認識していただければ大丈夫です。
+</div>
+
+
+---
+class: left, top
+
+## `Applicative`
+
+It is difficult to explain what `Applicative` is in this session, because it is too abstract a concept.
+
+Here, it is sufficient to understand that Applicative is a typeclass with the following two methods.
+
+- `pure`: It generates a value of type `G[A]` from a value of type `A`
+
+<div class="translation">
+  pure: A 型の値から G[A] 型の値を生成するメソッド
+</div>
+
+
+---
+class: left, top
+
+## `Applicative`
+
+It is difficult to explain what `Applicative` is in this session, because it is too abstract a concept.
+
+Here, it is sufficient to understand that Applicative is a typeclass with the following two methods.
+
+- `pure`: It generates a value of type `G[A]` from a value of type `A`
+- `map2`: It generates a value `G[C]` from two `G[_]` wrapped values `G[A]` and `G[B]`
+
+<div class="translation">
+  map2: G[_] に包まれた二つの値 G[A] と G[B] から、G[C] という値を生成できるメソッド
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+- `pure`: It generates a value of type `G[A]` from a value of type `A`
+- `map2`: It generates a value `G[C]` from two `G[_]` wrapped values `G[A]` and `G[B]`
+
+In code, In code, It is the type as follows.
+
+```scala
+trait Applicative[G[_]] {
+  def pure[A](a: A): G[A]
+  def map2[A, B, C](a: G[A], b: G[B])(f: (A, B) => C): G[C]
+}
+```
+
+<div class="translation">
+  コードで表現するとこのようなインターフェイスが実装できる型となります。
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+```scala
+trait Applicative[G[_]] {
+  def pure[A](a: A): G[A]
+  def map2[A, B, C](a: G[A], b: G[B])(f: (A, B) => C): G[C]
+}
+```
+
+`pure` is an operation that wraps a value.
+
+
+<div class="translation">
+  pure は値を包む操作ですね。
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+```scala
+trait Applicative[G[_]] {
+  def pure[A](a: A): G[A]
+  def map2[A, B, C](a: G[A], b: G[B])(f: (A, B) => C): G[C]
+}
+```
+
+`pure` is an operation that wraps a value.
+
+For `Option` it is `Option.apply` and ...
+
+```scala
+given Applicative[Option] with {
+  def pure[A](a: A): Option[A] = Option(a)
+  ...
+```
+
+<div class="translation">
+  Option であれば Option.apply ですし、
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+```scala
+trait Applicative[G[_]] {
+  def pure[A](a: A): G[A]
+  def map2[A, B, C](a: G[A], b: G[B])(f: (A, B) => C): G[C]
+}
+```
+
+`pure` is an operation that wraps a value.
+
+For `Option` it is `Option.apply` and for `List` it is `List.apply`.
+
+```scala
+given Applicative[Option] with {
+  def pure[A](a: A): Option[A] = Option(a)
+  ...
+```
+
+```scala
+given Applicative[List] with {
+  def pure[A](a: A): List[A] = List(a)
+  ...
+```
+
+<div class="translation">
+  Option であれば Option.apply ですし、List であれば List.apply です
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+```scala
+trait Applicative[G[_]] {
+  def pure[A](a: A): G[A]
+  def map2[A, B, C](a: G[A], b: G[B])(f: (A, B) => C): G[C]
+}
+```
+
+`map2` is the two values version of `map`.
+
+<div class="translation">
+  では map2 とはどういう操作かというと map の二つ版の事です。
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+```scala
+trait Applicative[G[_]] {
+  def pure[A](a: A): G[A]
+  def map2[A, B, C](a: G[A], b: G[B])(f: (A, B) => C): G[C]
+}
+```
+
+`map2` is the two values version of `map`.
+
+For `Option` as following and
+
+```scala
+given Applicative[Option] with {
+  ...
+  def map2[A, B, C](a: Option[A], b: Option[B])
+       (f: (A, B) => C): Option[C] = {
+    (a, b) match {
+      case (Some(a), Some(b)) => f(a, b)
+      case _                  => None
+    }
+  } 
+```
+
+<div class="translation">
+  Option であれば上記のようになりますし、
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+```scala
+trait Applicative[G[_]] {
+  def pure[A](a: A): G[A]
+  def map2[A, B, C](a: G[A], b: G[B])(f: (A, B) => C): G[C]
+}
+```
+
+`map2` is the two values version of `map`.
+
+For `List` as following
+
+```scala
+given Applicative[List] with {
+  ...
+  def map2[A, B, C](a: List[A], b: List[B])
+       (f: (A, B) => C): List[C] = 
+    for {
+      a_ <- a
+      b_ <- b
+    } yield f(a_, b_)
+```
+
+<div class="translation">
+  List であれば上記のようになります
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+Compared to `map` as following
+
+
+<div class="translation">
+  map と比較すると次のような感じです。
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+Compared to `map` as following
+
+```scala
+def map[A, B](a: Option[A])(f: (A) => B): Option[B]
+
+def map2[A, B, C](a: Option[A], b: Option[B])
+  (f: (A, B) => C): Option[C]
+```
+
+
+<div class="translation">
+  Option 版
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+Compared to `map` as following
+
+```scala
+def map[A, B](a: Option[A])(f: (A) => B): Option[B]
+
+def map2[A, B, C](a: Option[A], b: Option[B])
+  (f: (A, B) => C): Option[C]
+```
+
+```scala
+def map[A, B](a: List[A])(f: (A) => B): List[B]
+
+def map2[A, B, C](a: List[A], b: List[B])
+  (f: (A, B) => C): List[C]
+```
+
+
+<div class="translation">
+  List 版
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+Compared to `map` as following
+
+```scala
+def map[A, B](a: Option[A])(f: (A) => B): Option[B]
+
+def map2[A, B, C](a: Option[A], b: Option[B])
+  (f: (A, B) => C): Option[C]
+```
+
+```scala
+def map[A, B](a: List[A])(f: (A) => B): List[B]
+
+def map2[A, B, C](a: List[A], b: List[B])
+  (f: (A, B) => C): List[C]
+```
+
+While `map` returns a result from single value and one-parameter function, 
+`map2` returns a result from two values and  two-parameters function.
+
+
+<div class="translation">
+  map は一つ値と一引数関数から結果を作るのに対し、
+  <br>map2 は二つの値と二引数関数から結果をつくります。
+</div>
+
+---
+class: left, top
+
+## `Applicative`
+
+Compared to `map` as following
+
+```scala
+def map[A, B](a: Option[A])(f: (A) => B): Option[B]
+
+def map2[A, B, C](a: Option[A], b: Option[B])
+  (f: (A, B) => C): Option[C]
+```
+
+```scala
+def map[A, B](a: List[A])(f: (A) => B): List[B]
+
+def map2[A, B, C](a: List[A], b: List[B])
+  (f: (A, B) => C): List[C]
+```
+
+While `map` returns a result from single value and one-parameter function, 
+`map2` returns a result from two values and  two-parameters function.
+
+In other words, `map2` can be used to combine multiple values into a single value.
+
+<div class="translation">
+  つまり map2 が使えると、複数の値を合成して一つの値にすることができます。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+The reason why `traverse` is so powerful is that it can take advantage of this `Applicative` property.
+
+<div class="translation">
+  traverse がなぜ強力なのかと言うと、この Applicative の性質を活用できるからです。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+The reason why `traverse` is so powerful is that it can take advantage of this `Applicative` property.
+
+Let's look at a concrete example.
+
+<div class="translation">
+  具体例を見てみましょう。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+`map2` of `Either` returns Left immediately when one of the two values is Left, and applies the function when both values are Right.
+
+<div class="translation">
+  Either の map2 は二つの値のいずれかが Left であれば即座に Left を返し、<br>
+  二つの値の両方が Right であれば関数を適用します。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+`map2` of `Either` returns Left immediately when one of the two values is Left, and applies the function when both values are Right.
+
+```scala
+val e1: Either[String, Int] = Left("error1")
+val e2: Either[String, Int] = Right(1)
+```
+
+
+<div class="translation">
+  Either の map2 は二つの値のいずれかが Left であれば即座に Left を返し、<br>
+  二つの値の両方が Right であれば関数を適用します。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+`map2` of `Either` returns Left immediately when one of the two values is Left, and applies the function when both values are Right.
+
+```scala
+val e1: Either[String, Int] = Left("error1")
+val e2: Either[String, Int] = Right(1)
+```
+
+```scala
+val result = EitherApplicative.map2(e1, e2)(_ + _)
+println(result)
+```
+
+<div class="translation">
+  Either の map2 は二つの値のいずれかが Left であれば即座に Left を返し、<br>
+  二つの値の両方が Right であれば関数を適用します。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+`map2` of `Either` returns Left immediately when one of the two values is Left, and applies the function when both values are Right.
+
+```scala
+val e1: Either[String, Int] = Left("error1")
+val e2: Either[String, Int] = Right(1)
+```
+
+```scala
+val result = EitherApplicative.map2(e1, e2)(_ + _)
+println(result)
+```
+
+```scala
+Left("error1") // Either[String, Int]
+```
+
+<div class="translation">
+  Either の map2 は二つの値のいずれかが Left であれば即座に Left を返し、<br>
+  二つの値の両方が Right であれば関数を適用します。
+</div>
+
+
+---
+class: left, top
+
+## the `traverse`
+
+`map2` of `Either` returns Left immediately when one of the two values is Left, and applies the function when both values are Right.
+
+.diff-rm[
+```scala
+*val e1: Either[String, Int] = `Left("error1")`
+val e2: Either[String, Int] = Right(1)
+```
+]
+
+```scala
+val result = EitherApplicative.map2(e1, e2)(_ + _)
+println(result)
+```
+
+```scala
+Left("error1") // Either[String, Int]
+```
+
+<div class="translation">
+  Either の map2 は二つの値のいずれかが Left であれば即座に Left を返し、<br>
+  二つの値の両方が Right であれば関数を適用します。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+`map2` of `Either` returns Left immediately when one of the two values is Left, and applies the function when both values are Right.
+
+.diff-add[
+```scala
+*val e1: Either[String, Int] = `Right(2)`
+val e2: Either[String, Int] = Right(1)
+```
+]
+
+```scala
+val result = EitherApplicative.map2(e1, e2)(_ + _)
+println(result)
+```
+
+<div class="translation">
+  Either の map2 は二つの値のいずれかが Left であれば即座に Left を返し、<br>
+  二つの値の両方が Right であれば関数を適用します。
+</div>
+
+
+---
+## the `traverse`
+
+`map2` of `Either` returns Left immediately when one of the two values is Left, and applies the function when both values are Right.
+
+```scala
+val e1: Either[String, Int] = Right(2)
+val e2: Either[String, Int] = Right(1)
+```
+
+```scala
+val result = EitherApplicative.map2(e1, e2)(_ + _)
+println(result)
+```
+
+```scala
+Right(3) // Either[String, Int]
+```
+
+
+<div class="translation">
+  Either の map2 は二つの値のいずれかが Left であれば即座に Left を返し、<br>
+  二つの値の両方が Right であれば関数を適用します。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  Either.cond(i < 10, i * 10, s"error: $i")
+}
+println(result)
+```
+
+Let's pass a function that returns Either to the List traverse.
+
+<div class="translation">
+  List の traverse に Either を返す関数を渡してみます。
+</div>
+
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  Either.cond(`i < 10`, i * 10, s"error: $i")
+}
+println(result)
+```
+
+Let's pass a function that returns Either to the List traverse.
+
+If the value is less than 10, the function returns `Right`, so it returns `Right` for all elements of the list.
+
+<div class="translation">
+  10 より小さい値であれば Right を返すので、全ての要素で Right を返します。
+</div>
+
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  Either.cond(i < 10, i * 10, s"error: $i")
+}
+println(result)
+```
+
+```scala
+Right(List(10, 20, 30, 40, 50))
+```
+
+Therefore, the result is a `List` wrapped in `Right`.
+
+<div class="translation">
+  従って、結果は Right に包まれた List になります。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+.diff-rm[
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+* Either.cond(`i < 10`, i * 10, s"error: $i")
+}
+println(result)
+```
+]
+
+Now let's change the function to return `Right` for any value less than 3.
+
+<div class="translation">
+  今度は 3 より小さい値であれば Right を返すように変えてみましょう。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+.diff-add[
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+* Either.cond(`i < 3`, i * 10, s"error: $i")
+}
+println(result)
+```
+]
+
+Now let's change the function to return `Right` for any value less than 3.
+
+<div class="translation">
+  今度は 3 より小さい値であれば Right を返すように変えてみましょう。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  Either.cond(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+
+```scala
+Left("error: 3")
+```
+
+This time we see that the result is `Left`.
+
+<div class="translation">
+  今度は結果が Left になる事が確認できます。
+</div>
+
+
+---
+class: left, top
+
+## the `traverse`
+
+.diff-add[
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+* println(i)
+  Either.cond(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+]
+
+Let's output the progress as the test.
+
+<div class="translation">
+  試しに途中経過を出力してみましょう。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  println(i)
+  Either.cond(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+
+```scala
+1
+2
+3
+Left("error: 3")
+```
+
+We can see that up to 3 is processed, while 4 and 5 are not processed.
+
+<div class="translation">
+  3 まで処理されて結果が返され、4, 5 は処理されていない事がわかります。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  println(i)
+  Either.cond(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+
+```scala
+1
+2
+3
+Left("error: 3")
+```
+
+In this way, if we pass a function that returns `Either` or `Option` to `traverse`, 
+We can write a loop that terminates processing in the middle, such as `break`.
+
+<div class="translation">
+  この様に、traverse に Either や Option を返す関数を渡すと<br>
+  break のような途中で処理を打ち切るループも書くことができます。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+.diff-rm[
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  println(i)
+* `Either.cond`(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+]
+
+```scala
+1
+2
+3
+Left("error: 3")
+```
+
+Now let's use `Validated` instead of `Either`.
+
+<div class="translation">
+  今度は Either の代わりに Validated を使ってみましょう。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+.diff-add[
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  println(i)
+* `Validated.condNel`(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+]
+
+Now let's use `Validated` instead of `Either`.
+
+<div class="translation">
+  今度は Either の代わりに Validated を使ってみましょう。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+.diff-add[
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  println(i)
+* `Validated.condNel`(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+]
+
+Now let's use `Validated` instead of `Either`.
+
+`Validated` is a data structure that represents either `Invalid` or `Valid` like `Either`.
+
+<div class="translation">
+  Validated は Either のように Invalid または Valid のどちらかを表すデータ構造です。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+.diff-add[
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  println(i)
+* `Validated.condNel`(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+]
+
+Now let's use `Validated` instead of `Either`.
+
+`Validated` is a data structure that represents either `Invalid` or `Valid` like `Either`.
+
+`Validated` differs from `Either` in that the `map2` of `Validated` aggregates the values of `Invalid`.
+
+<div class="translation">
+  Either と異なる点は、Validated の map2 は Invalid が持つ値を集約するという事です。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  println(i)
+  Validated.condNel(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+
+```scala
+1
+2
+3
+4
+5
+Invalid(List("error: 3", "error: 4", "error: 5"))
+```
+
+Because of this difference, passing a function that returns `Validated` to `traverse` will aggregate all `Invalid` values.
+
+<div class="translation">
+  その違いのため、traverse に Validated を返す関数を渡すと全ての Invalid値を集約します。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  println(i)
+  `Either.cond`(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+
+```scala
+1
+2
+3
+Left("error: 3")
+```
+
+In the case of `Either`, the loop ends when an error occurs.
+
+<div class="translation">
+  Either の時はエラーが発生した時点でループが終了したのに対し、
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val result = list.traverse { i =>
+  println(i)
+  `Validated.condNel`(i < 3, i * 10, s"error: $i")
+}
+println(result)
+```
+
+```scala
+1
+2
+3
+4
+5
+Invalid(List("error: 3", "error: 4", "error: 5"))
+```
+
+Whereas in the case of `Validated`, the loop continues to the end and aggregates the errors.
+
+
+<div class="translation">
+  Validated の時は最後までループしエラーを集約していることが見て取れます。
+</div>
+
+
+
+---
+class: left, top
+
+## the `traverse`
+
+In this way, The `traverse` allows us to control the behavior of the loop by using the `Applicative` concrete type.
+
+<div class="translation">
+  この様に traverse は Applicative の具象型によってループの挙動を制御できます。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+In this way, The `traverse` allows us to control the behavior of the loop by using the `Applicative` concrete type.
+
+```scala
+def validateUser(user: User): Validated[Errors, User] = ...
+```
+
+```scala
+def validateUsers(users:List[User]):Validated[Errors, List[User]]=
+  users.traverse(validateUser)
+```
+
+As a side note, as in the example, if you define validation logic for a single user, 
+you can easily get validation logic for multiple users using `traverse`.
+
+
+<div class="translation">
+  また余談ですが、例のように、単一のユーザに対する validation ロジックを定義しておけば、<br>
+  traverse を使えば簡単に複数のユーザに対する validation ロジックを手に入れられます。
+</div>
+
+
+---
+class: left, top
+
+## the `traverse`
+
+The `Applicative` can also be compose in various ways.
+
+
+<div class="translation">
+  また、Applicative は様々な方法で合成することができます。
+</div>
+
+
+---
+class: left, top
+
+## the `traverse`
+
+The `Applicative` can also be compose in various ways.
+
+For example, if you want to find the total value and the maximum value in a List, 
+we can compose each of them as a tuple.
+
+<div class="translation">
+  例えば List の中から合計値と最大値を探したい時、それぞれをタプルで合成できます。
+</div>
+
+
+---
+class: left, top
+
+## the `traverse`
+
+The `Applicative` can also be compose in various ways.
+
+For example, if you want to find the total value and the maximum value in a List, 
+we can compose each of them as a tuple.
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val (sum, max) = list.traverse { i =>
+  (Const(i), Const(Max(i)))
+}
+println(s"sum: $sum")
+println(s"max: $max")
+```
+
+<div class="translation">
+  例えば List の中から合計値と最大値を探したい時、それぞれをタプルで合成できます。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+The `Applicative` can also be compose in various ways.
+
+For example, if you want to find the total value and the maximum value in a List, 
+we can compose each of them as a tuple.
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val (sum, max) = list.traverse { i =>
+  (Const(i), Const(Max(i)))
+}
+println(s"sum: $sum")
+println(s"max: $max")
+```
+
+```scala
+sum: 15
+max: 5
+```
+
+<div class="translation">
+  例えば List の中から合計値と最大値を探したい時、それぞれをタプルで合成できます。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+The `Applicative` can also be compose in various ways.
+
+For example, if you want to find the total value and the maximum value in a List, 
+we can compose each of them as a tuple.
+
+```scala
+val list = List(1, 2, 3, 4, 5)
+val (sum, max) = list.traverse { i =>
+  (Const(i), Const(Max(i)))
+}
+println(s"sum: $sum")
+println(s"max: $max")
+```
+
+```scala
+sum: 15
+max: 5
+```
+
+The important point here is that the process of summarizing and finding the maximum value can be defined separately from the loop.
+
+<div class="translation">
+  ここでのポイントは、合計を求める処理と最大値を求める処理を、<br>
+  ループとは別にそれぞれ定義できることです。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+The `Applicative` can also be compose in various ways.
+
+In other words, even complex and huge loops can be broken down into smaller pieces by finding individual `Applicative` values.
+
+<div class="translation">
+  つまり複雑で巨大なループ処理も、<br>
+  個々の Applicative な値を見つける事で小さく分解することができます。
+</div>
+
+
+---
+class: left, top
+
+## the `traverse`
+
+The `Applicative` can also be compose in various ways.
+
+In other words, even complex and huge loops can be broken down into smaller pieces by finding individual `Applicative` values.
+
+The ability to break down the loop process into smaller pieces makes it easier to test, and easier to add other processing later.
+
+<div class="translation">
+  小さく分解できるという事は、テストも容易になり、<br>
+  後に別の処理を加えることも容易になっていきます。
+</div>
+
+
+---
+class: left, top
+
+## the `traverse`
+
+By using various Applicative concrete types, traverse can express all the looping operations realized by the Iterator pattern.
+
+<div class="translation">
+  様々な Applicative の具象型を使うことで<br>
+  traverse は the Iterator pattern が実現するループ処理について全て表現する事ができます。
+</div>
+
+---
+class: left, top
+
+## the `traverse`
+
+By using various Applicative concrete types, traverse can express all the looping operations realized by the Iterator pattern.
+
+The `Applicative` property makes it possible to decompose the components of a complex loop to increase its modularity.
+
+<div class="translation">
+  Applicative の性質を利用することで、<br>
+  複雑なループの構成要素を分解しモジュラリティを高める事が可能になります。
+</div>
+
+
+---
+class: left, top
+
+## the Essence of the Iterator pattern
+
+For the evidence that rewriting is possible and more complex concrete examples, see, 
+[The Essence of the Iterator pattern](http://www.cs.ox.ac.uk/jeremy.gibbons/publications/iterator.pdf)(J Gibbons, BCS Oliveira, 2009) (PDF) 
+for those who are interested.
+
+<div class="translation">
+  このセッションで紹介した書き換えが可能な根拠やより複雑な具体例などは、 <br>
+  <a href="http://www.cs.ox.ac.uk/jeremy.gibbons/publications/iterator.pdf">http://www.cs.ox.ac.uk/jeremy.gibbons/publications/iterator.pdf</a><br>
+  に詳しく書かれているので、興味がある方はぜひご参照ください。
+</div>
+
+---
+class: left, top
+
+## the Essence of the Iterator pattern
+
+For the evidence that rewriting is possible and more complex concrete examples, see, 
+[The Essence of the Iterator pattern](http://www.cs.ox.ac.uk/jeremy.gibbons/publications/iterator.pdf)(J Gibbons, BCS Oliveira, 2009) (PDF) 
+for those who are interested.
+
+Also, please refer to the following supplementary article on the implementation aspects of `traverse` that were not covered in this session. 
+I have written a supplementary article titled ["`map` を使いこなせるあなたに `traverse`"](https://zenn.dev/gakuzzzz/articles/81cd723a36067f). 
+Please refer to this article if you would like to know more about the implementation of `traverse`.
+
+
+<div class="translation">
+  また、このセッション中で紹介しきれなかった traverse の実装面について<br>
+  <a href="https://zenn.dev/gakuzzzz/articles/81cd723a36067f">https://zenn.dev/gakuzzzz/articles/81cd723a36067f</a><br>
+  補足記事を書きましたので、よかったらこちらもご参照ください。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- Loops are important in programming.
+
+<div class="translation">
+  プログラミングにおいてループは重要です。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- Loops are important in programming.
+- A design pattern was created for the process of iterating elements over data structures.
+
+<div class="translation">
+  データ構造に対して要素をイテレートする処理はパターンが生まれました。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- Loops are important in programming.
+- A design pattern was created for the process of iterating elements over data structures.
+- The iteration represented by this pattern can be represented by `traverse`.
+
+<div class="translation">
+  このパターンで表現されるイテレーションは traverse で表現することができます。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- Loops are important in programming.
+- A design pattern was created for the process of iterating elements over data structures.
+- The iteration represented by this pattern can be represented by `traverse`.
+- The `traverse` takes advantage of the `Applicative` property
+
+<div class="translation">
+  traverse は Applicative の性質を活用します。
+</div>
+
+
+---
+class: left, top
+
+## Summary
+
+- Loops are important in programming.
+- A design pattern was created for the process of iterating elements over data structures.
+- The iteration represented by this pattern can be represented by `traverse`.
+- The `traverse` takes advantage of the `Applicative` property
+- Modularity is increased by organizing the contents of the iteration by `Applicative`.
+
+<div class="translation">
+  イテレーションの中身を Applicative で整理する事によってモジュラリティが高まります。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- Loops are important in programming.
+- A design pattern was created for the process of iterating elements over data structures.
+- The iteration represented by this pattern can be represented by `traverse`.
+- The `traverse` takes advantage of the `Applicative` property
+- Modularity is increased by organizing the contents of the iteration by `Applicative`.
+- let's control codes, let's control `traverse`
+
+<div class="translation">
+  traverse を制して code を制しましょう。
+</div>
+
+---
+class: center, middle
+
+## Any questions?
+
+
+        </textarea>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            var slideshow = remark.create({
+              highlightStyle: 'github',
+              highlightSpans: true,
+              highlightLines: true
+          });
+        </script>
+    </body>
+</html>
