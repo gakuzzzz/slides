@@ -1716,8 +1716,8 @@ we can compose each of them as a tuple.
 
 ```scala
 val list = List(1, 2, 3, 4, 5)
-val Const(sum, product) = list.traverse { i =>
-  Const(Sum(i), Product(i))
+val Const((sum, product)) = list.traverse { i =>
+  Const((Sum(i), Product(i)))
 }
 println(s"sum: $sum")
 println(s"product: $product")
@@ -1739,8 +1739,8 @@ we can compose each of them as a tuple.
 
 ```scala
 val list = List(1, 2, 3, 4, 5)
-val Const(sum, product) = list.traverse { i =>
-  Const(Sum(i), Product(i))
+val Const((sum, product)) = list.traverse { i =>
+  Const((Sum(i), Product(i)))
 }
 println(s"sum: $sum")
 println(s"product: $product")
@@ -1767,8 +1767,8 @@ we can compose each of them as a tuple.
 
 ```scala
 val list = List(1, 2, 3, 4, 5)
-val Const(sum, product) = list.traverse { i =>
-  Const(Sum(i), Product(i))
+val Const((sum, product)) = list.traverse { i =>
+  Const((Sum(i), Product(i)))
 }
 println(s"sum: $sum")
 println(s"product: $product")
