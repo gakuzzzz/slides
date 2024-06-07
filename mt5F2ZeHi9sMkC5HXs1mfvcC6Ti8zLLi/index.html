@@ -1,0 +1,1116 @@
+<!Doctype html>
+<html>
+    <head>
+        <title>ScalaMatsuri 2024 トレーニングDay Scala講座</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <meta name="robots" content="noindex">
+        <meta name="robots" content="nofollow">
+        <link rel="stylesheet" type="text/css" href="../style/nrinaudo/css/style.css"/>
+        <style type="text/css">
+.translation {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.5em 4em;
+    width: 90%;
+    line-height: 110%;
+}
+a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-style: dotted;
+}            
+        </style>
+    </head>
+    <body>
+        <textarea id="source">
+
+class: center, middle
+
+# トレーニングDay Scala講座
+
+Scala Matsuri 2024 2024/06/07<br>
+@gakuzzzz
+
+
+---
+class: center, middle
+
+# 今日のコンセプト
+
+---
+class: center, middle
+
+## ScalaMatsuri 2024 を<br>もっと楽しむための Scala 基礎講座
+
+---
+class: left, top
+
+## 自己紹介
+
+* 中村 学/Manabu NAKAMURA
+* Twitter: [@gakuzzzz](https://twitter.com/gakuzzzz)
+* [Tech to Value Co.,Ltd.](https://www.t2v.jp/) CEO
+* [Alp, Inc.](https://thealp.co.jp/) Tech Lead
+
+---
+class: left, top
+
+## タイムテーブル
+
+- 13:00 ～ イントロダクション
+- 13:05 ～ 環境編
+- 13:25 ～ 基礎文法編・前編
+- 13:55 ～ （休憩）
+- 14:05 ～ 基礎文法編・後編
+- 14:50 ～ （休憩）
+- 15:00 ～ 発展文法編
+- 15:50 ～ （休憩）
+- 16:00 ～ 周辺知識編
+- 16:45 ～ Track Trainingコース for Scala 及びギブリーさんの紹介
+
+---
+class: center, middle
+
+# 環境編
+
+---
+class: left, top
+
+## Scala とは
+
+Scalaは2003年にスイス連邦工科大学ローザンヌ校（EPFL）のMartin Odersky教授によって開発されたプログラミング言語です。
+
+処理系は Java Virtual Machine (JVM) 上で動作します。
+
+---
+class: left, top
+
+## Scala とは
+
+Scalaは2003年にスイス連邦工科大学ローザンヌ校（EPFL）のMartin Odersky教授によって開発されたプログラミング言語です。
+
+処理系は Java Virtual Machine (JVM) 上で動作します。
+
+JVM とは プログラミング言語 Java の実行環境の事で、class file と呼ばれるバイトコードを読み込んで処理を実行します。
+
+この class file のフォーマットが形式化されているため、
+コンパイルして class file を生成する Java 以外のプログラミング言語が多く存在しています。
+
+そして Scala もその一つです。他には Kotlin や Clojure などなどがあります。
+
+
+---
+class: left, top
+
+
+## Javaとの互換性
+
+Scala は Java との互換性がよく考えられた言語です。Scala の型やメソッド呼び出しは Java と互換性があり、Java で作られたライブラリは普通に Scala から使うことができます。
+
+また、Java の標準ライブラリも全て利用できます。
+
+Scala のバージョンとサポートしている Java のバージョンは、[Scala の公式ドキュメントでまとめられている](https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html)
+ので、実際に使う際には参照してください。
+
+---
+class: left, top
+
+## 使い始める
+
+今現在で Scala を使い始めるおススメの方法として、以下の3つを紹介します。
+
+- [Scastie](https://scastie.scala-lang.org/)
+    - Web Playground です
+    - さっと出先でコードを確かめたり共有したりするのに便利
+- [scala-CLI](https://scala-cli.virtuslab.org/)
+    - 色々な事ができるコマンドラインツールです
+    - まずとにかくScalaに触ってみるならこれがおススメ
+- [sbt](https://www.scala-sbt.org/)
+    - デファクトスタンダードのビルドツールです
+    - 多くの Scala プロジェクトが sbt で作られています
+
+
+---
+class: left, top
+
+## 開発環境
+
+今現在では、以下の二つのどちらかを利用されている方が多いです。
+
+- [IntelliJ IDEA](https://www.jetbrains.com/ja-jp/idea/) + Scala Plug-in
+- [VS Code](https://code.visualstudio.com/) + Metals 
+
+
+---
+class: left, top
+
+## JVM 以外の Scala
+
+Scala は JVM 上で動作すると言いましたが、実は JVM 以外をターゲットにする事もできます。
+
+- [Scala.js](https://www.scala-js.org/)
+    - Scala コードをコンパイルすると JavaScript になります。
+- [scala-native](https://scala-native.org/en/stable/)
+    - Scala コードを native binary にコンパイルします。
+
+Java の標準ライブラリのサポートに関してはそれぞれ差異がありますが、
+TypeScript や C++ などの代わりに Scala でプログラミングする事ができます。
+
+ただしこれらのコンパイラ自体はやはり JVM を使います。
+
+---
+class: center, middle
+
+# 質問とか
+
+---
+class: center, middle
+
+# 基礎文法編
+
+---
+class: left, top
+
+## 式と文
+
+形式的な定義は言語仕様に譲るとして、
+Scalaにおいて式はプログラムの実行における基本的な要素です。
+
+```scala
+"scala"
+```
+
+```scala
+1 + 2 + 3
+```
+
+式は評価(実行)が成功すると値になります。
+
+それに対し、評価しても値にならないものを文と言います。
+
+```scala
+val bar = "the value declaration is a statement"
+```
+
+クラス定義や変数定義やメソッド定義などが文になります。
+
+---
+class: left, top
+
+## リテラル
+
+式を構成する最小要素です
+
+```scala
+true         // Boolean リテラル
+100          // 整数リテラル
+20.12        // 浮動小数点リテラル
+'a'          // 文字リテラル
+"foo"        // 文字列リテラル
+"""aaaa"""   // Multi-Line  文字列リテラル
+```
+
+---
+class: left, top
+
+## 変数定義
+
+変数定義には `val` もしくは `var` を使います。
+
+```scala
+val 変数名: 変数の型 = 式
+```
+
+```scala
+val foo: String = "Hello Scala"
+```
+
+変数の型を推論させることもできますが、必ず初期値の式は必要になります。
+
+```scala
+val bar = "Hello Scala"
+```
+
+`val` を使うと再代入が不可能になり、`var` を使うと再代入が可能になります。
+
+```scala
+var buz = 10
+buz = 300     // 再代入が可能
+```
+
+---
+class: left, top
+
+## if 式
+
+Scala においては `if` も値を返す式になります。
+
+```scala
+if (条件式) THEN式 else ELSE式
+```
+
+```scala
+if (foo > 10) "Grater" else "Lesser"
+```
+
+Scala 3 では `then` キーワードを使用して条件式の括弧を取ることもできます。
+
+```scala
+if foo > 10 then "Grater" else "Lesser"
+```
+
+`if` は式なので値を返します。
+
+```scala
+val message = if (foo > 10) "Grater" else "Lesser"
+```
+
+そのため他の言語で見られるような条件三項演算子 `式 ? 式 : 式` はありません。
+
+---
+class: left, top
+
+## ブロック式
+
+Scalaでは `{}` で複数の式や文の並びを囲むと、それ全体が式になります。便宜上それをブロック式と呼びます。
+
+```scala
+val foo = {
+  val a = 20
+  val b = 30
+  a + b
+}
+
+println(foo)   // 50 と表示される
+```
+
+ブロック式全体の値は、ブロックの最後の式の値になります。
+
+
+---
+class: left, top
+
+## while 式
+
+`while` 式の構文は他の多くの言語とほぼ同じです。
+
+```scala
+while (条件式) 本体式
+```
+
+```scala
+var i = 0
+while (i < 10) {
+  i = i + 1
+  println(i)
+}
+```
+
+Scala 3 では `do` を使って条件式の括弧をとることができます。
+
+```scala
+while 条件式 do 本体式
+```
+
+なお、他の言語で `break` や `continue` に相当する言語機能はありません。
+
+---
+class: left, top
+
+## for 式 その１
+
+`for` 式は Java の拡張for文や ECMAScript の for-of などと似た使い方ができる制御構文です。
+
+```scala
+for (ジェネレータ...) 本体式
+```
+
+変数名 と集合を `<-` でつないだものを Scala では ジェネレータと呼びます。
+
+```scala
+for (i <- 1 to 10) println(i)
+```
+
+Scala の `for` 式はジェネレータを複数とる事ができるので、多重ループもネストせず書くことができます。
+
+```scala
+for (i <- 1 to 10) {
+  for (j <- 1 to i) println(j)
+}
+```
+```scala
+for (i <- 1 to 10; j <- 1 to i) println(j) 
+```
+
+
+---
+class: left, top
+
+## class
+
+Scalaのクラス定義は次のような形を取ります。
+
+```scala
+class クラス名(コンストラクタ引数リスト) {
+  フィールドやメソッド等のメンバー定義
+}
+```
+
+
+```scala
+class Rectangle(width: Int, height: Int) {
+  val area: Int = width * height
+}
+```
+
+インスタンスを生成する場合は `new` を使いますが、 Scala 3 からは `new` が無くてもよくなりました。
+
+```scala
+val r1 = new Rectangle(10, 20)
+val r2 = Rectangle(10, 20)       // Scala 3 から
+```
+
+---
+class: left, top
+
+## フィールド
+
+フィールドは変数と同様に `val` または `var` を使って定義します。
+
+```scala
+val フィールド名: フィールド型 = 式
+```
+
+```scala
+class Rectangle(width: Int, height: Int) {
+  val area: Double = width * height
+}
+```
+
+`val` の場合は再代入不能、`var` の場合は再代入可能なフィールドになります。
+
+また、コンストラクタの引数をフィールドとして公開したい場合、コンストラクタ引数に `val` または `var` を指定することができます。
+
+```scala
+class Rectangle(val width: Int, val height: Int)
+val r = new Rectangle(10, 20)
+println(r.width) // 公開フィールドとしてアクセス可能
+```
+
+
+---
+class: left, top
+
+## メソッド
+
+メソッドは `def` を使って定義します。
+
+```scala
+def メソッド名(引数リスト): 戻り値型 = 式
+```
+
+```scala
+def add(a: Int, b: Int): Int = a + b
+```
+
+`=` で区切られ、左辺にシグネチャを、右辺に単一の式をとります。
+
+式の評価結果値がメソッドの戻り値となるわけです。
+
+---
+class: left, top
+
+## メソッド
+
+従って、下記のようなコードが完全なメソッド定義のコードになります。
+
+```scala
+def add(a: Int, b: Int): Int = a + b
+```
+
+ここに `return` も `{ }` も存在しない事に注目してください。
+
+時折「Scalaのメソッド定義では `return` や `{ }` を省略することができる」
+という解説がされる事がありますが、厳密に言うと正しくありません。
+
+あくまで上記のように無い形が一般的で「必要に応じて `return` 等を書いても良い」
+というのが正確なところです。
+
+詳しくは [他言語経験者が0から始めるScala](https://gakuzzzz.github.io/slides/scala_from_other_languages/) をご参照下さい。
+
+---
+class: left, top
+
+## 可視性制御
+
+class もフィールドもメソッドも、アクセス修飾子で可視性を制御できます。
+
+```scala
+アクセス修飾子 class クラス名 アクセス修飾子 (コンストラクタ引数リスト) {
+  アクセス修飾子 val フィールド名: フィールド型 = 式
+  アクセス修飾子 def メソッド名(引数リスト): 戻り値型 = 式
+}
+```
+
+クラス名の後ろにあるアクセス修飾子はコンストラクタの可視性になります。
+
+アクセス修飾子は 無指定, `private`, `protected` が指定でき、それぞれ以下のような意味になります。
+
+- 無指定: どこからでもアクセス可能
+- `private`: そのクラス内だけからアクセス可能
+- `protected`: そのクラスと派生クラスだけからアクセス可能
+- `private[this]`: そのインスタンスだけからアクセス可能
+- `private[パッケージ名]`: 指定したパッケージ以下からアクセス可能
+- `protected[パッケージ名]`: 指定したパッケージ以下と派生クラスからアクセス可能
+
+---
+class: left, top
+
+## package
+
+アクセス修飾子の説明にパッケージというものが出てきました。
+
+Scala は名前空間を作るためにパッケージを使います。これによりプログラムをモジュール化できます。
+
+ファイルの先頭でパッケージ名を宣言することでそのファイルで定義されたクラスなどはパッケージに属する事になります。
+
+```scala
+package my.cool.application
+
+class Rectangle(val width: Int, val height: Int)
+```
+
+このパッケージの命名規則は Java のパッケージの命名規則に准じます。
+
+ただし、Java と異なり Scala のパッケージは階層構造を持ちます。
+
+Java では `my.cool` と `my.cool.application` は言語機構的には何の関係もない別のパッケージと見做されますが、Scala では サブパッケージとして見做されます。
+
+---
+class: left, top
+
+## 継承
+
+class 定義時に `extends` を使用して継承をすることができます。
+
+```scala
+class Animal
+
+class Dog(name: String) extends Animal
+class Cat(name: String) extends Animal
+```
+
+他のオブジェクト指向言語のクラス継承とだいたい同じです。
+
+フィールドやメソッドを override する場合は、`override` 修飾子をつけます。
+
+```scala
+class Rectangle(width: Int, height: Int) extends Shape {
+  override val area: Double = width * height
+}
+```
+
+
+
+---
+class: left, top
+
+## 抽象メンバー
+
+フィールドやメソッドの `=` 以降を省略すると抽象フィールドや抽象メソッドになり、派生クラスに実装を任せる事ができます。
+
+```scala
+abstract class Shape {
+  def area: Double
+}
+```
+
+抽象メンバーを持つクラスは抽象クラスとなり、 `abstract` 修飾子を付ける必要があります。
+
+```scala
+class Rectangle(width: Int, height: Int) extends Shape {
+  val area: Double = width * height
+}
+```
+
+メソッドをフィールドで override する事も可能です。逆はできません。
+
+抽象メンバーを override する場合は、`override` 修飾子は無くても問題ありません。
+
+---
+class: center, middle
+
+# 質問とか
+
+---
+class: center, middle
+
+# （休憩タイム）
+
+---
+class: left, top
+
+## object
+
+Scalaでは、全ての値がオブジェクトです。
+
+GoF デザインパターンの Singleton パターンを明示的に利用しなくても、Scala では `object` キーワードを使ってシングルトンオブジェクトを定義する事ができます。
+
+シングルトンオブジェクトの定義方法はクラスとほぼ同じで、`class` の代わりに `object` を使用することと、コンストラクタ引数が無い事だけが異なります。
+
+
+```scala
+object オブジェクト名 extends スーパークラス名 {
+  フィールドやメソッド等のメンバー定義
+}
+```
+
+```scala
+object Math {
+  def abs(i: Int): Int = if (i > 0) i else i * -1 // bug があります
+}
+```
+
+---
+class: left, top
+
+## companion object
+
+Scalaでは、全ての値がオブジェクトです。また、全てのメソッドは何らかのオブジェクトに所属しています。
+
+そのため、Javaの static フィールドや static メソッド、Ruby や Pathon の クラスフィールドやクラスメソッドといった概念がありません。
+
+ではどうするかと言うと、クラス名と同じ名前のシングルトンオブジェクトを定義して、そこにフィールドやメソッドを定義します。
+
+```scala
+class Time private (unixEpochMillis: Long)
+
+object Time {
+  def fromJST(year: Int, month: Int, day: Int): Time = ...
+}
+```
+
+クラスと同じファイル内、同じ名前で定義されたシングルトンオブジェクトは、コンパニオンオブジェクトと呼ばれます。
+
+コンパニオンオブジェクトとクラスは相互に特権的なアクセス権を持っており、 `private` なメンバーにアクセスする事が可能です。
+
+---
+class: left, top
+
+## trait
+
+トレイトはクラスやシングルトンオブジェクトでインターフェース等を共有するためのもので、Java の `interface` や Ruby の `module` に似ています。
+
+```scala
+trait トレイト名 {
+  フィールドやメソッド等のメンバー定義
+}
+```
+
+Scalaのトレイトはクラスに比べて以下のような特徴があります。
+
+- 複数のトレイトを1つのクラスやトレイトにMix-inできる
+- 直接インスタンス化できない
+- （コンストラクタの引数を取ることができない）
+
+---
+class: left, top
+
+## trait
+
+- 複数のトレイトを1つのクラスやトレイトにMix-inできる
+
+```scala
+trait TraitA
+trait TraitB
+
+class ClassA extends AnyRef with TraitA with TraitB
+```
+
+トレイトは `with` を使ってクラスやオブジェクトに mix-in する事ができます。
+
+この時、スーパークラスの指定が不要であれば、直接 `extends` の後ろにトレイトを置くことも可能です。
+
+```scala
+class ClassA extends TraitA with TraitB
+```
+
+---
+class: left, top
+
+## trait
+
+- 直接インスタンス化できない
+
+Scalaのトレイトはクラスと違い、直接インスタンス化できません。
+
+```scala
+trait TraitA
+
+val a = new TraitA //  コンパイルエラー！
+```
+
+なお、`new Trait {}` という記法を使うと、一見トレイトをインスタンス化できているように見えます。
+
+しかしこれは、トレイトを mix-in した無名のクラスを作って、無名クラスのインスタンスを生成する構文なので、
+トレイトそのものをインスタンス化できているわけではありません。
+
+
+---
+class: left, top
+
+## trait
+
+- （コンストラクタの引数を取ることができない）
+
+Scala 2 まではトレイトにパラメータを持たせることができませんでした。
+
+```scala
+// Scala 2 ではコンパイルエラー
+trait TraitA(name: String) 
+```
+
+ところが Scala 3 ではトレイトにパラメータを持たせる事が可能になりました。
+
+```scala
+// Scala 3 ではOK
+trait TraitA(name: String) 
+
+class ClassA extends TraitA("Trait Parameter!")
+```
+
+
+---
+class: left, top
+
+## case class / case object
+
+クラスやシングルトンオブジェクト定義時に `case` キーワードをつけると様々な便利なメソッド等を自動で定義してくれます。
+
+```scala
+case class Point(x: Int, y: Int)
+```
+
+この定義で以下の様なメソッド等が定義されていることになります。
+
+```scala
+class Point(val x: Int, val y: Int) {
+  def equals(other: Any): Boolean = ...
+  def hashCode: Int = ...
+  def copy(x: Int = x, y: Int = y): Point = ...
+  ... etc.
+}
+object Point {
+  def apply(x: Int, y: Int): Point = new Point(x, y)
+  def unapply(point: Point): Option[Point] = ...
+  ... etc.
+}
+```
+
+
+---
+class: left, top
+
+## sealed
+
+`sealed` を使うことで、継承や mix-in できる先を限定することができます。最近 Java にも導入されましたね。
+
+```scala
+// foo.scala ファイル
+sealed trait TraitA
+class ClassA extends TraitA { // OK!
+```
+
+```scala
+// bar.scala ファイル
+class ClassB extends TraitA { // コンパイルエラー！
+```
+
+クラスやトレイトの定義に `sealed` をつけると、同一ファイル内でしか継承や mix-in ができません。
+
+これにより後述のパターンマッチングで、コンパイラが網羅性検査を行う事ができるようになります。
+
+
+---
+class: left, top
+
+## enum
+
+Scala 2 までは `sealed` を駆使して代数的データ型(Algebraic Data Types) を定義していました。
+
+代数的データ型とは直積型と直和型で表されるデータ型です。
+
+```scala
+sealed trait Shape
+object Shape {
+  case class Rectangle(width: Int, height: Int) extends Shape
+  case class Circle(rdius: Int) extends Shape
+}
+```
+
+代数的データ型について詳しくは ScalaMatsuri2024 6/9 の「いつ継承を使い、いつ使わないか」というセッションを聞いて頂ければ。
+
+---
+class: left, top
+
+## enum
+
+```scala
+sealed trait Shape
+object Shape {
+  case class Rectangle(width: Int, height: Int) extends Shape
+  case class Circle(rdius: Int) extends Shape
+}
+```
+
+この `sealed` 使った定義が Scala 3 では `enum` を使ってより簡潔に定義できるようになりました。
+
+```scala
+enum Shape {
+  case Rectangle(width: Int, height: Int)
+  case Circle(rdius: Int)
+}
+```
+
+---
+class: left, top
+
+## type member
+
+Scala のクラスやトレイトなどのメンバーにはフィールドとメソッドだけではなく `type` も定義ができます。
+
+```scala
+type 型名 = 実体の型名
+```
+
+型に別名をつけてコードの意味を読み取りやすくできます。
+
+```scala
+class Rectangle {
+  type Width = Int
+}
+```
+
+またフィールドやメソッドと同様に抽象メンバーとすることもできます。
+
+```scala
+trait Entity {
+  type Id
+}
+```
+
+詳しくは [Abstract Type Member 入門](https://gakuzzzz.github.io/slides/abstract_type_member_introduction/) を参照ください。
+
+---
+class: left, top
+
+## generics
+
+Scala も他の多くの言語と同様にジェネリクスが使えます。
+
+
+```scala
+class クラス名[型パラメータリスト](コンストラクタ引数リスト) {
+  def メソッド名[型パラメータリスト](引数リスト): 戻り値型 = 式
+}
+```
+
+```scala
+class Stack[A] {
+  def push(a: A): Unit = ...
+  def pop(): A = ...
+}
+```
+
+利用側が型を指定して使います。
+
+```scala
+val intStack = new Stack[Int]
+```
+
+
+---
+class: center, middle
+
+# 質問とか
+
+---
+class: center, middle
+
+# （休憩タイム）
+
+---
+class: center, middle
+
+# 発展文法編
+
+---
+class: left, top
+
+## 変位指定と共変・反変
+
+型パラメータには変性(variance)と呼ばれる性質があり、これを指定するための変位指定とよばれる構文があります。
+
+
+- [TOUR OF SCALA の変位指定の解説ページ](https://docs.scala-lang.org/ja/tour/variances.html)
+- [ScalaText の変位指定の解説ページ](https://scala-text.github.io/scala_text/type-parameter.html#%E5%A4%89%E4%BD%8D%E6%8C%87%E5%AE%9A%EF%BC%88variance%EF%BC%89)
+
+---
+class: left, top
+
+## apply メソッド
+
+Scala では `apply` という名前のメソッドは特別扱いをされています。
+
+```scala
+class Point(x: Int, y: Int)
+object Point {
+  def apply(x: Int, y: Int): Point = new Point(x, y)
+}
+```
+
+というコードがあった時、`apply` という名前のメソッドは省略することができます。
+
+```scala
+val p1 = Point.apply(10, 20)
+val p2 = Point(10, 20)
+```
+
+この仕組みによって、あたかもオブジェクトを関数のように扱う事ができるようになっています。
+
+---
+class: left, top
+
+## FunctionN クラス
+
+関数を表す型として `Function1` ～ `Function22` という型が定義されています。
+
+この 1 とかっていう数字は引数の数ですね。
+
+```scala
+trait Function1[A1, B] {
+  def apply(a1: A1): B
+}
+trait Function2[A1, A2, B] {
+  def apply(a1: A1, a2: A2): B
+}
+``` 
+
+この `FunctionN` も `apply` メソッドで定義されているため、自然に扱う事ができます。
+
+```scala
+val func: Function1[Int, String] = ...
+
+func(10) // 関数的に扱える
+```
+
+Scala における高階関数というのは、この `FunctionN` を引数や戻り値にとる関数の事です。
+
+---
+class: left, top
+
+## 関数リテラル
+
+`FunctionN` の型や実体は Scala プログラム中で頻出するので、略記法やリテラルが存在しています。
+
+[Scala の省略ルール早覚え](https://gist.github.com/gakuzzzz/10104162#%E9%96%A2%E6%95%B0%E3%81%AB%E3%81%BE%E3%81%A4%E3%82%8F%E3%82%8B%E7%9C%81%E7%95%A5)
+
+
+---
+class: left, top
+
+## タプル
+
+Scala には複数の値を組み合わせて扱いたい時に気軽に使えるタプルとよばれるデータ型があります。
+
+[TOUR OF SCALA のタプル解説ページ](https://docs.scala-lang.org/ja/tour/tuples.html)
+
+
+---
+class: left, top
+
+## パターンマッチ
+
+[TOUR OF SCALA のパターンマッチ](https://docs.scala-lang.org/ja/tour/pattern-matching.html)
+
+---
+class: left, top
+
+## String Interpolation
+
+[String Interpolation によるパターンマッチの紹介](https://zenn.dev/gakuzzzz/articles/dd52cbed4df879)
+
+---
+class: left, top
+
+## for式 その２
+
+[for式 再入門](https://gakuzzzz.github.io/slides/for_comprehension_reintoroduction/#1)
+
+---
+class: left, top
+
+## import 
+
+Scala の `import` は他のパッケージのメンバーにアクセスするためのものです。
+
+Java と大きく異なる点は以下の通りです。
+
+- ファイルの先頭だけでなくどこにでも使用できます
+- クラスの import だけでなく、メソッドやフィールドも import できます
+- また引数やローカル変数のメンバーも import できます
+
+
+[「import 変数名._」の使いどころ](https://qiita.com/ka2kama/items/3579f8a9fe72261a3bf2)
+
+[Scala 3 のimport構文のワイルドカードは `_` ではなくて `*` になっている](https://blog.3qe.us/entry/2023/06/05/232322)
+
+---
+class: left, top
+
+## export 
+
+Scala 3 から `import` と対になる `export` という構文が追加されます。
+
+[Export Clauses](https://docs.scala-lang.org/scala3/reference/other-new-features/export.html)
+
+委譲を行うコードを簡潔に記述することができます。
+
+
+---
+class: left, top
+
+## implicit / 型クラス
+
+[Implicit 入門](https://gakuzzzz.github.io/slides/implicit_introduction/#1)
+
+Haskell 等の言語では型クラスは言語機能ですが、Scala においては implicit parameter とジェネリクスを利用したデザインパターンの一つです。
+
+---
+class: left, top
+
+## 拡張メソッド
+
+[Extension Method](https://docs.scala-lang.org/scala3/reference/contextual/extension-methods.html)
+
+---
+class: center, middle
+
+# 質問とか
+
+---
+class: center, middle
+
+# （休憩タイム）
+
+---
+class: center, middle
+
+# 周辺知識編
+
+---
+class: left, top
+
+## Collection Framework
+
+[Overview](https://docs.scala-lang.org/ja/overviews/collections/overview.html)
+
+[性能特性](https://docs.scala-lang.org/ja/overviews/collections/performance-characteristics.html)
+
+
+---
+class: left, top
+
+## 頻出クラス
+
+- `Option[A]`
+    - null の代わりに使います。値があるか無いかを示します
+- `Either[A, B]`
+    - A か B のどちらか、を表現するためのデータ型です。
+    - エラーか正常な結果か、とかにも良く使われます
+- `Future[A]`
+    - 非同期計算を表すデータ型です
+- `Try[A]`
+    - 失敗か成功かを表すデータ型です
+- `Ordering[A]`
+    - 自然順序付けを表す型クラスです
+
+---
+class: left, top
+
+## Akka/Pekko
+
+[Akka](https://akka.io/) は Actor モデルというプログラミングパラダイムを背景にした、分散処理システムの基盤です。
+
+ライセンスの変更があり、オープンソースライセンスのバージョンを Fork したものが生まれました。
+
+それが [Apache Pekko](https://pekko.apache.org/) になります。
+
+---
+class: left, top
+
+## Apache Spark
+
+[Apache Spark](https://spark.apache.org/) は大規模分散データ処理のために設計された統合エンジンです。
+
+
+
+---
+class: left, top
+
+## scalaz/cats
+
+Scala で Haskell の様々なデータ型や型クラスをエミュレートし、高度な関数型プログラミングを実現するライブラリです。
+
+- [scalaz](https://scalaz.github.io/7/)
+- [cats](https://typelevel.org/cats/)
+
+モナドとかが提供されています。
+
+
+---
+class: left, top
+
+## ZIO
+
+[ZIO](https://zio.dev/) は様々な Effect を統合的に扱うためのフレームワークです。
+
+Stream処理、エラーハンドリング、Dependency Injection などアプリケーションに共通して表れる様々な要素を、
+オールインワンで統合して手軽に扱える様にした点がユニークな特徴になっています。
+
+---
+class: left, top
+
+## Play Framework
+
+非常に広く利用されている Webフレームワークです。
+
+[Play Framework](https://www.playframework.com/)
+
+
+---
+class: left, top
+
+## circe
+
+[circe](https://circe.github.io/circe/) は広く利用されている Json ライブラリです。
+
+関数型プログラミングのアプローチを上手く取り入れており、安全で柔軟な Json 操作を提供してくれます。
+
+---
+class: center, middle
+
+# 質問とか
+
+        </textarea>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            var slideshow = remark.create({
+              highlightStyle: 'github',
+              highlightSpans: true,
+              highlightLines: true
+          });
+        </script>
+    </body>
+</html>
