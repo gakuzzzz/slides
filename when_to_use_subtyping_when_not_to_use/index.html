@@ -1,0 +1,1389 @@
+
+<!Doctype html>
+<html>
+    <head>
+        <title>When to use subtyping & when not use to it</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <link rel="stylesheet" type="text/css" href="../style/nrinaudo/css/style.css"/>
+        <style type="text/css">
+.translation {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.5em 4em;
+    width: 90%;
+    line-height: 110%;
+}            
+        </style>
+    </head>
+    <body>
+        <textarea id="source">
+class: center, middle
+
+# When to use subtyping & when not use to it
+
+Scala Matsuri 2024 2024/06/09<br>
+@gakuzzzz
+
+<div class="translation">
+    いつ継承を使い、いつ使わないか
+</div>
+
+---
+class: left, top
+
+## Who am I
+
+* Manabu NAKAMURA
+* Twitter: [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd. CEO
+* Alp, Inc. Tech Lead
+
+<div class="translation">
+    自己紹介: 中村 学 / Twitter: @gakuzzzz<br/>
+    株式会社Tech to Value 代表 / アルプ株式会社 テックリード
+</div>
+    
+---
+class: left, top
+
+## Intoroduction
+
+The title of this session is “When to use subtyping & when not to use It".
+
+<div class="translation">
+このセッションのタイトルは「いつ継承を使い、いつ使わないか」です。
+</div>
+
+---
+class: left, top
+
+## Intoroduction
+
+The title of this session is “When to use subtyping & when not to use It".
+
+In Japanese, "継承"  may mean "subtyping" or "inheritance", but in this case it is "subtyping".
+
+
+<div class="translation">
+日本語では「継承」としていますが、Inheritance ではなく Subtyping です。
+</div>
+
+---
+class: left, top
+
+## Intoroduction
+
+The title of this session is “When to use subtyping & when not to use It".
+
+In Japanese, "継承"  may mean "subtyping" or "inheritance", but in this case it is "subtyping".
+
+In this session, we will compare the model representation using conventional Subtype polymorphism 
+and the model representation using algebraic data types that can be realized by language mechanisms such as sealed, 
+and give you some guidelines on which to choose when.
+
+<div class="translation">
+このセッションでは、従来の Subtype polymorphism を活用したモデル表現と、<br>
+sealed などの言語機構によって実現できる代数的データ型によるモデル表現を比較し、<br>
+どの様な時にどちらを選択するかの指針を皆さんにお伝えしたいと思います。
+</div>
+
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+Scala and other modern languages now support Algebraic Data Types(ADT) through language mechanisms such as `sealed`.
+
+<div class="translation">
+Scala を始め昨今の言語では sealed などの言語機構により<br>代数的データ型を表現できるようになりました。
+</div>
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+Scala and other modern languages now support Algebraic Data Types(ADT) through language mechanisms such as `sealed`.
+
+What are Algebraic Data Types?
+
+<div class="translation">
+この代数的データ型と呼ばれるものはどういった型なのでしょうか？
+</div>
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+Scala and other modern languages now support Algebraic Data Types(ADT) through language mechanisms such as `sealed`.
+
+What are Algebraic Data Types?
+
+To put it simply, It is data types represented by a combination of Product Types and Sum Types.
+
+<div class="translation">
+端的に言ってしまうと、直積型と直和型の組み合わせで表された型の事です。
+</div>
+
+---
+class: left, top
+
+## Product Type
+
+Product type is a type that is expressed by combining some types. In other words, it is an ordinary case class.
+
+<div class="translation">
+直積型とは、なんらかの型を組み合わせて表現する型の事です。<br/>言ってしまえば普通の case class です。
+</div>
+
+
+---
+class: left, top
+
+## Product Type
+
+Product type is a type that is expressed by combining some types. In other words, it is an ordinary case class.
+
+```scala
+case class User(id: Int, name: String)
+```
+
+Let us consider the `User` class as an example.
+
+This `User` class takes `Int` and `String` as arguments.
+
+
+<div class="translation">
+例として `User` クラスを考えてみましょう。<br>この `User` クラスは引数として `Int` と `String` を取ります。
+</div>
+
+
+---
+class: left, top
+
+## Product Type
+
+Product type is a type that is expressed by combining some types. In other words, it is an ordinary case class.
+
+```scala
+case class User(id: Int, name: String)
+```
+
+Let us consider the `User` class as an example.
+
+This `User` class takes `Int` and `String` as arguments.
+
+Question, Counting one that all instances of the same value, how many instances of this `User` class can be created?
+
+<div class="translation">
+さて問題です。<br>同値のインスタンスは全て１つとした時、<br>この `User` クラスのインスタンスはいくつ作れるでしょうか？
+</div>
+
+
+---
+class: left, top
+
+## Product Type
+
+Product type is a type that is expressed by combining some types. In other words, it is an ordinary case class.
+
+```scala
+case class User(id: Int, name: String)
+```
+
+Let us consider the `User` class as an example.
+
+This `User` class takes `Int` and `String` as arguments.
+
+Question, Counting one that all instances of the same value, how many instances of this `User` class can be created?
+
+The answer is "the number of instances of `Int` × the number of instances of `String`".
+
+
+<div class="translation">
+答えは「`Int` のインスタンス数 × `String` のインスタンス数」ですね。
+</div>
+
+---
+class: left, top
+
+## Product Type
+
+Product type is a type that is expressed by combining some types. In other words, it is an ordinary case class.
+
+```scala
+case class User(id: Int, name: String)
+```
+
+Let us consider the `User` class as an example.
+
+This `User` class takes `Int` and `String` as arguments.
+
+Question, Counting one that all instances of the same value, how many instances of this `User` class can be created?
+
+The answer is "the number of instances of `Int` × the number of instances of `String`".
+
+In this way, it can be thought of as a product of types, which is why it is called product types.
+
+
+<div class="translation">
+この様に型の積のように考える事ができるため、直積型と言われる訳です。
+</div>
+
+
+---
+class: left, top
+
+## Sum type
+
+Product types are types that could be expressed as a combination of "A and B and C and...". 
+On the other hand, Sum types are types that expresses one of several types, such as "A or B or C or...".
+
+<div class="translation">
+直積型は「AとBとCと...」と組み合わせで表すような型の事でした。<br>
+それに対し、「AまたはBまたはCまたは...」のように複数の中からいずれかを表す型を<br>直和型といいます。
+</div>
+
+
+---
+class: left, top
+
+## Sum type
+
+Product types are types that could be expressed as a combination of "A and B and C and...". 
+On the other hand, Sum types are types that expresses one of several types, such as "A or B or C or...".
+
+In Scala 2.x, these types were defined using `sealed`. 
+In Scala 3 and later, it can be defined more concisely using `enum`.
+
+```scala
+ sealed trait Animal
+
+ case class Dog(name: String) extends Animal
+ case class Cat(name: String) extends Animal
+```
+
+
+<div class="translation">
+Scala 2.x では `sealed` を使って表現していました。Scala 3以降では `enum` を使って同じ内容をより簡潔に記述できます。
+</div>
+
+
+---
+class: left, top
+
+## Sum type
+
+Product types are types that could be expressed as a combination of "A and B and C and...". 
+On the other hand, Sum types are types that expresses one of several types, such as "A or B or C or...".
+
+In Scala 2.x, these types were defined using `sealed`. 
+In Scala 3 and later, it can be defined more concisely using `enum`.
+
+```scala
+ `sealed` trait Animal
+
+ case class Dog(name: String) extends Animal
+ case class Cat(name: String) extends Animal
+```
+
+By restricting with `sealed`, `Animal` is guaranteed to be either `Dog` or `Cat`.
+
+<div class="translation">
+`sealed` で制限する事によって、`Animal` は必ず `Dog` か `Cat` のいずれかである事が保証される訳です。
+</div>
+
+
+---
+class: left, top
+
+## Sum type
+
+```scala
+ sealed trait Animal
+
+ case class Dog(name: String) extends Animal
+ case class Cat(name: String) extends Animal
+```
+
+Question, Counting one that all instances of the same value, how many instances of this `Animal` class can be created?
+
+<div class="translation">
+さて、同値のインスタンスは全て１つとした時、<br>この `Animal` のインスタンスはいくつ作れるでしょうか？
+</div>
+
+---
+class: left, top
+
+## Sum type
+
+```scala
+ sealed trait Animal
+
+ case class Dog(name: String) extends Animal
+ case class Cat(name: String) extends Animal
+```
+
+Question, Counting one that all instances of the same value, how many instances of this `Animal` class can be created?
+
+The answer is “the number of instances of `Dog` + the number of instances of `Cat`".
+
+
+<div class="translation">
+答えは「`Dog` のインスタンス数 ＋ `Cat` のインスタンス数」ですね。
+</div>
+
+---
+class: left, top
+
+## Sum type
+
+```scala
+ sealed trait Animal
+
+ case class Dog(name: String) extends Animal
+ case class Cat(name: String) extends Animal
+```
+
+Question, Counting one that all instances of the same value, how many instances of this `Animal` class can be created?
+
+The answer is “the number of instances of `Dog` + the number of instances of `Cat`".
+
+This is why it is called a sum type because it can be thought of as a sum.
+
+<div class="translation">
+この様に和のように考える事ができるため、直和型と言われる訳です。
+</div>
+
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+These types expressed as product types and sum types are called algebraic data types.
+
+<div class="translation">
+これら直積型と直和型で表現された型の事を代数的データ型と呼んでいる訳です。
+</div>
+
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+These types expressed as product types and sum types are called algebraic data types.
+
+```scala
+sealed trait Account
+
+case class Personal(...) extends Account
+case class Business(...) extends Account
+```
+
+At first glance, it is normal usage of trait and class, except for `sealed`.
+
+<div class="translation">
+一見すると `sealed` が付いている事以外、普通の `trait` と `class` の使い方に見えます。
+</div>
+
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+These types expressed as product types and sum types are called algebraic data types.
+
+```scala
+sealed trait Account
+
+case class Personal(...) extends Account
+case class Business(...) extends Account
+```
+
+At first glance, it is normal usage of trait and class, except for `sealed`.
+
+This is because `sealed` was originally introduced to emulate algebraic data types used in programming languages such as Haskell, 
+which are intoroduced  to emulate naturally in object-oriented languages with subtyping.
+
+<div class="translation">
+それもその筈で、<br>
+もともと Haskell などのプログラミング言語で使われていた代数的データ型を、<br>
+Subtyping があるオブジェクト指向言語で自然にエミュレートできるように<br>
+導入された機構が `sealed` だからです。
+</div>
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+These types expressed as product types and sum types are called algebraic data types.
+
+```scala
+sealed trait Account
+
+case class Personal(...) extends Account
+case class Business(...) extends Account
+```
+
+In languages such as Haskell, `Personal` and `Business` are called data constructors and are not types.
+
+<div class="translation">
+Haskell などの言語では、`Personal` や `Business` はデータ構築子と呼ばれるものにあたり、型ではありません。
+</div>
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+These types expressed as product types and sum types are called algebraic data types.
+
+```scala
+sealed trait Account
+
+case class Personal(...) extends Account
+case class Business(...) extends Account
+```
+
+In languages such as Haskell, `Personal` and `Business` are called data constructors and are not types.
+
+However, in languages such as Scala, it is realized by `sealed` and subtyping, so `Personal` and `Business` are also represented as types.
+
+<div class="translation">
+しかし、Scala などで `sealed` で表現した場合は Subtyping で実現しているため、
+`Personal` や `Business` も型として表れる事に注意が必要です。
+</div>
+
+---
+class: left, top
+
+## Difference Subtyping and ADT
+
+So what is the difference between a typical subtyping model representation and an ADT model representation?
+
+<div class="translation">
+では典型的な Subtyping によるモデル表現と、<br>ADT によるモデル表現にはどのような違いがあるのでしょうか？
+</div>
+
+---
+class: left, top
+
+## Subtyping
+
+In a typical subtyping model representation, it is **possible to add cases** without changing the original code.
+
+```scala
+trait Shape {
+  def area: Double
+}
+
+class EquilateralTriangle(side: Int) extends Shape {
+  def area: Double = math.sqrt(3) * 4 * side * side
+}
+class Rectangle(width: Int, height: Int) extends Shape {
+  def area: Double = width * height
+}
+```
+
+<div class="translation">
+典型的な Subtyping によるモデル表現では、<br>元のコードを変更する事無しに構造の追加をする事が可能です。
+</div>
+
+---
+class: left, top
+
+## Subtyping
+
+In a typical subtyping model representation, it is **possible to add cases** without changing the original code.
+
+
+.diff-add[
+```scala
+trait Shape {
+  def area: Double
+}
+
+class EquilateralTriangle(side: Int) extends Shape {
+  def area: Double = math.sqrt(3) * 4 * side * side
+}
+class Rectangle(width: Int, height: Int) extends Shape {
+  def area: Double = width * height
+}
+*class Circle(radius: Int) extends Shape {
+* def area: Double = radius * radius  * math.Pi
+*}
+```
+]
+
+<div class="translation">
+典型的な Subtyping によるモデル表現では、<br>元のコードを変更する事無しに構造の追加をする事が可能です。
+</div>
+
+
+---
+class: left, top
+
+## Subtyping
+
+
+On the other hand, **adding operations would require changes** to existing code.
+
+```scala
+trait Shape {
+  def area: Double
+}
+
+class EquilateralTriangle(side: Int) extends Shape {
+  def area: Double = math.sqrt(3) * 4 * side * side
+}
+class Rectangle(width: Int, height: Int) extends Shape {
+  def area: Double = width * height
+}
+```
+
+<div class="translation">
+一方で、操作の追加には既存コードの変更が必要になってしまいます。
+</div>
+
+
+---
+class: left, top
+
+## Subtyping
+
+
+On the other hand, **adding operations would require changes** to existing code.
+
+.diff-add[
+```scala
+trait Shape {
+  def area: Double
+* def circumference: Double
+}
+
+class EquilateralTriangle(side: Int) extends Shape {
+  def area: Double = math.sqrt(3) * 4 * side * side
+* def circumference: Double = side * 3
+}
+class Rectangle(width: Int, height: Int) extends Shape {
+  def area: Double = width * height
+* def circumference: Double = (width + height) * 2
+}
+```
+]
+
+<div class="translation">
+一方で、操作の追加には既存コードの変更が必要になってしまいます。
+</div>
+
+---
+class: left, top
+
+## Subtyping
+
+This ability to **add cases without modifying** the original code is gained by hiding the cases from users 
+and providing a branching of operations by subtype polymorphism.
+
+.diff-add[
+```scala
+trait Shape {
+  def area: Double
+}
+
+class EquilateralTriangle(side: Int) extends Shape {
+  def area: Double = math.sqrt(3) * 4 * side * side
+}
+class Rectangle(width: Int, height: Int) extends Shape {
+  def area: Double = width * height
+}
+*class Circle(radius: Int) extends Shape {
+* def area: Double = radius * radius  * math.Pi
+*}
+```
+]
+
+<div class="translation">
+この元コードの変更無しに構造の追加が可能な性質は、 <br>
+モデルの利用者に対し構造を隠ぺいし、<br>
+操作の分岐を Subtype polymorphism で提供しているため得られています。
+</div>
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+The Algebraic Data Type model representation is **possible to add operations** without modifying the original code.
+
+```scala
+sealed trait Shape 
+case class EquilateralTriangle(side: Int) extends Shape
+case class Rectangle(width: Int, height: Int) extends Shape
+
+def area(shape: Shape): Double = shape match {
+  case EquilateralTriangle(side) => math.sqrt(3) * 4 * side * side
+  case Rectangle(width, height:) => width * height
+}
+```
+
+<div class="translation">
+Algebraic Data Type によるモデル表現では、元のコードを変更する事無しに操作を追加する事が可能です。
+</div>
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+The Algebraic Data Type model representation is **possible to add operations** without modifying the original code.
+
+.diff-add[
+```scala
+sealed trait Shape 
+case class EquilateralTriangle(side: Int) extends Shape
+case class Rectangle(width: Int, height: Int) extends Shape
+
+def area(shape: Shape): Double = shape match {
+  case EquilateralTriangle(side) => math.sqrt(3) * 4 * side * side
+  case Rectangle(width, height:) => width * height
+}
+*def circumference(shape: Shape): Double = shape match {
+* case EquilateralTriangle(side) => side * 3
+* case Rectangle(width, height:) => (width + height) * 2
+*}
+```
+]
+
+<div class="translation">
+Algebraic Data Type によるモデル表現では、元のコードを変更する事無しに操作を追加する事が可能です。
+</div>
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+On the other hand, **adding cases requires modification** of existing code.
+
+```scala
+sealed trait Shape 
+case class EquilateralTriangle(side: Int) extends Shape
+case class Rectangle(width: Int, height: Int) extends Shape
+
+def area(shape: Shape): Double = shape match {
+  case EquilateralTriangle(side) => math.sqrt(3) * 4 * side * side
+  case Rectangle(width, height:) => width * height
+}
+```
+
+<div class="translation">
+一方で、構造の追加には既存コードの変更が必要になってしまいます。
+</div>
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+On the other hand, **adding cases requires modification** of existing code.
+
+.diff-add[
+```scala
+sealed trait Shape 
+case class EquilateralTriangle(side: Int) extends Shape
+case class Rectangle(width: Int, height: Int) extends Shape
+*case class Circle(radius: Int) extends Shape
+
+def area(shape: Shape): Double = shape match {
+  case EquilateralTriangle(side) => math.sqrt(3) * 4 * side * side
+  case Rectangle(width, height)  => width * height
+* case Circle(radius)            => radius * radius  * math.Pi
+}
+```
+]
+
+<div class="translation">
+一方で、構造の追加には既存コードの変更が必要になってしまいます。
+</div>
+
+---
+class: left, top
+
+## Algebraic Data Type
+
+This ability to **add operations without modifying** the original code is gained by exposing the cases to the users, 
+and branching to the cases for each operation.
+
+.diff-add[
+```scala
+sealed trait Shape 
+case class EquilateralTriangle(side: Int) extends Shape
+case class Rectangle(width: Int, height: Int) extends Shape
+
+def area(shape: Shape): Double = shape match {
+  case EquilateralTriangle(side) => math.sqrt(3) * 4 * side * side
+  case Rectangle(width, height:) => width * height
+}
+*def circumference(shape: Shape): Double = shape match {
+* case EquilateralTriangle(side) => side * 3
+* case Rectangle(width, height:) => (width + height) * 2
+*}
+```
+]
+
+<div class="translation">
+この元コードの変更無しに操作の追加が可能な性質は、<br>
+構造を公開し、操作毎に構造に対する分岐をすることで得られています。
+</div>
+
+---
+class: left, top
+
+## Difference Subtyping and ADT
+
+- Subtyping is easy to add cases, difficult to add operations
+- Algebraic Data Type is easy to add operations, difficult to add cases
+
+<div class="translation">
+- Subtyping は 構造の追加が容易で操作の追加が困難<br>
+- Algebraic Data Type は 操作の追加が容易で構造の追加が困難
+</div>
+
+---
+class: left, top
+
+## Difference Subtyping and ADT
+
+- Subtyping is easy to add cases, difficult to add operations
+- Algebraic Data Type is easy to add operations, difficult to add cases
+
+Based on these properties, let's look at specific cases in which we should choose one over the other in actual applications.
+
+<div class="translation">
+この性質を踏まえたうえで、実際のアプリケーションにおいて、どういったケースではどちらを選択していけば良いか具体のケースを見ていきましょう。
+</div>
+
+---
+class: left, top
+
+## Case 1. Single Layer Application 
+
+
+Let us consider the case of a very small application in which all branches to the cases can define in the same layer as the model.
+
+<div class="translation">
+とても規模が小さいアプリケーションで、構造に対する分岐を全てモデルと同じ Layer で表現しきれる場合について考えてみましょう。
+</div>
+
+---
+class: left, top
+
+## Case 1. Single Layer Application 
+
+For example, in the ActiveRecord pattern, where the model is responsible for everything from domain logic to persistence, 
+all the branches to the cases can be hidden within the model.
+
+So model representation using subtype polymorphism is more straightforward.
+
+```scala
+package my.coolapp.domain
+
+trait Operator {
+  def name: Name
+  def editArticle(): Article // operator has some domain logics
+  def save(): Unit           // operator has some infra logics
+}
+```
+
+<div class="translation">
+例えば ActiveRecord パターンのような形で、<br>
+モデルがドメインロジックから永続化まで全ての責務を担う場合、<br>
+構造に対する分岐も全てモデル内に隠ぺいできるため、<br>
+Subtype polymorphism を活用したモデル表現の方が素直に表現できると思います。
+</div>
+
+
+---
+class: left, top
+
+## Case 1. Single Layer Application 
+
+For example, in the ActiveRecord pattern, where the model is responsible for everything from domain logic to persistence, 
+all the branches to the cases can be hidden within the model.
+
+So model representation using subtype polymorphism is more straightforward.
+
+```scala
+private case class RegularUser(
+  id: UserId,
+  organizationId: OrganizationId,
+  name: Name,
+  email: Email
+) extends Operator {
+  ...
+  def save(): Unit = 
+    db.exec("MERGE operator USING(VALUES(...)) ...")
+}
+```
+
+<div class="translation">
+例えば ActiveRecord パターンのような形で、<br>
+モデルがドメインロジックから永続化まで全ての責務を担う場合、<br>
+構造に対する分岐も全てモデル内に隠ぺいできるため、<br>
+Subtype polymorphism を活用したモデル表現の方が素直に表現できると思います。
+</div>
+
+---
+class: left, top
+
+## Case 1. Single Layer Application 
+
+For example, in the ActiveRecord pattern, where the model is responsible for everything from domain logic to persistence, 
+all the branches to the cases can be hidden within the model.
+
+So model representation using subtype polymorphism is more straightforward.
+
+```scala
+private case class CustomerSuccessManager(
+  id: CsmId
+  name: Name
+) extends Operator {
+  ...
+  def save(): Unit = 
+    db.exec("MERGE customer_success USING(VALUES(...)) ...")
+}
+```
+
+<div class="translation">
+例えば ActiveRecord パターンのような形で、<br>
+モデルがドメインロジックから永続化まで全ての責務を担う場合、<br>
+構造に対する分岐も全てモデル内に隠ぺいできるため、<br>
+Subtype polymorphism を活用したモデル表現の方が素直に表現できると思います。
+</div>
+
+---
+class: left, top
+
+## Case 1. Single Layer Application 
+
+Because of this property, It can add cases without affecting others, and can add operations with limited affecting within the model.
+
+.diff-add[
+```scala
+// in operator.scale file
+trait Operator { ... }
+
+private case class RegularUser(...) extends Operator { ... }
+private case class CustomerSuccessManager(...) extends Operator {}
+
+*private case class Administrator(...) extends Operator
+```
+]
+
+<div class="translation">
+その性質から、構造を追加する場合は他に影響することなく追加が可能ですし、<br>
+操作を追加する場合も影響範囲をモデル内だけに限定する事が可能です。
+</div>
+
+---
+
+## Case 1. Single Layer Application 
+
+Because of this property, It can add cases without affecting others, and can add operations with limited affecting within the model.
+
+
+.diff-add[
+```scala
+// in operator.scale file
+trait Operator { 
+  ...
+* def delete(): Unit
+}
+
+private case class RegularUser(...) extends Operator { 
+  ...
+* def delete(): Unit = ...
+}
+private case class CustomerSuccessManager(...) extends Operator {
+  ...
+* def delete(): Unit = ...
+}
+```
+]
+
+<div class="translation">
+その性質から、構造を追加する場合は他に影響することなく追加が可能ですし、<br>
+操作を追加する場合も影響範囲をモデル内だけに限定する事が可能です。
+</div>
+
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+Now let us consider layered architecture, which is common in today's applications.
+
+<div class="translation">
+今度は昨今のアプリケーションでは一般的な<br>
+レイヤードアーキテクチャについて考えてみましょう。
+</div>
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+Now let us consider layered architecture, which is common in today's applications.
+
+In the case of layered architecture, it is often difficult to limit the branching to a specific layer of the cases.
+
+<div class="translation">
+レイヤードアーキテクチャの場合、構造に対する分岐を特定のレイヤーだけに限定する事が難しい場合が多いと思われます。
+</div>
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+Now let us consider layered architecture, which is common in today's applications.
+
+In the case of layered architecture, it is often difficult to limit the branching to a specific layer of the cases.
+
+For example, in the persistence layer, there may be a need to manipulate different tables for each case.
+
+```scala
+package my.coolapp.domain // Domain Layer
+trait Operator { ... }
+```
+
+```scala
+package my.coolapp.infra // Infra Layer
+class OperatorRepositoryImpl(...) {
+  // We need a branch per case here. 
+  def save(operator: Operator): Unit = ??? 
+}
+```
+
+
+<div class="translation">
+例えば、永続化層では構造毎に異なるテーブルを操作する必要性が考えられます。
+</div>
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+In these cases, the Algebraic Data Type can be used to expose the cases, 
+allowing each layer to take advantage of the property of being able to add operations.
+
+```scala
+package my.coolapp.domain // Domain Layer
+sealed trait Operator { ... }
+case class RegularUser(...) extends Operator
+case class CustomerSuccess(...) extends Operator
+```
+
+```scala
+package my.coolapp.infra // Infra Layer
+class OperatorRepositoryImpl(...) {
+  def save(operator: Operator): Unit = operator match {
+    case RegularUser(...)     => db.exec("MERGE operator ...")
+    case CustomerSuccess(...) => db.exec("MERGE customer_succ ...")
+  }
+}
+```
+
+
+<div class="translation">
+こういったケースでは Algebraic Data Type を用い構造を公開する事で、<br>
+操作を追加できるという性質をそれぞれのレイヤーで活用する事ができます。
+</div>
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+The domain models defined in applications frequently change in cases as the specifications change.
+
+.diff-add[
+```scala
+package my.coolapp.domain // Domain Layer
+sealed trait Operator { ... }
+case class RegularUser(...) extends Operator
+case class CustomerSuccess(...) extends Operator
+*case class Adminixtrator(...) extends Operator
+```
+]
+
+<div class="translation">
+自分たちのアプリケーションで定義するドメインモデルは、仕様変更に際して構造の増減が起こる事が頻出します。
+</div>
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+
+The domain models defined in applications frequently change in cases as the specifications change.
+
+With the Algebraic Data Type, increase or decrease cases will require modifications to all of the codes used.
+
+.diff-add[
+```scala
+package my.coolapp.infra // Infra Layer
+class OperatorRepositoryImpl(...) {
+  def save(operator: Operator): Unit = operator match {
+    case RegularUser(...)     => db.exec("MERGE operator ...")
+    case CustomerSuccess(...) => db.exec("MERGE customer_succ ...")
+*   case Administrator(...)   => ...
+  }
+}
+```
+]
+
+<div class="translation">
+Algebraic Data Type を用いた場合、構造の増減を行うと利用箇所の全てに手を入れる必要が出てきてしまいます。
+</div>
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+
+The domain models defined in applications frequently change in cases as the specifications change.
+
+With the Algebraic Data Type, increase or decrease cases will require modifications to all of the codes used.
+
+.diff-add[
+```scala
+package my.coolapp.infra // Infra Layer
+class OperatorRepositoryImpl(...) {
+  def save(operator: Operator): Unit = operator match {
+    case RegularUser(...)     => db.exec("MERGE operator ...")
+    case CustomerSuccess(...) => db.exec("MERGE customer_succ ...")
+*   case Administrator(...)   => ...
+  }
+}
+```
+]
+
+However, by using exhaustiveness checks, 
+it is possible to detect areas that need to be changed without omission, allowing safe changes to be made.
+
+<div class="translation">
+ただし網羅性検査を活用することによって、変更が必要な箇所を漏れなく検出する事ができるので、安全な変更を行う事ができます。
+</div>
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+Conversely, in a layered architecture, if a model using conventional subtypes is used, 
+it is not possible to define a process that branches for each case on a separate layer.
+
+```scala
+package my.coolapp.domain // Domain Layer
+trait Operator { ... }
+private case class RegularUser(...) extends Operator
+private case class CustomerSuccess(...) extends Operator
+```
+
+```scala
+package my.coolapp.infra // Infra Layer
+class OperatorRepositoryImpl(...) {
+  def save(operator: Operator): Unit =
+    // Cannot branch per case
+}
+```
+
+
+<div class="translation">
+逆にレイヤードアーキテクチャにおいて、従来の Subtype を使ったモデルを用いた場合、<br>
+構造毎に分岐するような処理を別レイヤーに定義することがそもそもできなくなります。
+</div>
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+Conversely, in a layered architecture, if a model using conventional subtypes is used, 
+it is not possible to define a process that branches for each case on a separate layer.
+
+If downcasting is forced by instanceof or other means, encapsulation is destroyed, 
+so the advantages of both the subtyping and ADT versions can no longer be enjoyed, and only the disadvantages of both are gained.
+
+```scala
+package my.coolapp.infra // Infra Layer
+class OperatorRepositoryImpl(...) {
+  def save(operator: Operator): Unit =
+    if (operator.isInstanceOf[RegularUser]) ...
+    else if (operator.isInstanceOf[CustomerSuccess]) ...
+    else throw RuntimeException("...")
+```
+
+<div class="translation">
+無理やり `instanceof` などでダウンキャストするとカプセル化が破壊されるため、<br>
+Subtyping版とADT版のどちらのメリットも享受できなくなり、<br>
+逆に両者のデメリットだけが得られる形になります。
+</div>
+
+---
+class: left, top
+
+## Case 2. Layered Architecture
+
+Conversely, in a layered architecture, if a model using conventional subtypes is used, 
+it is not possible to define a process that branches for each case on a separate layer.
+
+If downcasting is forced by instanceof or other means, encapsulation is destroyed, 
+so the advantages of both the subtyping and ADT versions can no longer be enjoyed, and only the disadvantages of both are gained.
+
+```scala
+package my.coolapp.infra // Infra Layer
+class OperatorRepositoryImpl(...) {
+  def save(operator: Operator): Unit =
+    if (operator.isInstanceOf[RegularUser]) ...
+    else if (operator.isInstanceOf[CustomerSuccess]) ...
+    else throw RuntimeException("...")
+```
+
+if it is necessary increase or decrease cases, it is easy to miss the correction because the benefit of the exhaustiveness check is not available.
+
+<div class="translation">
+構造の増減に関して修正が必要になっても、網羅性検査の恩恵が受けられないため修正漏れが起きやすくなります。
+</div>
+
+---
+class: left, top
+
+## Case 3. Framework or Library
+
+For modern applications that require some degree of layering, I think that is better to use Algebraic Data Type for the data structure they define.
+
+<div class="translation">
+ある程度レイヤー分けが必要になる規模の現代的なアプリケーションの場合、<br>
+自分たちが定義するデータ構造は Algebraic Data Type を用いた方が良さそうです。
+</div>
+
+---
+class: left, top
+
+## Case 3. Framework or Library
+
+For modern applications that require some degree of layering, I think that is better to use Algebraic Data Type for the data structures they define.
+
+So, will there be no more opportunities to using subtype polymorphism?
+Where should it be used?
+
+<div class="translation">
+では Subtype polymorphism を活用する機会は無くなるのでしょうか？<br>
+どういう所で使うとよいでしょうか？
+</div>
+
+---
+class: left, top
+
+## Case 3. Framework or Library
+
+If you are creating an application that has a Framework, Library, or Pulg In mechanism, 
+and you want to be able to use data structures that are defined by the user, you can use subtype polymorphism.
+
+```scala
+trait MyApplicationPlugIn {
+  def onStart(context: ApplicationCtx): Process
+  def onShutdown(context: ApplicationCtx): Process
+}
+```
+
+
+<div class="translation">
+作っているものがFrameworkやLibraryあるいはPulg In機構のあるアプリケーション等で、<br>
+データ構造自体を利用者が独自に定義したものを使えるようにしたい場合は、<br>
+Subtype polymorphism を活用すると良いでしょう。
+</div>
+
+---
+class: left, top
+
+## Case 3. Framework or Library
+
+If you are creating an application that has a Framework, Library, or Pulg In mechanism, 
+and you want to be able to use data structures that are defined by the user, you can use subtype polymorphism.
+
+```scala
+trait MyApplicationPlugIn {
+  def onStart(context: ApplicationCtx): Process
+  def onShutdown(context: ApplicationCtx): Process
+}
+```
+
+It is not possible to restrict the definition of subtype to the user, and it is not possible for the user to know in advance the data type to be defined,
+And it is not possible to know in advance which data types the user will define.
+
+<div class="translation">
+そもそも構造の定義を利用者側に委ねるため `sealed` のような制限もできませんし、<br>
+利用者が定義するデータ型を事前に知っておくこともできません<br>
+</div>
+
+
+---
+class: left, top
+
+## Case 3. Framework or Library
+
+Subtype polymorphism can also be used to provide a common interface for various data structures such as typeclasses.
+
+```scala
+// our Json library
+trait JsonEncoder[A] {
+  def toJson(a: A): Json
+}
+def toJson[A: JsonEncoder](a: A): Json = ...
+```
+
+```scala
+// Users can use json library with user defined data structure
+
+case class UserDefinedType(...)
+implicit object Encoder extends JsonEncoder[UserDefinedType] {...}
+
+toJson(new UserDefinedType(...))
+```
+
+<div class="translation">
+また型クラスなどの様々なデータ構造に対し共通するインターフェイスを提供した場合も<br>
+Subtype polymorphism が活用できます。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- In Scala and other recent OOPLs, Algebraic Data Type can be defined by a mechanism such as sealed.
+
+<div class="translation">
+Scala を始め最近のOOPLでは `sealed` などの機構によって Algebraic Data Type を定義できるようになりました。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- In Scala and other recent OOPLs, Algebraic Data Type can be defined by a mechanism such as sealed.
+- In a traditional subtyping model, it is easy to add cases and difficult to add operations.
+
+<div class="translation">
+典型的な Subtyping によるモデルでは 構造の追加が容易で操作の追加が困難という性質があります。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- In Scala and other recent OOPLs, Algebraic Data Type can be defined by a mechanism such as sealed.
+- In a traditional subtyping model, it is easy to add cases and difficult to add operations.
+- The Algebraic Data Type model is easy to add operations and difficult to add cases.
+
+<div class="translation">
+Algebraic Data Type によるモデルでは 操作の追加が容易で構造の追加が困難という性質があります。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- In Scala and other recent OOPLs, Algebraic Data Type can be defined by a mechanism such as sealed.
+- In a traditional subtyping model, it is easy to add cases and difficult to add operations.
+- The Algebraic Data Type model is easy to add operations and difficult to add cases.
+- For applications above a certain size that adopt a layered architecture, you can take advantage of the properties of the Algebraic Data Type model representation.
+
+<div class="translation">
+レイヤードアーキテクチャを採用するような一定規模以上のアプリケーションでは、<br>
+Algebraic Data Type によるモデル表現を使う方が性質を活かしやすいです。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- In Scala and other recent OOPLs, Algebraic Data Type can be defined by a mechanism such as sealed.
+- In a traditional subtyping model, it is easy to add cases and difficult to add operations.
+- The Algebraic Data Type model is easy to add operations and difficult to add cases.
+- For applications above a certain size that adopt a layered architecture, you can take advantage of the properties of the Algebraic Data Type model representation.
+- Subtype polymorphism can be used for applications such as frameworks and libraries where the definition of data structures is left to the user.
+
+<div class="translation">
+フレームワークやライブラリなど、利用者にデータ構造定義を委ねたい場合は、<br>
+Subtype polymorphism が活用できます。
+</div>
+
+---
+class: left, top
+
+## Summary
+
+- In Scala and other recent OOPLs, Algebraic Data Type can be defined by a mechanism such as sealed.
+- In a traditional subtyping model, it is easy to add cases and difficult to add operations.
+- The Algebraic Data Type model is easy to add operations and difficult to add cases.
+- For applications above a certain size that adopt a layered architecture, you can take advantage of the properties of the Algebraic Data Type model representation.
+- Subtype polymorphism can be used for applications such as frameworks and libraries where the definition of data structures is left to the user.
+- Understand the properties and use them appropriately.
+
+<div class="translation">
+性質を理解し、適切に使い分けましょう。
+</div>
+
+
+---
+class: left, top
+
+## Advertising (to Japanese)
+
+(株)Tech to Value では Scalaコードレビューサービスを提供しています。
+
+* [Tech to Value Website](http://www.t2v.jp/)
+
+アルプ(株) では一緒に働くメンバーを募集しています。
+
+* [アルプ採用情報](https://alpinc.notion.site/52af90188305440d86acf72968646054)
+
+<div class="translation">
+</div>
+
+---
+class: center, middle
+
+## Any questions?
+
+
+        </textarea>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            var slideshow = remark.create({
+              highlightStyle: 'github',
+              highlightSpans: true,
+              highlightLines: true
+          });
+        </script>
+    </body>
+</html>
