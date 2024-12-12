@@ -1,5 +1,8 @@
 
 
+- 2024/06/09 [いつ継承を使い、いつ使わないか](https://gakuzzzz.github.io/slides/when_to_use_subtyping_when_not_to_use/)
+- 2023/04/15 [traverse を制する者はコードを制す](https://gakuzzzz.github.io/slides/controls_the_traverse_controls_the_code/)
+- 2023/03/25 [コードレビューサービスで多くの現場に伝えたこと](https://gakuzzzz.github.io/slides/common_points_in_code_review_service/)
 - 2022/12/10 [Java の進化と Kotlin の未来](https://gakuzzzz.github.io/slides/evolution_java_future_kotlin/)
 - 2022/04/19 [Abstract Type Members 入門](https://gakuzzzz.github.io/slides/abstract_type_member_introduction/)
 - 2020/10/17 [他言語経験者が0から始めるScala ～block式とfor式と型クラス～](https://gakuzzzz.github.io/slides/scala_from_other_languages/)
