@@ -1,0 +1,543 @@
+<!Doctype html>
+<html>
+    <head>
+        <title>より安全で単純な関数定義</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <link rel="stylesheet" type="text/css" href="../style/nrinaudo/css/style.css"/>
+        <style type="text/css">
+a {
+  text-decoration: underline;
+}
+h1 {
+  line-height: 120%;
+}
+        </style>
+    </head>
+    <body>
+        <textarea id="source">
+class: center, middle
+
+# より安全で単純な関数定義
+
+関数型まつり 2025 2025/06/14<br>
+@gakuzzzz
+
+---
+class: left, top
+
+## 自己紹介
+
+* 中村 学/Manabu NAKAMURA
+* Twitter: [@gakuzzzz](https://twitter.com/gakuzzzz)
+* Tech to Value Co.,Ltd. CEO
+* [Alp, Inc.](https://thealp.co.jp/) Tech Lead
+
+
+---
+class: center, middle
+
+## 前置き
+
+---
+class: center, middle
+
+## このセッションでは
+##<strong>モナド</strong>の話はしません！
+## 安心して聞いて下さい
+
+
+---
+class: left, top
+
+## はじめに
+
+静的な型付けを行う言語において、関数の制約を表現する方向性は二つあります。
+
+一つは戻り値で制約を表現する方向
+
+```scala
+def max[A: Ordering](list: List[A]): Option[A]
+```
+
+もう一つは引数で制約を表現する方向
+
+```scala
+def max[A: Ordering](nel: NonEmptyList[A]): A
+```
+
+それでは、どういった時にどちらのケースを選択するべきでしょうか？
+
+---
+class: center, middle
+
+## 型の Cardinality
+
+
+---
+class: left, top
+
+## 型の Cardinality
+
+```scala
+// 戻り値で制約を表現
+def max[A: Ordering](list: List[A]): Option[A]
+```
+
+```scala
+// 引数で制約を表現
+def max[A: Ordering](nel: NonEmptyList[A]): A
+```
+
+この二つを比較するにあたって、 Matt Parsons さんが [Keep your types small...](https://www.parsonsmatt.org/2018/10/02/small_types.html) 
+というブログ記事で紹介した「型の Cardinality」という概念を紹介します
+
+---
+class: left, top
+
+## 型の Cardinality
+
+「型の Cardinality」とは、「その型の値がいくつの種類をとることができるのか」を示す値です
+
+---
+class: left, top
+
+## 型の Cardinality
+
+「型の Cardinality」とは、「その型の値がいくつの種類をとることができるのか」を示す値です
+
+
+具体例を見てみましょう
+
+
+---
+class: left, top
+
+## 型の Cardinality
+
+「型の Cardinality」とは、「その型の値がいくつの種類をとることができるのか」を示す値です
+
+
+具体例を見てみましょう
+
+ここで一つの記法を導入します。
+
+このセッションではこれ以降、ある型 `A` についての Cardinality を `|A|` と表します
+
+---
+class: left, top
+
+## 型の Cardinality
+
+「型の Cardinality」とは、「その型の値がいくつの種類をとることができるのか」を示す値です
+
+
+具体例を見てみましょう
+
+ここで一つの記法を導入します。
+
+このセッションではこれ以降、ある型 `A` についての Cardinality を `|A|` と表します
+
+- `|Boolean|` は `2` です
+    - 値は `true` か `false` のどちらかなので
+
+---
+class: left, top
+
+## 型の Cardinality
+
+「型の Cardinality」とは、「その型の値がいくつの種類をとることができるのか」を示す値です
+
+
+具体例を見てみましょう
+
+ここで一つの記法を導入します。
+
+このセッションではこれ以降、ある型 `A` についての Cardinality を `|A|` と表します
+
+- `|Boolean|` は `2` です
+    - 値は `true` か `false` のどちらかなので
+- `|Byte|` は `256` です
+    - 値は `-128` ～ `127` までの 256個なので
+
+---
+class: left, top
+
+## 型の Cardinality
+
+「型の Cardinality」とは、「その型の値がいくつの種類をとることができるのか」を示す値です
+
+
+具体例を見てみましょう
+
+ここで一つの記法を導入します。
+
+このセッションではこれ以降、ある型 `A` についての Cardinality を `|A|` と表します
+
+- `|Boolean|` は `2` です
+    - 値は `true` か `false` のどちらかなので
+- `|Byte|` は `256` です
+    - 値は `-128` ～ `127` までの 256個なので
+- `|Option[A]|` は `|A|+1` です
+    - `A` 型の値の数だけ `Some` があり、さらに `None` で +1 という訳です
+    - つまり `|Option[Boolean]|` であれば `3` ということですね
+
+---
+class: left, top
+
+## 型の Cardinality
+
+「型の Cardinality」とは、「その型の値がいくつの種類をとることができるのか」を示す値です
+
+
+具体例を見てみましょう
+
+ここで一つの記法を導入します。
+
+このセッションではこれ以降、ある型 `A` についての Cardinality を `|A|` と表します
+
+- `|Boolean|` は `2` です
+    - 値は `true` か `false` のどちらかなので
+- `|Byte|` は `256` です
+    - 値は `-128` ～ `127` までの 256個なので
+- `|Option[A]|` は `|A|+1` です
+    - `A` 型の値の数だけ `Some` があり、さらに `None` で +1 という訳です
+    - つまり `|Option[Boolean]|` であれば `3` ということですね
+- `|Either[A, B]|` は `|A|+|B|` です
+    - `A` 型の数だけ `Left` があり、`B` 型の数だけ `Right` があるからです
+
+---
+class: left, top
+
+## 型の Cardinality
+
+- `|Boolean|` は `2` です
+    - 値は `true` か `false` のどちらかなので
+- `|Byte|` は `256` です
+    - 値は `-128` ～ `127` までの 256個なので
+- `|Option[A]|` は `|A|+1` です
+    - `A` 型の値の数だけ `Some` があり、さらに `None` で +1 という訳です
+    - つまり `|Option[Boolean]|` であれば `3` ということですね
+- `|Either[A, B]|` は `|A|+|B|` です
+    - `A` 型の数だけ `Left` があり、`B` 型の数だけ `Right` があるからです
+
+そろそろ慣れてきたでしょうか？
+
+---
+class: left, top
+
+## 型の Cardinality
+
+- `|Boolean|` は `2` です
+    - 値は `true` か `false` のどちらかなので
+- `|Byte|` は `256` です
+    - 値は `-128` ～ `127` までの 256個なので
+- `|Option[A]|` は `|A|+1` です
+    - `A` 型の値の数だけ `Some` があり、さらに `None` で +1 という訳です
+    - つまり `|Option[Boolean]|` であれば `3` ということですね
+- `|Either[A, B]|` は `|A|+|B|` です
+    - `A` 型の数だけ `Left` があり、`B` 型の数だけ `Right` があるからです
+
+そろそろ慣れてきたでしょうか？
+
+では `|NonEmptyList[A]|` はどうなるでしょう
+
+---
+class: left, top
+
+## 型の Cardinality
+
+- `|Boolean|` は `2` です
+    - 値は `true` か `false` のどちらかなので
+- `|Byte|` は `256` です
+    - 値は `-128` ～ `127` までの 256個なので
+- `|Option[A]|` は `|A|+1` です
+    - `A` 型の値の数だけ `Some` があり、さらに `None` で +1 という訳です
+    - つまり `|Option[Boolean]|` であれば `3` ということですね
+- `|Either[A, B]|` は `|A|+|B|` です
+    - `A` 型の数だけ `Left` があり、`B` 型の数だけ `Right` があるからです
+
+そろそろ慣れてきたでしょうか？
+
+では `|NonEmptyList[A]|` はどうなるでしょう
+
+これは `|List[A]| -1` になります
+
+---
+class: left, top
+
+## 型の Cardinality
+
+- `|Boolean|` は `2` です
+    - 値は `true` か `false` のどちらかなので
+- `|Byte|` は `256` です
+    - 値は `-128` ～ `127` までの 256個なので
+- `|Option[A]|` は `|A|+1` です
+    - `A` 型の値の数だけ `Some` があり、さらに `None` で +1 という訳です
+    - つまり `|Option[Boolean]|` であれば `3` ということですね
+- `|Either[A, B]|` は `|A|+|B|` です
+    - `A` 型の数だけ `Left` があり、`B` 型の数だけ `Right` があるからです
+- `|NonEmptyList[A]|` は `|List[A]| -1` です
+    - `|List[A]|` から空リストの 1 を除いた形になるからです
+
+Refinement Types や Quotient Types などを用いて定義された型は、元になった型の Cardinal より小さい Cardinal になります。
+
+
+---
+class: center, middle
+
+# 関数の比較
+
+---
+class: left, top
+
+## 関数の比較
+
+それでは話を戻して元の関数を比較してみましょう
+
+```scala
+// 戻り値で制約を表現
+def max[A: Ordering](list: List[A]): Option[A]
+```
+
+```scala
+// 引数で制約を表現
+def max[A: Ordering](nel: NonEmptyList[A]): A
+```
+
+
+---
+class: left, top
+
+## 関数の比較
+
+それでは話を戻して元の関数を比較してみましょう
+
+```scala
+// 戻り値で制約を表現
+def max[A: Ordering](list: List[A]): Option[A]
+```
+
+```scala
+// 引数で制約を表現
+def max[A: Ordering](nel: NonEmptyList[A]): A
+```
+
+前者の関数は、引数と戻り値の Cardinality がそれぞれ `|List[A]|` と `|A|+1` です
+
+後者の関数は、引数と戻り値の Cardinality がそれぞれ `|List[A]| -1` と `|A|` です
+
+
+---
+class: left, top
+
+## 関数の比較
+
+それでは話を戻して元の関数を比較してみましょう
+
+```scala
+// 戻り値で制約を表現
+def max[A: Ordering](list: List[A]): Option[A]
+```
+
+```scala
+// 引数で制約を表現
+def max[A: Ordering](nel: NonEmptyList[A]): A
+```
+
+前者の関数は、引数と戻り値の Cardinality がそれぞれ `|List[A]|` と `|A|+1` です
+
+後者の関数は、引数と戻り値の Cardinality がそれぞれ `|List[A]| -1` と `|A|` です
+
+関数 `A => B` を見た時、`|A|` が `|B|` それぞれ有限であれば、この関数が取りうる可能性は `|B|^|A|` と Cardinality の累乗で表現ができます。
+
+
+---
+class: left, top
+
+## 関数の比較
+
+それでは話を戻して元の関数を比較してみましょう
+
+```scala
+// 戻り値で制約を表現
+def max[A: Ordering](list: List[A]): Option[A]
+```
+
+```scala
+// 引数で制約を表現
+def max[A: Ordering](nel: NonEmptyList[A]): A
+```
+
+前者の関数は、引数と戻り値の Cardinality がそれぞれ `|List[A]|` と `|A|+1` です
+
+後者の関数は、引数と戻り値の Cardinality がそれぞれ `|List[A]| -1` と `|A|` です
+
+関数 `A => B` を見た時、`|A|` が `|B|` それぞれ有限であれば、この関数が取りうる可能性は `|B|^|A|` と Cardinality の累乗で表現ができます。
+
+`|List[A]|` は無限なのでそのまま単純に累乗するわけにはいきませんが、引数で制約を表現した方が関数の複雑性を減らせると考えることができます。
+
+
+---
+class: left, top
+
+## 関数の比較
+
+```scala
+// 戻り値で制約を表現
+def max[A: Ordering](list: List[A]): Option[A]
+```
+
+```scala
+// 引数で制約を表現
+def max[A: Ordering](nel: NonEmptyList[A]): A
+```
+
+従って、特に強い理由がない限りは、まず引数で制約を表現する関数からスタートする事が推奨できます。
+
+
+---
+class: left, top
+
+## 関数の比較
+
+```scala
+// 戻り値で制約を表現
+def max[A: Ordering](list: List[A]): Option[A]
+```
+
+```scala
+// 引数で制約を表現
+def max[A: Ordering](nel: NonEmptyList[A]): A
+```
+
+従って、特に強い理由がない限りは、まず引数で制約を表現する関数からスタートする事が推奨できます。
+
+単体テストを書く場合においても、テストするバリエーションが少なくなり、その恩恵は関数を合成すればするほど指数的に影響して行きます。
+
+
+
+---
+class: left, top
+
+## 関数の比較
+
+また、引数で制約を表現する関数からスタートする事を推奨するもう一つの理由として、「戻り値で制約を表現する関数は、引数で制約を表現する関数をラップする事で簡単につくれる」というのがあります。
+
+```scala
+// 引数で制約を表現
+def max[A: Ordering](nel: NonEmptyList[A]): A = ...
+```
+
+
+```scala
+// 戻り値で制約を表現
+def max2[A: Ordering](list: List[A]): Option[A] = 
+  list.toNel.map(max)
+```
+
+---
+class: left, top
+
+## 関数の比較
+
+逆に戻り値で制約を表現する関数からはじめて、後から引数で制約を表現する関数を定義しようとした場合、元のコードに手を加えるか、重複コードを受け入れるか、unsafe な操作をする必要がでてきてしまいます。
+
+```scala
+// 戻り値で制約を表現
+def max[A: Ordering](list: List[A]): Option[A] = ...
+```
+
+
+```scala
+// 引数で制約を表現
+def max2[A: Ordering](nel: NonEmptyList[A]): A =
+  max(nel.toList).get // !!! 危険 !!!!!!
+```
+
+
+---
+class: center, middle
+
+# まとめ
+
+---
+class: left, top
+
+## まとめ
+
+- 関数の制約を表現する方向性は二つあります
+
+---
+class: left, top
+
+## まとめ
+
+- 関数の制約を表現する方向性は二つあります
+- 戻り値で制約を表現する方向と引数で制約を表現する方法です
+
+---
+class: left, top
+
+## まとめ
+
+- 関数の制約を表現する方向性は二つあります
+- 戻り値で制約を表現する方向と引数で制約を表現する方法です
+- 型の Cardinality という概念を使えば、関数の複雑性を比較できます
+
+---
+class: left, top
+
+## まとめ
+
+- 関数の制約を表現する方向性は二つあります
+- 戻り値で制約を表現する方向と引数で制約を表現する方法です
+- 型の Cardinality という概念を使えば、関数の複雑性を比較できます
+- 引数で制約を表現する方向から始めるのがおススメです
+
+---
+class: left, top
+
+## まとめ
+
+- 関数の制約を表現する方向性は二つあります
+- 戻り値で制約を表現する方向と引数で制約を表現する方法です
+- 型の Cardinality という概念を使えば、関数の複雑性を比較できます
+- 引数で制約を表現する方向から始めるのがおススメです
+- 制約を上手に型で表現していきましょう！
+
+
+---
+class: left, top
+
+## 宣伝
+
+- Tech to Value では Online Scala コードレビュー サービスを提供しています
+    - チームに Scala熟練者が居ない等、ぜひご相談ください
+    - 株式会社アドウェイズさんにて[導入事例を記事にして頂きました](https://blog.engineer.adways.net/entry/2022/08/12/120000)
+    - 応募フォームが現在メンテ中なので X [@gakuzzzz](https://x.com/gakuzzzz) でお声がけください
+
+- アルプ株式会社では一緒に働くメンバーを募集しています
+    - Scala 未経験でも他言語の一定経験あれば業務で活用できるレベルまで教えます
+    - お気軽にお声がけください！
+    - [アルプ採用情報](https://alpinc.notion.site/52af90188305440d86acf72968646054)
+
+
+---
+class: center, middle
+
+## 質問とか
+
+---
+class: left, top
+
+        </textarea>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            var slideshow = remark.create({
+              highlightStyle: 'github',
+              highlightSpans: true,
+              highlightLines: true
+          });
+        </script>
+    </body>
+</html>
