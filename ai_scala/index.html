@@ -1,0 +1,817 @@
+<!Doctype html>
+<html>
+    <head>
+        <title>AI で Scala を使いこなし Scala で AI を活躍させる</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <link rel="stylesheet" type="text/css" href="../style/nrinaudo/css/style.css"/>
+        <style type="text/css">
+a {
+  text-decoration: underline;
+}
+h1 {
+  line-height: 120%;
+}
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  margin: 0.6em 0 1em 0;
+}
+th {
+  background: #34495e;
+  color: #fff;
+  font-weight: 600;
+}
+th, td {
+  text-align: left;
+  padding: 8px 14px;
+  border: none;
+}
+td {
+  border-top: 1px solid #e3e8ee;
+}
+tbody tr:nth-child(even) td {
+  background: #f5f7fa;
+}
+td:first-child {
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+        </style>
+    </head>
+    <body>
+        <textarea id="source">
+class: center, middle
+
+# AI で Scala を使いこなし<br>Scala で AI を活躍させる
+
+Nextbeat Tech Bar #22 2026/11/13<br>
+@gakuzzzz
+
+---
+class: left, top
+
+## 自己紹介
+
+* 中村 学/Manabu NAKAMURA
+* Twitter: [@gakuzzzz](https://twitter.com/gakuzzzz)
+* [Tech to Value Co.,Ltd.](https://www.t2v.jp/) 代表
+* [Scalebase株式会社](https://scalebase.co.jp/) Tech Lead
+
+---
+class: left, top
+
+## はじめに
+
+Scalebase では AI と一緒にプロダクト開発・運営をやっています
+
+---
+class: left, top
+
+## はじめに
+
+Scalebase では AI と一緒にプロダクト開発・運営をやっています
+
+今日のお話
+
+- **AI で Scala を使いこなす**<br>
+  難しいと言われる Scala も、AI に書かせれば怖くない
+- **Scala で AI を活躍させる**<br>
+  AI のコードの正しさを、人間ではなく型と道具で確かめる
+
+---
+class: center, middle
+
+# AI で Scala を使いこなす
+
+---
+class: left, top
+
+## Scala は難しい？
+
+「Scala は学習曲線が急で難しい」とよく言われてきました
+
+- given の解決ルールと優先順位
+- 高カインド型、型クラス
+- inline、マクロ、Mirror
+- cats の膨大な API
+
+---
+class: left, top
+
+## Scala は難しい？
+
+「Scala は学習曲線が急で難しい」とよく言われてきました
+
+- given の解決ルールと優先順位
+- 高カインド型、型クラス
+- inline、マクロ、Mirror
+- cats の膨大な API
+
+今はこれを全部覚えていなくても大丈夫です
+
+**「何ができるか」さえ知っていれば、細かいところは AI が埋めてくれます**
+
+---
+class: left, top
+
+## 「何ができるか」だけ知っていれば良い
+
+人間は機能の名前で頼むだけ
+
+| 人間の指示 | AI が書いてくれるもの |
+|---|---|
+| 「型クラスにして」 | `trait` / `given` / `using` / `extension` |
+| 「enum にして」 | `enum` と網羅的な `match` |
+
+---
+class: left, top
+
+## 「何ができるか」だけ知っていれば良い
+
+人間は機能の名前で頼むだけ
+
+| 人間の指示 | AI が書いてくれるもの |
+|---|---|
+| 「型クラスにして」 | `trait` / `given` / `using` / `extension` |
+| 「enum にして」 | `enum` と網羅的な `match` |
+| 「opaque type で」 | `opaque type` とコンパニオン / `extension` |
+| 「導出できるようにして」 | `derives` と `Mirror` を使った `derived` |
+
+---
+class: left, top
+
+## 「何ができるか」だけ知っていれば良い
+
+「これ型クラスにして」
+
+.diff-rm[
+```scala
+*def format(m: Money): String    = ...
+*def format(r: TaxRate): String  = ...
+*def format(q: Quantity): String = ...
+```
+]
+
+.diff-add[
+```scala
+*trait Format[A] { extension (a: A) def format: String }
+*
+*object Format {
+*  given Format[Money]    = ...
+*  given Format[TaxRate]  = ...
+*  given Format[Quantity] = ...
+*}
+```
+]
+
+---
+class: left, top
+
+## 「何ができるか」だけ知っていれば良い
+
+「これ型クラスにして」
+
+```scala
+trait Format[A] { extension (a: A) def format: String }
+
+object Format {
+  given Format[Money]    = ...
+  given Format[TaxRate]  = ...
+  given Format[Quantity] = ...
+}
+```
+
+人間が知っていたのは「型クラスという機能があり、何が嬉しいか」だけ
+
+given の解決ルールも、extension の構文も、AI が埋めてくれます
+
+---
+class: left, top
+
+## 型を指示すれば定義が手に入る
+
+> Patch.scala の traverse の定義が ValidatedNec に限定されちゃってるので Applicative に拡張して
+
+.diff-rm[
+```scala
+enum Patch[+A] { // case Keep / case Clear / case Set(value: A)
+* def traverse[B](f: A => ValidatedNec[String, B])
+*     : ValidatedNec[String, Patch[B]] =
+    this match {
+*     case Keep   => Validated.validNec(Keep)
+*     case Clear  => Validated.validNec(Clear)
+*     case Set(a) => f(a).map(Set.apply)
+    }
+}
+```
+]
+
+---
+class: left, top
+
+## 型を指示すれば定義が手に入る
+
+> Patch.scala の traverse の定義が ValidatedNec に限定されちゃってるので Applicative に拡張して
+
+.diff-add[
+```scala
+enum Patch[+A] { // case Keep / case Clear / case Set(value: A)
+* def traverse[F[_], B](f: A => F[B])
+*     (using F: Applicative[F]): F[Patch[B]] =
+    this match {
+*     case Keep   => F.pure(Keep)
+*     case Clear  => F.pure(Clear)
+*     case Set(a) => F.map(f(a))(Set.apply)
+    }
+}
+```
+]
+
+ジェネリックな型ほど、書ける実装はほぼ 1 通りに決まります
+
+**型を決めるのは人間、型を満たす実装は AI**
+
+---
+class: left, top
+
+## Functional Programming も AI ならお手の物
+
+> 最初のエラーで止めずに、エラーを全部集めて返すようにして
+
+.diff-rm[
+```scala
+def validate(id: String, partner: String, amount: String)
+*   : Either[String, Invoice] =
+* for {
+*   i <- validateId(id)
+*   p <- validatePartner(partner)
+*   a <- validateAmount(amount)
+* } yield Invoice(i, p, a)
+```
+]
+
+---
+class: left, top
+
+## Functional Programming も AI ならお手の物
+
+> 最初のエラーで止めずに、エラーを全部集めて返すようにして
+
+.diff-rm[
+```scala
+def validate(id: String, partner: String, amount: String)
+*   : Either[String, Invoice] =
+* for {
+*   i <- validateId(id)
+*   p <- validatePartner(partner)
+*   a <- validateAmount(amount)
+* } yield Invoice(i, p, a)
+```
+]
+
+.diff-add[
+```scala
+def validate(id: String, partner: String, amount: String)
+*   : ValidatedNec[String, Invoice] =
+* (
+*   validateId(id),
+*   validatePartner(partner),
+*   validateAmount(amount)
+* ).mapN(Invoice.apply)
+```
+]
+
+---
+class: left, top
+
+## Functional Programming も AI ならお手の物
+
+> 最初のエラーで止めずに、エラーを全部集めて返すようにして
+
+```scala
+def validate(id: String, partner: String, amount: String)
+    : ValidatedNec[String, Invoice] =
+  (
+    validateId(id),
+    validatePartner(partner),
+    validateAmount(amount)
+  ).mapN(Invoice.apply)
+
+validate("x", "", "abc")
+// Invalid(Chain(id が不正: x,
+//   partner が空, amount が不正: abc))
+```
+
+人間が知っていたのは「Applicative ならエラーを蓄積できる」ことだけ
+
+`ValidatedNec` も `mapN` も、AI が選んで書いてくれます
+
+---
+class: left, top
+
+## 型レベルプログラミングも AI ならお手の物
+
+> case class のフィールドの型に合わせて、CSV の行をパースして
+
+```scala
+inline def parseAll[T <: Tuple](cells: List[String])
+    : Either[String, Tuple] =
+  inline erasedValue[T] match {
+    case _: EmptyTuple => Right(EmptyTuple)
+    case _: (h *: t) =>
+      for {
+        a  <- summonInline[Parse[h]].parse(cells.head)
+        as <- parseAll[t](cells.tail)
+      } yield a *: as
+  }
+
+inline def parseRow[A](cells: List[String])
+    (using m: Mirror.ProductOf[A]): Either[String, A] =
+  parseAll[m.MirroredElemTypes](cells).map(m.fromProduct)
+```
+
+---
+class: left, top
+
+## 型レベルプログラミングも AI ならお手の物
+
+> case class のフィールドの型に合わせて、CSV の行をパースして
+
+```scala
+case class Invoice(
+  id: Long, partner: String, amount: BigDecimal)
+parseRow[Invoice](List("1", "ACME", "100"))
+// Right(Invoice(1,ACME,100))
+
+case class Contract(id: Long, start: LocalDate)
+parseRow[Contract](List("1", "2026-01-01"))
+// error: No given instance of type
+//   Parse[java.time.LocalDate] was found
+```
+
+人間が知っていたのは「Mirror で case class の構造を型として扱える」ことだけ
+
+`inline` での型の再帰も `summonInline` も、AI が書いてくれます
+
+---
+class: left, top
+
+## 人間が把握すべきなのは
+
+構文や解決ルールではなく、**その機能のモチベーション**
+
+- 何を解決するための機能なのか
+- 何が嬉しいのか、何を犠牲にするのか
+
+---
+class: left, top
+
+## 人間が把握すべきなのは
+
+構文や解決ルールではなく、**その機能のモチベーション**
+
+- 何を解決するための機能なのか
+- 何が嬉しいのか、何を犠牲にするのか
+
+モチベーションを知っていれば
+
+- AI に機能の名前で頼める
+- AI が出してきたコードが、その機能を活かせているか判断できる
+
+---
+class: center, middle
+
+## AI が Scala を書けるようになった<br>では、そのコードは正しい？
+
+---
+class: center, middle
+
+# Scala で AI を活躍させる
+
+---
+class: left, top
+
+## ボイラープレートの話
+
+AI が書いてくれるなら、ボイラープレートはもう問題にならない？
+
+---
+class: left, top
+
+## ボイラープレートの話
+
+AI が書いてくれるなら、ボイラープレートはもう問題にならない？
+
+AI が読み書きする前提でも、デメリットは残ります
+
+- **同期漏れ**: 同じ知識が N か所にあると、変更のたびに N か所すべてを直す必要があり、1 か所漏れれば不整合
+- **コンテキストの浪費**: 冗長なコードがコンテキストを圧迫し、本当に大事な部分が埋もれる
+- **自己増殖**: AI は既存のパターンを真似るので、冗長さが冗長さを呼ぶ
+- **差分の肥大化**: 変更の意図が定型の差分に埋もれ、レビューが難しくなる
+
+---
+class: left, top
+
+## 減らすべきボイラープレート
+
+.diff-rm[
+```scala
+*private given Codec[PartnerId]  = ...
+*private given Codec[ProductId]  = ...
+*private given Codec[TaxPercent] = ...
+*...
+```
+]
+
+.diff-add[
+```scala
+given [FTP: RefinedType as rt](using e: Encoder[rt.T]): Encoder[FTP] =
+  e.contramap(v => rt.refType.unwrap(rt.dealias(v)))
+```
+]
+
+知識の重複は、型クラスの導出に任せて消します
+
+---
+class: left, top
+
+## 増やすべきボイラープレート
+
+.diff-rm[
+```scala
+kind match {
+  case Adjustment.Kind.Discount => ...
+* case _                        => ...
+}
+```
+]
+
+.diff-add[
+```scala
+kind match {
+  case Adjustment.Kind.Discount        => ...
+* case Adjustment.Kind.BankTransferFee => ...
+}
+```
+]
+
+行は増えますが、enum に要素が増えたらコンパイラが全箇所を教えてくれます
+
+---
+class: left, top
+
+## ボイラープレートの話
+
+| 種類 | 例 | AI 時代の扱い |
+|---|---|---|
+| 知識の重複 | 型ごとの Codec / Binder | 導出に任せて消す |
+| 検証される明示 | 全 case の列挙 | 積極的に書く |
+
+基準は「行数」ではなく、**同期し続ける重複か、コンパイラが検証する明示か**
+
+---
+class: left, top
+
+## AI が書いたコードは正しい？
+
+これからは AI が書き、AI がレビューする時代になっていきます
+
+一般的には、正しさはテストで担保しようとします
+
+---
+class: left, top
+
+## AI が書いたコードは正しい？
+
+これからは AI が書き、AI がレビューする時代になっていきます
+
+一般的には、正しさはテストで担保しようとします
+
+なので、AI はテストも大量に生成します
+
+```scala
+it("割引が 10% のとき")   { ... }
+it("割引が 0% のとき")    { ... }
+it("割引が 100% のとき")  { ... }
+it("端数が出るとき")      { ... }
+it("明細が空のとき")      { ... }
+... // さらに 100 ケース
+```
+
+---
+class: left, top
+
+## そのテストは正しい？
+
+- 実装をなぞって期待値を計算していないか
+- 肝心のケースが抜けていないか
+- アサーションが本当に仕様を表しているか
+
+---
+class: left, top
+
+## そのテストは正しい？
+
+- 実装をなぞって期待値を計算していないか
+- 肝心のケースが抜けていないか
+- アサーションが本当に仕様を表しているか
+
+AI にレビューさせても「そのレビューは正しい？」が残るだけ
+
+生成されたテストの正しさを確かめる方法は、今のところありません
+
+**結局、一定は人間が確認するしかありません**
+
+---
+class: left, top
+
+## 人間がボトルネック
+
+AI はいくらでもコードとテストを書き、レビューもできます
+
+それでも、人間が確認できる量には限りがあります
+
+---
+class: left, top
+
+## 人間がボトルネック
+
+AI はいくらでもコードとテストを書き、レビューもできます
+
+それでも、人間が確認できる量には限りがあります
+
+**人間が確認しなければいけない部分を、小さく局所化する必要があります**
+
+- 実装全体ではなく「仕様」だけ
+- 100 個の例ではなく「性質」1 つだけ
+- 全ての呼び出し元ではなく「型の定義」1 か所だけ
+
+---
+class: left, top
+
+## 局所化の道具
+
+| 道具 | 人間が確認するもの | 機械がやること |
+|---|---|---|
+| Property Based Testing | 性質と入力の生成 | 大量の入力での検査 |
+| 型による静的検査 | 型の定義 | 全ての使用箇所の検査 |
+| 形式的手法 | 仕様(事前・事後条件) | 全ての入力での検証 |
+| 定理証明 | 定理の主張 | 証明の正しさの検査 |
+
+下に行くほど、確認する範囲は小さく、保証は強くなります
+
+---
+class: left, top
+
+## 局所化の道具
+
+| 道具 | 人間が確認するもの | 機械がやること |
+|---|---|---|
+| Property Based Testing | 性質と入力の生成 | 大量の入力での検査 |
+| 型による静的検査 | 型の定義 | 全ての使用箇所の検査 |
+| 形式的手法 | 仕様(事前・事後条件) | 全ての入力での検証 |
+| 定理証明 | 定理の主張 | 証明の正しさの検査 |
+
+下に行くほど、確認する範囲は小さく、保証は強くなります
+
+**Scala は、これらの道具を活用しやすい言語の 1 つです**
+
+---
+class: left, top
+
+## Property Based Testing
+
+100 個の例の代わりに、1 つの性質を書きます
+
+```scala
+forAll(genTotal, genWeights) { (total, weights) =>
+  val allocated = allocate(total, weights)  // 金額を按分する
+
+  allocated.size == weights.size &&
+  allocated.sum  == total &&  // 合計は変わらない
+  allocated.forall(_ >= 0)
+}
+```
+
+- 人間が確認するのは「性質」と、入力を作る `Gen` だけ
+- 境界値や組み合わせは、ScalaCheck が大量の入力で試してくれます
+- ただし、性質が実装の写しになっていないかは人間が見る
+    - 合計の保存、往復で元に戻る、などの不変条件は写しになりにくい
+
+---
+class: left, top
+
+## 型による静的検査
+
+テストで不正な値を弾く代わりに、不正な値を型で表現できなくします
+
+```scala
+type CodeType =
+  NonEmpty And MaxSize[255] And MatchesRegex["[a-zA-Z0-9_-]+"]
+type Code = String Refined CodeType
+
+def register(code: Code, ...) = ...
+```
+
+- **篩型 (Refinement Types)**: 述語で値を絞り込んだ型
+    - Scala では refined や iron で使えます
+- 人間が確認するのは型定義の 1 行だけ
+- 検証を忘れたコードは、そもそもコンパイルが通らない
+- 代数的データ型 + 網羅性検査、opaque type、phantom type も同じ発想
+
+---
+class: left, top
+
+## Multi Stage Programming
+
+型からコードを生成する生成器を書きます
+
+- N 個の手書きのインスタンスではなく、**生成器 1 つ**をレビューすれば済む
+- 人間には難しかったマクロも、AI なら書ける
+
+---
+class: left, top
+
+## Multi Stage Programming
+
+型からコードを生成する生成器を書きます
+
+- N 個の手書きのインスタンスではなく、**生成器 1 つ**をレビューすれば済む
+- 人間には難しかったマクロも、AI なら書ける
+
+では、**AI が書いた生成器が間違っていたら？**
+
+---
+class: left, top
+
+## 生成器の間違いはいつ見つかる？
+
+| 手法 | 例 | 見つかるのは |
+|---|---|---|
+| リフレクション | Jackson | 本番で実行した時 |
+| テキスト生成 | テンプレート、APT | 生成後のコンパイル時 |
+| 型なし AST マクロ | Scala 2、Rust | 使う側で展開した時 |
+
+---
+class: left, top
+
+## 生成器の間違いはいつ見つかる？
+
+| 手法 | 例 | 見つかるのは |
+|---|---|---|
+| リフレクション | Jackson | 本番で実行した時 |
+| テキスト生成 | テンプレート、APT | 生成後のコンパイル時 |
+| 型なし AST マクロ | Scala 2、Rust | 使う側で展開した時 |
+| **MSP (Scala 3)** | `'{ ... }` | **生成器の定義時** |
+
+quote の中身は、生成器の定義時点で型検査されます
+
+---
+class: left, top
+
+## AI が生成器で型を取り違えたら
+
+テキストのコード生成の場合
+
+```scala
+def genBinder(name: String): String =
+  s"""given Binder[$name] with {
+     |  def toDb(a: $name): Long = a.value.toString
+     |}""".stripMargin
+```
+
+生成器はコンパイルが通り、生成されたファイルで初めてエラーになります
+
+```text
+-- [E007] Type Mismatch Error: UserIdBinder.scala:5:30
+5 |  def toDb(a: UserId): Long = a.value.toString
+  |                              ^^^^^^^^^^^^^^^^
+  |                              Found:    String
+  |                              Required: Long
+```
+
+---
+class: left, top
+
+## AI が生成器で型を取り違えたら
+
+MSP の場合
+
+```scala
+def binderImpl[A <: Identifier: Type]
+    (using Quotes): Expr[Binder[A]] =
+  '{
+    new Binder[A] {
+      def toDb(a: A): Long = a.value.toString
+    }
+  }
+```
+
+まだ誰も使っていないのに、生成器の定義でエラーになります
+
+```text
+-- [E007] Type Mismatch Error: Macros.scala:12:29
+12 |      def toDb(a: A): Long = a.value.toString
+   |                             ^^^^^^^^^^^^^^^^
+   |                             Found:    String
+   |                             Required: Long
+```
+
+---
+class: center, middle
+
+## AI が書いた生成器ごと<br>コンパイラが検査する
+
+.small[人間がレビューするのは生成器のロジックだけ]
+
+---
+class: left, top
+
+## 静的検査 × Scalafix
+
+型で表現しきれない規約は、lint のルールにします
+
+```scala
+class RefinedUnsafeFromLiteral
+    extends SyntacticRule("RefinedUnsafeFromLiteral") {
+  override def fix(implicit doc: SyntacticDocument): Patch =
+    doc.tree.collect {
+      case t @ Term.Apply.After_4_6_0(
+            Term.Select(
+              Term.Name(RefinedTypes()), Term.Name("unsafeFrom")),
+            Term.ArgClause(List(LiteralOrBigLiteral()), None)) =>
+        Patch.lint(Diagnostic("", "リテラルは apply で", t.pos))
+    }.asPatch
+}
+```
+
+AI への指示は忘れられますが、CI で動く lint のルールは忘れません
+
+---
+class: left, top
+
+## Scala だと、ここが嬉しい
+
+- 型でかなりのことを表現できる
+    - Refined、enum の網羅性検査、型クラス、高カインド型
+- コンパイル時にいろいろできる
+    - inline、型付きのマクロ (MSP)、Mirror による導出
+- 検証の道具が揃っている
+    - ScalaCheck、Scalafix
+
+どれも Scala だけのものではありませんが、1 つの言語の中で組み合わせて使えるのは強みです
+
+人間には学習コストが高かったこれらも、**AI が書くなら気にならなくなります**
+
+---
+class: center, middle
+
+# まとめ
+
+---
+class: left, top
+
+## まとめ
+
+- AI で Scala を使いこなす
+    - 機能のモチベーションを知っていれば、細かい仕様は AI が埋めてくれる
+    - 型を決めれば、AI がそれを満たす実装を書いてくれる
+- Scala で AI を活躍させる
+    - AI 時代のボトルネックは、人間による確認
+    - 人間が確認する部分を、性質・型・仕様に局所化する
+    - Scala はそのための道具を活用しやすい
+
+---
+class: center, middle
+
+## AI が Scala の難しさを引き受け<br>Scala が AI の正しさを引き受ける
+
+---
+class: left, top
+
+## 宣伝
+
+- Scalebase株式会社では一緒に働くメンバーを募集しています
+    - 気軽にお声がけください！
+    - [Scalebase 採用情報](https://alpinc.notion.site/52af90188305440d86acf72968646054)
+
+---
+class: center, middle
+
+## 質問とか
+
+        </textarea>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/remark/0.14.0/remark.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            var slideshow = remark.create({
+              highlightStyle: 'github',
+              highlightSpans: true,
+              highlightLines: true
+          });
+        </script>
+    </body>
+</html>
